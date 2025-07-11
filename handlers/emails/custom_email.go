@@ -15,7 +15,7 @@ func getBody(headerTxt string, promptTxt string, codeParam string) string {
     <table align="center" width="100%%" cellpadding="0" cellspacing="0" style="max-width:600px; background:white; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.1); margin-top:40px;">
       <tr>
         <td style="padding:30px 40px;">
-          <h2 style="color:#70B8FF; margin:0 0 10px;">🍞 %s</h2>
+          <h2 style="margin:0 0 10px;">🍞 %s</h2>
           <p style="font-size:16px; color:#333;">Hi there,</p>
           <p style="font-size:15px; color:#444;">%s</p>
           <div style="margin:30px 0; text-align:center;">
