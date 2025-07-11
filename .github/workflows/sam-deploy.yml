@@ -32,7 +32,6 @@ jobs:
       - name: Set up SAM CLI
         uses: aws-actions/setup-sam@v2
         with:
-          version: latest
           use-installer: true
 
       - name: build go bins for lambda
