@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: "2010-09-09"
+AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: SAM template for Breadcrumb
 
@@ -12,13 +12,12 @@ Globals:
         USERS_TABLE: !Ref UsersTable
 
 Resources:
+
   # auth
   CognitoUserPool:
     Type: AWS::Cognito::UserPool
     Properties:
       UserPoolName: BreadUserPool
-      LambdaConfig:
-        CustomMessage: !GetAtt CognitoCustomMessageFunction.Arn
       UsernameAttributes:
         - email
       AutoVerifiedAttributes:
@@ -54,7 +53,7 @@ Resources:
     Properties:
       CodeUri: bin/custom_email/custom_email.zip
       Handler: bootstrap
-      Architectures: [arm64]
+      Architectures: [ arm64 ]
       Runtime: provided.al2023
       Description: Custom email logic for Cognito events
       Policies:
@@ -64,6 +63,12 @@ Resources:
               - ses:SendEmail
               - ses:SendRawEmail
             Resource: "*"
+      Events:
+        CognitoCustomMessageTrigger:
+          Type: Cognito
+          Properties:
+            UserPool: !Ref CognitoUserPool
+            Trigger: CustomMessage
 
   # api gateway
   BreadApi:
@@ -76,9 +81,9 @@ Resources:
           - DELETE
           - PUT
         AllowOrigins:
-          - "*"
+          - '*'
         AllowHeaders:
-          - "*"
+          - '*'
       StageName: prod
       Auth:
         Authorizers:
@@ -95,7 +100,7 @@ Resources:
     Properties:
       CodeUri: bin/signup_confirm/signup_confirm.zip
       Handler: bootstrap
-      Architectures: [arm64]
+      Architectures: [ arm64 ]
       Description: Lambda function that runs after user successfully signs up
       Policies:
         - DynamoDBCrudPolicy:

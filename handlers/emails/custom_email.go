@@ -36,16 +36,16 @@ func getBody(headerTxt string, promptTxt string, codeParam string) string {
 func Handler(ctx context.Context, event events.CognitoEventUserPoolsCustomMessage) (events.CognitoEventUserPoolsCustomMessage, error) {
 	switch event.TriggerSource {
 	case "CustomMessage_SignUp":
-		event.Response.EmailSubject = "Confirm your Breadcrumb account"
-		event.Response.EmailMessage = getBody("Welcome to Breadcrumb!", "Use this code to complete the signup process", event.Request.CodeParameter)
+		event.Response.EmailSubject = "Verify your Breadcrumb account"
+		event.Response.EmailMessage = getBody("Welcome to Breadcrumb!", "Use this code to complete your signup process", event.Request.CodeParameter)
 
 	case "CustomMessage_ForgotPassword":
 		event.Response.EmailSubject = "Reset your Breadcrumb password"
-		event.Response.EmailMessage = getBody("You requested to reset your password.", "Use this code to complete the password change:", event.Request.CodeParameter)
+		event.Response.EmailMessage = getBody("You requested to reset your password.", "Use this code to complete your password change:", event.Request.CodeParameter)
 
 	case "CustomMessage_UpdateUserAttribute":
 		event.Response.EmailSubject = "Confirm your new email address"
-		event.Response.EmailMessage = getBody("You're updating your email address.", "Use this code to complete the email address change:", event.Request.CodeParameter)
+		event.Response.EmailMessage = getBody("You're updating your email address.", "Use this code to complete your email address change:", event.Request.CodeParameter)
 
 	default:
 		log.Printf("Unknown trigger source: %s", event.TriggerSource)
