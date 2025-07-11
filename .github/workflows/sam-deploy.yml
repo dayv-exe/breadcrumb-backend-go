@@ -1,0 +1,55 @@
+name: Build and deploy Breadcrumb backend
+
+env:
+  AWS_REGION: "eu-west-2"
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: checkout repo
+        uses: actions/checkout@v4
+
+      - name: setup docker build
+        uses: docker/setup-buildx-action@v3
+
+      - name: configure aws creds
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{secrets.AWS_ROLE}}
+          role-session-name: github-ci
+          aws-region: ${{env.AWS_REGION}}
+
+      - name: Set up SAM CLI
+        uses: aws-actions/setup-sam@v2
+        with:
+          version: latest
+          use-installer: true
+
+      - name: build go bins for lambda
+        run: |
+          docker build --build-arg BUILD_DIRS="signup_confirm,custom_email" -t breadcrumb .
+          docker create --name extract-builder breadcrumb
+          rm -rf ./bin
+          docker cp extract-builder:/app/bin ./bin
+          docker rm extract-builder
+
+      - name: deploy sam
+        run: |
+          sam deploy \
+            --template-file template.yaml \
+            --stack-name breadcrumb-stack \
+            --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
+            --resolve-s3 \
+            --region ${{env.AWS_REGION}} \
+            --no-confirm-changeset \
+            --no-fail-on-empty-changeset
