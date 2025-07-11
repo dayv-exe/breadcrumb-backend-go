@@ -97,7 +97,8 @@ Resources:
       Handler: bootstrap
       Architectures:
       - arm64
-      Description: Lambda function that runs after user successfully signs up
+      Description: Lambda function that runs after user successfully signs up to add
+        them to dynamodb
       Policies:
       - DynamoDBCrudPolicy:
           TableName:

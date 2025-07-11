@@ -6,7 +6,7 @@ Globals:
   Function:
     Timeout: 10
     Runtime: provided.al2023
-    MemorySize: 512
+    MemorySize: 256
     Environment:
       Variables:
         USERS_TABLE: !Ref UsersTable
@@ -101,7 +101,7 @@ Resources:
       CodeUri: bin/signup_confirm/signup_confirm.zip
       Handler: bootstrap
       Architectures: [ arm64 ]
-      Description: Lambda function that runs after user successfully signs up
+      Description: Lambda function that runs after user successfully signs up to add them to dynamodb
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref UsersTable

@@ -17,13 +17,13 @@ func getBody(headerTxt string, promptTxt string, codeParam string) string {
         <td style="padding:30px 40px;">
           <h2 style="margin:0 0 10px;">🍞 %s</h2>
           <p style="font-size:16px; color:#333;">Hi there,</p>
-          <p style="font-size:15px; color:#444;">%s</p>
+          <p style="font-size:15px; color:#444;">%s. DO NOT SHARE THIS CODE WITH ANYONE:</p>
           <div style="margin:30px 0; text-align:center;">
             <span style="display:inline-block; font-size:24px; font-weight:bold; color:#222; background:#f0f0f0; padding:12px 24px; border-radius:8px;">
               %s
             </span>
           </div>
-          <p style="font-size:14px; color:#666;">DO NOT SHARE THIS CODE WITH ANYONE. If you didn't request this, you can safely ignore this email.</p>
+          <p style="font-size:14px; color:#666;">If you didn't request this, you can safely ignore this email.</p>
           <hr style="margin:30px 0; border:none; border-top:1px solid #eee;">
         </td>
       </tr>
@@ -41,11 +41,11 @@ func Handler(ctx context.Context, event events.CognitoEventUserPoolsCustomMessag
 
 	case "CustomMessage_ForgotPassword":
 		event.Response.EmailSubject = "Reset your Breadcrumb password"
-		event.Response.EmailMessage = getBody("You requested to reset your password.", "Use this code to complete your password change:", event.Request.CodeParameter)
+		event.Response.EmailMessage = getBody("Password reset.", "Use this code to complete your password change", event.Request.CodeParameter)
 
 	case "CustomMessage_UpdateUserAttribute":
 		event.Response.EmailSubject = "Confirm your new email address"
-		event.Response.EmailMessage = getBody("You're updating your email address.", "Use this code to complete your email address change:", event.Request.CodeParameter)
+		event.Response.EmailMessage = getBody("Updating your email address.", "Use this code to complete your email address change", event.Request.CodeParameter)
 
 	default:
 		log.Printf("Unknown trigger source: %s", event.TriggerSource)
