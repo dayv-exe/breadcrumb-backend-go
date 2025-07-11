@@ -8,14 +8,19 @@ ENV CGO_ENABLED=0 \
 WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
-RUN mkdir -p ${BIN_ROOT}
 COPY . .
+RUN mkdir -p ${BIN_ROOT}
 ARG BUILD_DIRS
-RUN for dir in $(echo ${BUILD_DIRS} | tr ',' '\n'); do \
-    mkdir -p ${BIN_ROOT}/$dir && \
-    go build -o ${BIN_ROOT}/$dir/bootstrap ./cmd/$dir/main.go && \
-    cd ${BIN_ROOT}/$dir && \
+RUN set -e; \
+  for dir in $(echo ${BUILD_DIRS} | tr ',' '\n'); do \
+    echo "==> Building $dir"; \
+    mkdir -p ${BIN_ROOT}/$dir; \
+    echo "Running: go build -o ${BIN_ROOT}/$dir/bootstrap ./cmd/$dir/main.go"; \
+    go build -o ${BIN_ROOT}/$dir/bootstrap ./cmd/$dir/main.go; \
+    echo "Zipping binary..."; \
+    cd ${BIN_ROOT}/$dir; \
     zip $dir.zip bootstrap; \
+    cd -; \
   done
 
 RUN ls -R ${BIN_ROOT}
