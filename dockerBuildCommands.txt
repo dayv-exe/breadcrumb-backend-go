@@ -1,0 +1,5 @@
+docker build --build-arg BUILD_DIRS="signup_confirm" -t breadcrumb .
+docker create --name extract-builder breadcrumb
+rm -rf ./bin
+docker cp extract-builder:/app/bin ./bin
+docker rm extract-builder
