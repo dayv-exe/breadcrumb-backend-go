@@ -48,7 +48,7 @@ func HandleNicknameAvailable(ctx context.Context, req events.APIGatewayProxyRequ
 		return models.ServerSideErrorResponse(""), nil
 	}
 
-	exists := len(out.Items) > 0
+	exists := len(out.Items) < 1
 
 	return models.SuccessfulRequestResponse(fmt.Sprintf("%v", exists), false), nil
 }
