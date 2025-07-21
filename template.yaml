@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: "2010-09-09"
 Transform: AWS::Serverless-2016-10-31
 Description: SAM template for Breadcrumb
 
@@ -12,7 +12,6 @@ Globals:
         USERS_TABLE: !Ref UsersTable
 
 Resources:
-
   # auth
   CognitoUserPool:
     Type: AWS::Cognito::UserPool
@@ -53,7 +52,7 @@ Resources:
     Properties:
       CodeUri: bin/custom_email/custom_email.zip
       Handler: bootstrap
-      Architectures: [ arm64 ]
+      Architectures: [arm64]
       Runtime: provided.al2023
       Description: Custom email logic for Cognito events
       Policies:
@@ -81,9 +80,9 @@ Resources:
           - DELETE
           - PUT
         AllowOrigins:
-          - '*'
+          - "*"
         AllowHeaders:
-          - '*'
+          - "*"
       StageName: prod
       Auth:
         Authorizers:
@@ -100,7 +99,7 @@ Resources:
     Properties:
       CodeUri: bin/signup_confirm/signup_confirm.zip
       Handler: bootstrap
-      Architectures: [ arm64 ]
+      Architectures: [arm64]
       Description: Lambda function that runs after user successfully signs up to add them to dynamodb
       Policies:
         - DynamoDBCrudPolicy:
@@ -114,6 +113,25 @@ Resources:
           Properties:
             UserPool: !Ref CognitoUserPool
             Trigger: PostConfirmation
+
+  NicknameAvailableFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: NicknameAvailableFunction
+      CodeUri: bin/nickname_available/nickname_available.zip
+      Handler: bootstrap
+      Architectures: [arm64]
+      Description: used during frontend login to check if the nickname user enters is not taken or somthing
+      Events:
+        NicknameAvailableApi:
+          Type: HttpApi
+          Properties:
+            Path: /nickname_available/{nickname}
+            Method: GET
+            ApiId: !Ref BreadApi
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref UsersTable
 
   # user dynamodb table
   UsersTable:
