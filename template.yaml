@@ -125,11 +125,20 @@ Resources:
           AttributeType: S
         - AttributeName: sk
           AttributeType: S
+        - AttributeName: nickname
+          AttributeType: S
       KeySchema:
         - AttributeName: pk
           KeyType: HASH
         - AttributeName: sk
           KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: NicknameIndex
+          KeySchema:
+            - AttributeName: nickname
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
 
 Outputs:
   BreadApiUrl:
