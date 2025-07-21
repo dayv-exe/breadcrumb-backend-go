@@ -45,7 +45,7 @@ func HandleNicknameAvailable(ctx context.Context, req events.APIGatewayProxyRequ
 	})
 
 	if err != nil {
-		return models.ServerSideErrorResponse(""), nil
+		return models.ServerSideErrorResponse("An error has occurred, try again."), nil
 	}
 
 	exists := len(out.Items) < 1
