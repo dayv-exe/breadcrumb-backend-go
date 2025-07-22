@@ -99,6 +99,8 @@ Resources:
               issuer: !Sub "https://cognito-idp.${AWS::Region}.amazonaws.com/${CognitoUserPool}"
               audience:
                 - !Ref CognitoUserPoolClient
+              claims:
+                email_verified: "true"
 
   # to add newly created user to dynamo db
   UserPostConfirmationFunction:
