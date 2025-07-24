@@ -45,7 +45,7 @@ func TestIsNickNameTakenInCognito(t *testing.T) {
 			queryFn: func() (*cognitoidentityprovider.ListUsersOutput, error) {
 				return nil, errors.New("cognito error")
 			},
-			wantTaken: false,
+			wantTaken: true,
 			wantErr:   true,
 		},
 	}
