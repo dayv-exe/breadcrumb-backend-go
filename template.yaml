@@ -146,10 +146,10 @@ Resources:
             TableName: !Ref UsersTable
         - Statement:
             Effect: Allow
-              Action:
-                - cognito-idp:ListUsers
-                - cognito-idp:AdminGetUser
-              Resource: !Sub arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${CognitoUserPool}
+            Action:
+              - cognito-idp:ListUsers
+              - cognito-idp:AdminGetUser
+            Resource: !Sub arn:aws:cognito-idp:${AWS::Region}:${AWS::AccountId}:userpool/${CognitoUserPool}
 
   # user dynamodb table
   UsersTable:
