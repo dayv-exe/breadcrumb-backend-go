@@ -9,16 +9,13 @@ import (
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
 
 type FuncDependencies struct {
-	DdbClient     *dynamodb.Client
-	TableName     string
-	CognitoClient *cognitoidentityprovider.Client
-	UserPoolId    string
+	DdbClient *dynamodb.Client
+	TableName string
 }
 
 func (fd *FuncDependencies) HandleNicknameAvailable(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
@@ -41,36 +38,13 @@ func (fd *FuncDependencies) HandleNicknameAvailable(ctx context.Context, req eve
 		})
 	})
 
-	cognitoFilter := fmt.Sprintf("custom:nickname = \"%s\"", nickname)
-
-	takenInCognito, cognitoErr := isNickNameTakenInCognito(func() (*cognitoidentityprovider.ListUsersOutput, error) {
-		return fd.CognitoClient.ListUsers(ctx, &cognitoidentityprovider.ListUsersInput{
-			UserPoolId: aws.String(fd.UserPoolId),
-			Filter:     aws.String(cognitoFilter),
-			Limit:      aws.Int32(1),
-		})
-	})
-
 	if dbErr != nil {
 		return models.ServerSideErrorResponse("An error has occurred, try again.", dbErr.Error()), nil
 	}
 
-	if cognitoErr != nil {
-		return models.ServerSideErrorResponse("An error has occurred, try again.", cognitoErr.Error()), nil
-	}
-
-	available := !takenInCognito && !takenInDb
+	available := !takenInDb
 
 	return models.SuccessfulRequestResponse(fmt.Sprintf("%v", available), false), nil
-}
-
-func isNickNameTakenInCognito(queryFn func() (*cognitoidentityprovider.ListUsersOutput, error)) (bool, error) {
-	out, err := queryFn()
-	if err != nil {
-		return false, err
-	}
-
-	return len(out.Users) > 0, nil
 }
 
 func isNicknameTakenInDynamodb(queryFn func() (*dynamodb.QueryOutput, error)) (bool, error) {

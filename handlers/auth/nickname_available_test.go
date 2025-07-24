@@ -4,64 +4,9 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
-	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	ddbTypes "github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
-
-func TestIsNickNameTakenInCognito(t *testing.T) {
-	tests := []struct {
-		name      string
-		queryFn   func() (*cognitoidentityprovider.ListUsersOutput, error)
-		wantTaken bool
-		wantErr   bool
-	}{
-		{
-			name: "nickname taken",
-			queryFn: func() (*cognitoidentityprovider.ListUsersOutput, error) {
-				return &cognitoidentityprovider.ListUsersOutput{
-					Users: []types.UserType{
-						{Username: aws.String("someone")},
-					},
-				}, nil
-			},
-			wantTaken: true,
-			wantErr:   false,
-		},
-		{
-			name: "nickname not taken",
-			queryFn: func() (*cognitoidentityprovider.ListUsersOutput, error) {
-				return &cognitoidentityprovider.ListUsersOutput{
-					Users: []types.UserType{},
-				}, nil
-			},
-			wantTaken: false,
-			wantErr:   false,
-		},
-		{
-			name: "query returns error",
-			queryFn: func() (*cognitoidentityprovider.ListUsersOutput, error) {
-				return nil, errors.New("cognito error")
-			},
-			wantTaken: false,
-			wantErr:   true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := isNickNameTakenInCognito(tt.queryFn)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("unexpected error: %v", err)
-			}
-			if got != tt.wantTaken {
-				t.Errorf("got %v, want %v", got, tt.wantTaken)
-			}
-		})
-	}
-}
 
 func TestIsNicknameTakenInDynamodb(t *testing.T) {
 	tests := []struct {
