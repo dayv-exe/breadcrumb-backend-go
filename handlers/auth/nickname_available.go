@@ -51,8 +51,12 @@ func (fd *FuncDependencies) HandleNicknameAvailable(ctx context.Context, req eve
 		})
 	})
 
-	if dbErr != nil || cognitoErr != nil {
-		return models.ServerSideErrorResponse("An error has occurred, try again."), nil
+	if dbErr != nil {
+		return models.ServerSideErrorResponse("An error has occurred, try again.", dbErr.Error()), nil
+	}
+
+	if cognitoErr != nil {
+		return models.ServerSideErrorResponse("An error has occurred, try again.", cognitoErr.Error()), nil
 	}
 
 	available := !takenInCognito && !takenInDb

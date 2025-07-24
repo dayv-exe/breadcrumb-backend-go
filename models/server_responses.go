@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"log"
 
 	"github.com/aws/aws-lambda-go/events"
 )
@@ -40,10 +41,11 @@ func InvalidRequestErrorResponse(msg string) events.APIGatewayProxyResponse {
 	return responseMessage(400, msg)
 }
 
-func ServerSideErrorResponse(msg string) events.APIGatewayProxyResponse {
+func ServerSideErrorResponse(msg string, error string) events.APIGatewayProxyResponse {
 	if msg == "" {
 		msg = "An error has occurred on our end, try again."
 	}
+	log.Println(error)
 	return responseMessage(500, msg)
 }
 
