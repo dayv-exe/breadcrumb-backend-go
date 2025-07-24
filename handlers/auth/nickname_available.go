@@ -41,7 +41,7 @@ func (fd *FuncDependencies) HandleNicknameAvailable(ctx context.Context, req eve
 		})
 	})
 
-	cognitoFilter := fmt.Sprintf("nickname = \"%s\"", nickname)
+	cognitoFilter := fmt.Sprintf("custom:nickname = \"%s\"", nickname)
 
 	takenInCognito, cognitoErr := isNickNameTakenInCognito(func() (*cognitoidentityprovider.ListUsersOutput, error) {
 		return fd.CognitoClient.ListUsers(ctx, &cognitoidentityprovider.ListUsersInput{
