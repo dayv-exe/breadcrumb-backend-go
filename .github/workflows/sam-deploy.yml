@@ -16,67 +16,44 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: checkout repo
-      uses: actions/checkout@v4
+      - name: checkout repo
+        uses: actions/checkout@v4
 
-    - name: Cache Go modules
-      uses: actions/cache@v3
-      with:
-        path: |
-          ~/go/pkg/mod
-          ~/.cache/go-build
-        key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-        restore-keys: |
-          ${{ runner.os }}-go-
+      - name: setup docker build
+        uses: docker/setup-buildx-action@v3
 
-    - name: setup docker build
-      uses: docker/setup-buildx-action@v3
+      - name: configure aws creds
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{secrets.AWS_ROLE}}
+          role-session-name: github-ci
+          aws-region: ${{env.AWS_REGION}}
 
-    - name: Cache Docker layers
-      uses: actions/cache@v3
-      with:
-        path: /tmp/.buildx-cache
-        key: ${{ runner.os }}-docker-${{ github.sha }}
-        restore-keys: |
-          ${{ runner.os }}-docker-
+      - name: Set up SAM CLI
+        uses: aws-actions/setup-sam@v2
+        with:
+          use-installer: true
 
-    - name: configure aws creds
-      uses: aws-actions/configure-aws-credentials@v4
-      with:
-        role-to-assume: ${{secrets.AWS_ROLE}}
-        role-session-name: github-ci
-        aws-region: ${{env.AWS_REGION}}
+      - name: run Go unit tests
+        run: |
+          cd handlers/auth
+          go test -v ./...
 
-    - name: Set up SAM CLI
-      uses: aws-actions/setup-sam@v2
-      with:
-        use-installer: true
+      - name: build go bins for lambda
+        run: |
+          docker build --build-arg BUILD_DIRS="signup_confirm,custom_email,nickname_available" -t breadcrumb .
+          docker create --name extract-builder breadcrumb
+          rm -rf ./bin
+          docker cp extract-builder:/app/bin ./bin
+          docker rm extract-builder
 
-    - name: run Go unit tests
-      run: |
-        cd handlers/auth
-        go test -v ./...
-
-    - name: build go bins for lambda
-      run: |
-        docker build \
-          --build-arg BUILD_DIRS="signup_confirm,custom_email,nickname_available" \
-          --cache-from=type=local,src=/tmp/.buildx-cache \
-          --cache-to=type=local,dest=/tmp/.buildx-cache-new \
-          -t breadcrumb .
-        docker create --name extract-builder breadcrumb
-        rm -rf ./bin
-        docker cp extract-builder:/app/bin ./bin
-        docker rm extract-builder
-        rm -rf /tmp/.buildx-cache && mv /tmp/.buildx-cache-new /tmp/.buildx-cache
-
-    - name: deploy sam
-      run: |
-        sam deploy \
-          --template-file template.yaml \
-          --stack-name breadcrumb-stack \
-          --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
-          --resolve-s3 \
-          --region ${{env.AWS_REGION}} \
-          --no-confirm-changeset \
-          --no-fail-on-empty-changeset
+      - name: deploy sam
+        run: |
+          sam deploy \
+            --template-file template.yaml \
+            --stack-name breadcrumb-stack \
+            --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
+            --resolve-s3 \
+            --region ${{env.AWS_REGION}} \
+            --no-confirm-changeset \
+            --no-fail-on-empty-changeset
