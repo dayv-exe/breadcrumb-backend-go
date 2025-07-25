@@ -29,7 +29,7 @@ func init() {
 func HandlePostConfirmation(ctx context.Context, event events.CognitoEventUserPoolsPostConfirmation) (interface{}, error) {
 	userID := event.Request.UserAttributes["sub"]
 	nickName := event.Request.UserAttributes["nickname"]
-	name := event.Request.UserAttributes["custom:fullname"]
+	name := event.Request.UserAttributes["name"]
 	birthdate := event.Request.UserAttributes["birthdate"]
 
 	newUser, uErr := models.NewUser(userID, nickName, name, birthdate, false).DatabaseFormat()

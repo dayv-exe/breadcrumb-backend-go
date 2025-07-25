@@ -36,7 +36,7 @@ Resources:
           AttributeDataType: String
           Required: false
           Mutable: true
-        - Name: fullname
+        - Name: name
           AttributeDataType: String
           Required: false
           Mutable: true
