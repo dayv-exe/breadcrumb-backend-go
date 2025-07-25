@@ -39,6 +39,11 @@ jobs:
           cd handlers/auth
           go test -v ./...
 
+      - name: run utils unit tests
+        run: |
+          cd utils
+          go test -v ./...
+
       - name: build go bins for lambda
         run: |
           docker build --build-arg BUILD_DIRS="signup_confirm,custom_email,nickname_available" -t breadcrumb .

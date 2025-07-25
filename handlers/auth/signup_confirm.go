@@ -2,6 +2,7 @@ package auth
 
 import (
 	"breadcrumb-backend-go/models"
+	"breadcrumb-backend-go/utils"
 	"context"
 	"fmt"
 	"log"
@@ -33,7 +34,7 @@ func HandlePostConfirmation(ctx context.Context, event events.CognitoEventUserPo
 	name := event.Request.UserAttributes["name"]
 	birthdate := event.Request.UserAttributes["birthdate"]
 
-	newUser, uErr := models.NewUser(userID, nickName, email, name, birthdate).DatabaseFormat()
+	newUser, uErr := models.NewUser(userID, nickName, name, email, birthdate).DatabaseFormat()
 	if uErr != nil {
 		log.Fatalf("AN ERROR OCCURRED WHILE ADDING NEW USER! %v", uErr)
 	}
@@ -49,4 +50,32 @@ func HandlePostConfirmation(ctx context.Context, event events.CognitoEventUserPo
 	}
 
 	return event, nil
+}
+
+func isNicknameTaken(queryFn func() (*dynamodb.QueryOutput, error)) (bool, error) {
+	out, err := queryFn()
+
+	if err != nil {
+		return false, err
+	}
+
+	isTaken := len(out.Items) > 0
+
+	return isTaken, nil
+}
+
+func validateUserDetails(user models.User) bool {
+	if len(user.Userid) < 1 {
+		return false
+	}
+
+	if !utils.IsEmailValid(user.Email) {
+		return false
+	}
+
+	if !utils.IsNicknameValid(user.Nickname) {
+		return false
+	}
+
+	return true
 }

@@ -59,32 +59,3 @@ func TestIsNicknameTakenInDynamodb(t *testing.T) {
 		})
 	}
 }
-
-func TestIsNicknameValid(t *testing.T) {
-	tests := []struct {
-		nickname string
-		valid    bool
-	}{
-		{"john_doe", true},
-		{"_john", false},
-		{"john..doe", false},
-		{"j", false},
-		{"averylongnamethatshouldfail", false},
-		{"john.doe_", false},
-		{"john__doe", false},
-		{"j.doe", true},
-		{"j_doe", true},
-		{"JohnDoe99", true},
-		{"john_.doe", false},
-		{"john.doe_", false},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.nickname, func(t *testing.T) {
-			got := isNicknameValid(tt.nickname)
-			if got != tt.valid {
-				t.Errorf("isNicknameValid(%q) = %v; want %v", tt.nickname, got, tt.valid)
-			}
-		})
-	}
-}

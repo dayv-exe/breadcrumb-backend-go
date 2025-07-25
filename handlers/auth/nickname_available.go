@@ -2,9 +2,10 @@ package auth
 
 import (
 	"breadcrumb-backend-go/models"
+	"breadcrumb-backend-go/utils"
 	"context"
 	"fmt"
-	"regexp"
+	"log"
 	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -22,9 +23,11 @@ func (fd *FuncDependencies) HandleNicknameAvailable(ctx context.Context, req eve
 
 	// if nickname is invalid return false immediately
 	nickname := strings.ToLower(req.PathParameters["nickname"])
-	if nickname == "" || !isNicknameValid(nickname) {
+	if nickname == "" || !utils.IsNicknameValid(nickname) {
 		return models.SuccessfulRequestResponse(fmt.Sprintf("%v", false), false), nil
 	}
+
+	log.Print(nickname)
 
 	takenInDb, dbErr := isNicknameTakenInDynamodb(func() (*dynamodb.QueryOutput, error) {
 		return fd.DdbClient.Query(ctx, &dynamodb.QueryInput{
@@ -34,7 +37,7 @@ func (fd *FuncDependencies) HandleNicknameAvailable(ctx context.Context, req eve
 			ExpressionAttributeValues: map[string]types.AttributeValue{
 				":nick": &types.AttributeValueMemberS{Value: nickname},
 			},
-			Limit: aws.Int32(1),
+			// Limit: aws.Int32(1),
 		})
 	})
 
@@ -48,6 +51,7 @@ func (fd *FuncDependencies) HandleNicknameAvailable(ctx context.Context, req eve
 }
 
 func isNicknameTakenInDynamodb(queryFn func() (*dynamodb.QueryOutput, error)) (bool, error) {
+	log.Print("nickname here")
 	out, err := queryFn()
 
 	if err != nil {
@@ -55,27 +59,9 @@ func isNicknameTakenInDynamodb(queryFn func() (*dynamodb.QueryOutput, error)) (b
 	}
 
 	isTaken := len(out.Items) > 0
+	for _, name := range out.Items {
+		log.Print(name)
+	}
 
 	return isTaken, nil
-}
-
-func isNicknameValid(nickname string) bool {
-	if len(nickname) < 3 || len(nickname) > 20 {
-		return false
-	}
-
-	match, _ := regexp.MatchString(`^[a-zA-Z][a-zA-Z0-9._]*[a-zA-Z0-9]$`, nickname)
-	if !match {
-		return false
-	}
-
-	if strings.Contains(nickname, "..") || strings.Contains(nickname, "__") {
-		return false
-	}
-
-	if strings.Contains(nickname, "_.") || strings.Contains(nickname, "._") {
-		return false
-	}
-
-	return true
 }
