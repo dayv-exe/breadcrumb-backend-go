@@ -45,6 +45,15 @@ func (fd *FuncDependencies) HandleNicknameAvailable(ctx context.Context, req eve
 		})
 	})
 
+	resp, _ := fd.DdbClient.Scan(ctx, &dynamodb.ScanInput{
+		TableName:        aws.String(fd.TableName),
+		FilterExpression: aws.String("nickname = :nick"),
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":nick": &types.AttributeValueMemberS{Value: nickname},
+		},
+	})
+	fmt.Println("Scan Result:", resp.Items)
+
 	if dbErr != nil {
 		return models.ServerSideErrorResponse("An error has occurred, try again.", dbErr.Error()), nil
 	}
