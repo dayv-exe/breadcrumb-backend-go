@@ -41,18 +41,9 @@ func (fd *FuncDependencies) HandleNicknameAvailable(ctx context.Context, req eve
 			ExpressionAttributeValues: map[string]types.AttributeValue{
 				":nick": &types.AttributeValueMemberS{Value: nickname},
 			},
-			// Limit: aws.Int32(1),
+			Limit: aws.Int32(1),
 		})
 	})
-
-	resp, _ := fd.DdbClient.Scan(ctx, &dynamodb.ScanInput{
-		TableName:        aws.String(fd.TableName),
-		FilterExpression: aws.String("nickname = :nick"),
-		ExpressionAttributeValues: map[string]types.AttributeValue{
-			":nick": &types.AttributeValueMemberS{Value: nickname},
-		},
-	})
-	fmt.Println("Scan Result:", resp.Items)
 
 	if dbErr != nil {
 		return models.ServerSideErrorResponse("An error has occurred, try again.", dbErr.Error()), nil
@@ -64,7 +55,6 @@ func (fd *FuncDependencies) HandleNicknameAvailable(ctx context.Context, req eve
 }
 
 func isNicknameTakenInDynamodb(queryFn func() (*dynamodb.QueryOutput, error)) (bool, error) {
-	log.Print("nickname here")
 	out, err := queryFn()
 
 	if err != nil {
@@ -72,9 +62,6 @@ func isNicknameTakenInDynamodb(queryFn func() (*dynamodb.QueryOutput, error)) (b
 	}
 
 	isTaken := len(out.Items) > 0
-	for _, name := range out.Items {
-		log.Print(name)
-	}
 
 	return isTaken, nil
 }
