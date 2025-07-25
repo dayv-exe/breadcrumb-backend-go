@@ -30,6 +30,10 @@ func (fd *FuncDependencies) HandleNicknameAvailable(ctx context.Context, req eve
 	log.Print(nickname)
 
 	takenInDb, dbErr := isNicknameTakenInDynamodb(func() (*dynamodb.QueryOutput, error) {
+		log.Printf("Querying nickname: %s", nickname)
+		log.Printf("ExpressionAttributeValues: %+v", map[string]types.AttributeValue{
+			":nick": &types.AttributeValueMemberS{Value: nickname},
+		})
 		return fd.DdbClient.Query(ctx, &dynamodb.QueryInput{
 			TableName:              aws.String(fd.TableName),
 			IndexName:              aws.String("NicknameIndex"),
