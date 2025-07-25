@@ -34,9 +34,14 @@ jobs:
         with:
           use-installer: true
 
-      - name: run Go unit tests
+      - name: run unit tests for auth packages
         run: |
           cd handlers/auth
+          go test -v ./...
+
+      - name: run  unit tests for media packages
+        run: |
+          cd handlers/media
           go test -v ./...
 
       - name: run utils unit tests
@@ -44,9 +49,14 @@ jobs:
           cd utils
           go test -v ./...
 
+      - name: run unit tests for models
+        run: |
+          cd models
+          go test -v ./...
+
       - name: build go bins for lambda
         run: |
-          docker build --build-arg BUILD_DIRS="signup_confirm,custom_email,nickname_available" -t breadcrumb .
+          docker build --build-arg BUILD_DIRS="signup_confirm,custom_email,nickname_available,presignup" -t breadcrumb .
           docker create --name extract-builder breadcrumb
           rm -rf ./bin
           docker cp extract-builder:/app/bin ./bin

@@ -5,21 +5,18 @@ import (
 	"breadcrumb-backend-go/utils"
 	"context"
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
 
-type FuncDependencies struct {
+type NicknameDependencies struct {
 	DdbClient *dynamodb.Client
 	TableName string
 }
 
-func (fd *FuncDependencies) HandleNicknameAvailable(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+func (deps *NicknameDependencies) HandleNicknameAvailable(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 
 	// if nickname is invalid return false immediately
 	nickname := strings.ToLower(req.PathParameters["nickname"])
@@ -27,23 +24,7 @@ func (fd *FuncDependencies) HandleNicknameAvailable(ctx context.Context, req eve
 		return models.SuccessfulRequestResponse(fmt.Sprintf("%v", false), false), nil
 	}
 
-	log.Print(nickname)
-
-	takenInDb, dbErr := isNicknameTakenInDynamodb(func() (*dynamodb.QueryOutput, error) {
-		log.Printf("Querying nickname: %s", nickname)
-		log.Printf("ExpressionAttributeValues: %+v", map[string]types.AttributeValue{
-			":nick": &types.AttributeValueMemberS{Value: nickname},
-		})
-		return fd.DdbClient.Query(ctx, &dynamodb.QueryInput{
-			TableName:              aws.String(fd.TableName),
-			IndexName:              aws.String("NicknameIndex"),
-			KeyConditionExpression: aws.String("nickname = :nick"),
-			ExpressionAttributeValues: map[string]types.AttributeValue{
-				":nick": &types.AttributeValueMemberS{Value: nickname},
-			},
-			Limit: aws.Int32(1),
-		})
-	})
+	takenInDb, dbErr := utils.IsNicknameTakenInDynamodb(nickname, deps.TableName, deps.DdbClient, ctx)
 
 	if dbErr != nil {
 		return models.ServerSideErrorResponse("An error has occurred, try again.", dbErr.Error()), nil
@@ -52,16 +33,4 @@ func (fd *FuncDependencies) HandleNicknameAvailable(ctx context.Context, req eve
 	available := !takenInDb
 
 	return models.SuccessfulRequestResponse(fmt.Sprintf("%v", available), false), nil
-}
-
-func isNicknameTakenInDynamodb(queryFn func() (*dynamodb.QueryOutput, error)) (bool, error) {
-	out, err := queryFn()
-
-	if err != nil {
-		return false, err
-	}
-
-	isTaken := len(out.Items) > 0
-
-	return isTaken, nil
 }

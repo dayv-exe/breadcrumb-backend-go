@@ -9,7 +9,6 @@ import (
 	"os"
 
 	"github.com/aws/aws-lambda-go/events"
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 )
@@ -29,53 +28,29 @@ func init() {
 
 func HandlePostConfirmation(ctx context.Context, event events.CognitoEventUserPoolsPostConfirmation) (interface{}, error) {
 	userID := event.Request.UserAttributes["sub"]
-	email := event.Request.UserAttributes["email"]
 	nickName := event.Request.UserAttributes["nickname"]
 	name := event.Request.UserAttributes["name"]
 	birthdate := event.Request.UserAttributes["birthdate"]
 
-	newUser, uErr := models.NewUser(userID, nickName, name, email, birthdate).DatabaseFormat()
+	newUser, uErr := models.NewUser(userID, nickName, name, birthdate, false).DatabaseFormat()
 	if uErr != nil {
 		log.Fatalf("AN ERROR OCCURRED WHILE ADDING NEW USER! %v", uErr)
 	}
 
-	input := &dynamodb.PutItemInput{
-		TableName: aws.String(usersTable),
-		Item:      newUser,
-	}
-
-	_, err := db.PutItem(ctx, input)
+	_, err := utils.PutItemInDDbTable(newUser, usersTable, db, ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to write user to DynamoDB: %w", err)
 	}
 
+	// input := &dynamodb.PutItemInput{
+	// 	TableName: aws.String(usersTable),
+	// 	Item:      newUser,
+	// }
+
+	// _, err := db.PutItem(ctx, input)
+	// if err != nil {
+	// 	return nil, fmt.Errorf("failed to write user to DynamoDB: %w", err)
+	// }
+
 	return event, nil
-}
-
-func isNicknameTaken(queryFn func() (*dynamodb.QueryOutput, error)) (bool, error) {
-	out, err := queryFn()
-
-	if err != nil {
-		return false, err
-	}
-
-	isTaken := len(out.Items) > 0
-
-	return isTaken, nil
-}
-
-func validateUserDetails(user models.User) bool {
-	if len(user.Userid) < 1 {
-		return false
-	}
-
-	if !utils.IsEmailValid(user.Email) {
-		return false
-	}
-
-	if !utils.IsNicknameValid(user.Nickname) {
-		return false
-	}
-
-	return true
 }

@@ -1,4 +1,4 @@
-package auth
+package utils
 
 import (
 	"errors"
@@ -49,7 +49,7 @@ func TestIsNicknameTakenInDynamodb(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := isNicknameTakenInDynamodb(tt.queryFn)
+			got, err := NicknameAvailabilityCheck(tt.queryFn)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("unexpected error: %v", err)
 			}

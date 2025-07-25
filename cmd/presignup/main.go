@@ -1,4 +1,4 @@
-package main
+package presignup
 
 import (
 	"breadcrumb-backend-go/handlers/auth"
@@ -28,9 +28,10 @@ func init() {
 }
 
 func main() {
-	fd := auth.NicknameDependencies{
+	fd := auth.PreSignupDependencies{
 		DdbClient: ddbClient,
 		TableName: tableName,
 	}
-	lambda.Start(fd.HandleNicknameAvailable)
+
+	lambda.Start(fd.PreSignupHandler)
 }
