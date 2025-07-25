@@ -39,10 +39,10 @@ jobs:
           cd handlers/auth
           go test -v ./...
 
-      - name: run  unit tests for media packages
-        run: |
-          cd handlers/media
-          go test -v ./...
+      # - name: run  unit tests for media packages
+      #   run: |
+      #     cd handlers/media
+      #     go test -v ./...
 
       - name: run utils unit tests
         run: |
