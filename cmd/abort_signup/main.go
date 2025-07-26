@@ -28,7 +28,9 @@ func init() {
 	if userPoolId == "" {
 		log.Fatal("COGNITO_USER_POOL_ID environment variable is required")
 	}
+}
 
+func main() {
 	asd := auth.AbortSignupDependencies{
 		Client:     client,
 		UserPoolId: userPoolId,
