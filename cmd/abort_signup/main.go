@@ -24,9 +24,9 @@ func init() {
 
 	client = cognitoidentityprovider.NewFromConfig(cfg)
 
-	userPoolId = os.Getenv("COGNITO_USER_POOL_ID")
+	userPoolId = os.Getenv("USER_POOL_ID")
 	if userPoolId == "" {
-		log.Fatal("COGNITO_USER_POOL_ID environment variable is required")
+		log.Fatal("USER_POOL_ID environment variable is required")
 	}
 }
 
