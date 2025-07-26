@@ -8,12 +8,12 @@ import (
 	ddbTypes "github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
 
-func TestIsNicknameTakenInDynamodb(t *testing.T) {
+func TestIsNicknameAvailableInDynamodb(t *testing.T) {
 	tests := []struct {
-		name      string
-		queryFn   func() (*dynamodb.QueryOutput, error)
-		wantTaken bool
-		wantErr   bool
+		name          string
+		queryFn       func() (*dynamodb.QueryOutput, error)
+		wantAvailable bool
+		wantErr       bool
 	}{
 		{
 			name: "nickname taken",
@@ -24,8 +24,8 @@ func TestIsNicknameTakenInDynamodb(t *testing.T) {
 					},
 				}, nil
 			},
-			wantTaken: true,
-			wantErr:   false,
+			wantAvailable: false,
+			wantErr:       false,
 		},
 		{
 			name: "nickname not taken",
@@ -34,16 +34,16 @@ func TestIsNicknameTakenInDynamodb(t *testing.T) {
 					Items: []map[string]ddbTypes.AttributeValue{},
 				}, nil
 			},
-			wantTaken: false,
-			wantErr:   false,
+			wantAvailable: true,
+			wantErr:       false,
 		},
 		{
 			name: "query returns error",
 			queryFn: func() (*dynamodb.QueryOutput, error) {
 				return nil, errors.New("dynamo error")
 			},
-			wantTaken: false,
-			wantErr:   true,
+			wantAvailable: false,
+			wantErr:       true,
 		},
 	}
 
@@ -53,8 +53,8 @@ func TestIsNicknameTakenInDynamodb(t *testing.T) {
 			if (err != nil) != tt.wantErr {
 				t.Errorf("unexpected error: %v", err)
 			}
-			if got != tt.wantTaken {
-				t.Errorf("got %v, want %v", got, tt.wantTaken)
+			if got != tt.wantAvailable {
+				t.Errorf("got %v, want %v", got, tt.wantAvailable)
 			}
 		})
 	}
