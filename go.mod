@@ -10,8 +10,6 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.44.0
 )
 
-require github.com/jmespath/go-jmespath v0.4.0 // indirect
-
 require (
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.70 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.16.32 // indirect

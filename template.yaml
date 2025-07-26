@@ -123,6 +123,26 @@ Resources:
             UserPool: !Ref CognitoUserPool
             Trigger: PostConfirmation
 
+  PreSignUpFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: bin/presignup/presignup.zip
+      Handler: bootstrap
+      Architectures: [arm64]
+      Description: Lambda function that runs before user signs up to validate user details
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref UsersTable
+      Environment:
+        Variables:
+          USERS_TABLE: !Ref UsersTable
+      Events:
+        CognitoTrigger:
+          Type: Cognito
+          Properties:
+            UserPool: !Ref CognitoUserPool
+            Trigger: PreSignUp
+
   NicknameAvailableFunction:
     Type: AWS::Serverless::Function
     Properties:
