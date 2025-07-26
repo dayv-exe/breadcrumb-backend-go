@@ -24,13 +24,11 @@ func (deps *NicknameDependencies) HandleNicknameAvailable(ctx context.Context, r
 		return models.SuccessfulRequestResponse(fmt.Sprintf("%v", false), false), nil
 	}
 
-	takenInDb, dbErr := utils.IsNicknameTakenInDynamodb(nickname, deps.TableName, deps.DdbClient, ctx)
+	isAvailable, dbErr := utils.IsNicknameAvailableInDynamodb(nickname, deps.TableName, deps.DdbClient, ctx)
 
 	if dbErr != nil {
 		return models.ServerSideErrorResponse("An error has occurred, try again.", dbErr.Error()), nil
 	}
 
-	available := !takenInDb
-
-	return models.SuccessfulRequestResponse(fmt.Sprintf("%v", available), false), nil
+	return models.SuccessfulRequestResponse(fmt.Sprintf("%v", isAvailable), false), nil
 }

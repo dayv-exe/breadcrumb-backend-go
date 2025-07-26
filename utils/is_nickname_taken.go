@@ -16,12 +16,13 @@ func NicknameAvailabilityCheck(queryFn func() (*dynamodb.QueryOutput, error)) (b
 		return false, err
 	}
 
-	isTaken := len(out.Items) > 0
+	// IF THIS FUNCTION RETURNS TRUE THEN NICKNAME IS AVAILABLE
+	isAvailable := len(out.Items) == 0
 
-	return isTaken, nil
+	return isAvailable, nil
 }
 
-func IsNicknameTakenInDynamodb(nickname string, TableName string, DdbClient *dynamodb.Client, ctx context.Context) (bool, error) {
+func IsNicknameAvailableInDynamodb(nickname string, TableName string, DdbClient *dynamodb.Client, ctx context.Context) (bool, error) {
 	return NicknameAvailabilityCheck(func() (*dynamodb.QueryOutput, error) {
 		return DdbClient.Query(ctx, &dynamodb.QueryInput{
 			TableName:              aws.String(TableName),
