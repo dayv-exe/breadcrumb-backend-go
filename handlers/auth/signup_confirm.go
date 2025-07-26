@@ -30,9 +30,8 @@ func HandlePostConfirmation(ctx context.Context, event events.CognitoEventUserPo
 	userID := event.Request.UserAttributes["sub"]
 	nickName := event.Request.UserAttributes["nickname"]
 	name := event.Request.UserAttributes["name"]
-	birthdate := event.Request.UserAttributes["birthdate"]
 
-	newUser, uErr := models.NewUser(userID, nickName, name, birthdate, false).DatabaseFormat()
+	newUser, uErr := models.NewUser(userID, nickName, name, false).DatabaseFormat()
 	if uErr != nil {
 		log.Fatalf("AN ERROR OCCURRED WHILE ADDING NEW USER! %v", uErr)
 	}
@@ -41,16 +40,5 @@ func HandlePostConfirmation(ctx context.Context, event events.CognitoEventUserPo
 	if err != nil {
 		return nil, fmt.Errorf("failed to write user to DynamoDB: %w", err)
 	}
-
-	// input := &dynamodb.PutItemInput{
-	// 	TableName: aws.String(usersTable),
-	// 	Item:      newUser,
-	// }
-
-	// _, err := db.PutItem(ctx, input)
-	// if err != nil {
-	// 	return nil, fmt.Errorf("failed to write user to DynamoDB: %w", err)
-	// }
-
 	return event, nil
 }

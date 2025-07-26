@@ -16,7 +16,9 @@ type PreSignupDependencies struct {
 
 func (deps *PreSignupDependencies) PreSignupHandler(ctx context.Context, event events.CognitoEventUserPoolsPreSignup) (events.CognitoEventUserPoolsPreSignup, error) {
 	nickname := event.Request.UserAttributes["nickname"]
+	birthdate := event.Request.UserAttributes["birthdate"]
 
+	// nickname check
 	if !utils.IsNicknameValid(nickname) {
 		return event, fmt.Errorf("invalid nickname")
 	}
@@ -29,6 +31,17 @@ func (deps *PreSignupDependencies) PreSignupHandler(ctx context.Context, event e
 
 	if !nicknameAvail {
 		return event, fmt.Errorf("nickname taken")
+	}
+
+	// birthdate check
+	validBirthdate, err := utils.BirthdateIsValid(birthdate)
+
+	if err != nil {
+		return event, fmt.Errorf("Birthdate is invalid! Reason: %s. Expected format is dd/mm/yyyy", err)
+	}
+
+	if !validBirthdate {
+		return event, fmt.Errorf("Birthdate is invalid, expected format is dd/mm/yyyy")
 	}
 
 	return event, nil

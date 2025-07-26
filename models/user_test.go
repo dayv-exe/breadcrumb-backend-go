@@ -12,7 +12,6 @@ func TestUser_DatabaseFormat(t *testing.T) {
 		"123",
 		"David",
 		"David Arubuike",
-		"2000-01-01",
 		true,
 	)
 
@@ -28,7 +27,6 @@ func TestUser_DatabaseFormat(t *testing.T) {
 		"sk":           "PROFILE",
 		"name":         "David Arubuike",
 		"nickname":     "david", // should be lowercased
-		"birthdate":    "2000-01-01",
 		"dpUrl":        "https://example.com/profile.jpg",
 		"is_suspended": "true",
 	}

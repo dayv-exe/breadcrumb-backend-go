@@ -1,6 +1,9 @@
 package utils
 
-import "testing"
+import (
+	"testing"
+	"time"
+)
 
 func TestIsNicknameValid(t *testing.T) {
 	tests := []struct {
@@ -51,6 +54,59 @@ func TestEmailValid(t *testing.T) {
 			got := IsEmailValid(tt.email)
 			if got != tt.valid {
 				t.Errorf("isEmailValid(%q) = %v; want %v", tt.email, got, tt.valid)
+			}
+		})
+	}
+}
+
+func TestBirthdateValid(t *testing.T) {
+	// DD/MM/YYYY
+	tests := []struct {
+		name      string
+		birthdate string
+		wantValid bool
+		wantError bool
+	}{
+		{
+			name:      "17 years and 11 months old",
+			birthdate: time.Now().AddDate(-18, 1, 0).Format("02/01/2006"),
+			wantValid: false,
+			wantError: false,
+		},
+		{
+			name:      "today years old",
+			birthdate: time.Now().Format("02/01/2006"),
+			wantValid: false,
+			wantError: false,
+		},
+		{
+			name:      "invalid format",
+			birthdate: time.Now().Format("2006/01/02"),
+			wantValid: false,
+			wantError: true,
+		},
+		{
+			name:      "18 year old",
+			birthdate: time.Now().AddDate(-18, 0, 0).Format("02/01/2006"),
+			wantValid: true,
+			wantError: false,
+		},
+		{
+			name:      "too damn old",
+			birthdate: time.Now().AddDate(-90, 0, 0).Format("02/01/2006"),
+			wantValid: false,
+			wantError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := BirthdateIsValid(tt.birthdate)
+			if (err != nil) != tt.wantError {
+				t.Errorf("unexpected error: %v", err)
+			}
+			if got != tt.wantValid {
+				t.Errorf("got %v, want %v", got, tt.wantValid)
 			}
 		})
 	}
