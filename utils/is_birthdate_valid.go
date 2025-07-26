@@ -3,6 +3,7 @@ package utils
 import "time"
 
 func BirthdateIsValid(date string) (bool, error) {
+	// returns true if date is valid
 	// format is dd/mm/yyyy
 	layout := "02/01/2006"
 	maxAge := 85

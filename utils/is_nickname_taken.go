@@ -23,6 +23,7 @@ func NicknameAvailabilityCheck(queryFn func() (*dynamodb.QueryOutput, error)) (b
 }
 
 func IsNicknameAvailableInDynamodb(nickname string, TableName string, DdbClient *dynamodb.Client, ctx context.Context) (bool, error) {
+	// use this function when validating nickname from other files
 	return NicknameAvailabilityCheck(func() (*dynamodb.QueryOutput, error) {
 		return DdbClient.Query(ctx, &dynamodb.QueryInput{
 			TableName:              aws.String(TableName),

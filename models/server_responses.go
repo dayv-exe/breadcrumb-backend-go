@@ -1,5 +1,7 @@
 package models
 
+// a way to standardize responses from functions triggered by apigateway event
+
 import (
 	"encoding/json"
 	"log"
@@ -41,7 +43,7 @@ func InvalidRequestErrorResponse(msg string) events.APIGatewayProxyResponse {
 	return responseMessage(400, msg)
 }
 
-func ServerSideErrorResponse(msg string, error string) events.APIGatewayProxyResponse {
+func ServerSideErrorResponse(msg string, error error) events.APIGatewayProxyResponse {
 	if msg == "" {
 		msg = "An error has occurred on our end, try again."
 	}

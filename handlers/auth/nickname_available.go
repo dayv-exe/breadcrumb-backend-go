@@ -18,6 +18,8 @@ type NicknameDependencies struct {
 
 func (deps *NicknameDependencies) HandleNicknameAvailable(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 
+	// returns true if a nickname has not been taken by a user in dynamodb
+
 	// if nickname is invalid return false immediately
 	nickname := strings.ToLower(req.PathParameters["nickname"])
 	if nickname == "" || !utils.IsNicknameValid(nickname) {
@@ -27,7 +29,7 @@ func (deps *NicknameDependencies) HandleNicknameAvailable(ctx context.Context, r
 	isAvailable, dbErr := utils.IsNicknameAvailableInDynamodb(nickname, deps.TableName, deps.DdbClient, ctx)
 
 	if dbErr != nil {
-		return models.ServerSideErrorResponse("An error has occurred, try again.", dbErr.Error()), nil
+		return models.ServerSideErrorResponse("An error has occurred, try again.", dbErr), nil
 	}
 
 	return models.SuccessfulRequestResponse(fmt.Sprintf("%v", isAvailable), false), nil

@@ -1,5 +1,7 @@
 package utils
 
+// helper to put stuff in db
+
 import (
 	"context"
 	"fmt"

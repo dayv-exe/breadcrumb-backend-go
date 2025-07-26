@@ -1,5 +1,7 @@
 package models
 
+// standard user db model
+
 import (
 	"encoding/json"
 	"fmt"
