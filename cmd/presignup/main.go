@@ -1,4 +1,4 @@
-package presignup
+package main
 
 import (
 	"breadcrumb-backend-go/handlers/auth"
