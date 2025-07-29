@@ -56,7 +56,7 @@ jobs:
 
       - name: build go bins for lambda
         run: |
-          docker build --build-arg BUILD_DIRS="signup_confirm,custom_email,nickname_available,presignup,abort_signup" -t breadcrumb .
+          docker build --build-arg BUILD_DIRS="signup_confirm,custom_email,nickname_available,presignup,abort_signup,remove_stale_accounts" -t breadcrumb .
           docker create --name extract-builder breadcrumb
           rm -rf ./bin
           docker cp extract-builder:/app/bin ./bin

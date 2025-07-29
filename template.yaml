@@ -168,7 +168,7 @@ Resources:
       CodeUri: bin/abort_signup/abort_signup.zip
       Handler: bootstrap
       Architectures: [arm64]
-      Description: deletes unverified users from cognito when called
+      Description: deletes the user with the given id if they are unconfirmed
       Environment:
         Variables:
           USER_POOL_ID: !Ref CognitoUserPool
@@ -184,6 +184,31 @@ Resources:
             Effect: Allow
             Action:
               - cognito-idp:AdminGetUser
+              - cognito-idp:AdminDeleteUser
+            Resource: "*"
+
+  RemoveStaleAccountsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: bin/remove_stale_accounts/remove_stale_accounts.zip
+      Handler: bootstrap
+      Architectures: [arm64]
+      Description: deletes unverified users from cognito when called
+      Environment:
+        Variables:
+          USER_POOL_ID: !Ref CognitoUserPool
+      Events:
+        ScheduledRun:
+          Type: Schedule
+          Properties:
+            Schedule: rate(12 hours)
+            Name: DeleteUnconfirmedUsersSchedule
+            Description: Runs every 12 hours, scans cognito users and deletes users with accounts older than 24 hours and are still unconfirmed
+      Policies:
+        - Statement:
+            Effect: Allow
+            Action:
+              - cognito-idp:ListUsers
               - cognito-idp:AdminDeleteUser
             Resource: "*"
 

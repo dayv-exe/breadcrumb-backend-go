@@ -37,7 +37,7 @@ func (asd *AbortSignupDependencies) AbortSignupHandler(ctx context.Context, req 
 		return models.InvalidRequestErrorResponse("invalid request"), nil
 	}
 
-	if user.UserStatus == types.UserStatusTypeConfirmed {
+	if user.UserStatus != types.UserStatusTypeUnconfirmed {
 		// if user has been confirmed their signup cannot be aborted
 		return models.InvalidRequestErrorResponse("Invalid request"), nil
 	}
