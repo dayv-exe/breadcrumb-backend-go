@@ -41,6 +41,7 @@ func (rsaDeps RemoveStaleAccountsDependencies) HandleRemoveStaleAccounts(ctx con
 		if err != nil {
 			return fmt.Errorf("FAILED TO LIST USERS: %w", err)
 		}
+		log.Printf("Found %v accounts to remove", len(res.Users))
 
 		for _, user := range res.Users {
 			if user.UserCreateDate == nil {
@@ -62,6 +63,7 @@ func (rsaDeps RemoveStaleAccountsDependencies) HandleRemoveStaleAccounts(ctx con
 			if uErr != nil {
 				log.Printf("FAILED TO DELETE USER %s: %v", username, uErr)
 			} else {
+				log.Printf("Removing %s", username)
 				count++
 			}
 		}
