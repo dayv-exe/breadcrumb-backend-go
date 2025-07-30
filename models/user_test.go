@@ -23,7 +23,7 @@ func TestUser_DatabaseFormat(t *testing.T) {
 	}
 
 	expect := map[string]string{
-		"pk":           "USERS#123",
+		"pk":           "USER#123",
 		"sk":           "PROFILE",
 		"name":         "David Arubuike",
 		"nickname":     "david", // should be lowercased
