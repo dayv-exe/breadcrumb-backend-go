@@ -51,6 +51,7 @@ func (rsaDeps RemoveStaleAccountsDependencies) HandleRemoveStaleAccounts(ctx con
 
 			if time.Since(*user.UserCreateDate) < 24*time.Hour {
 				//skip if account is less than 24 hours old
+				log.Printf("%s is less than 24 hours old, %v", *user.Username, user.UserCreateDate)
 				continue
 			}
 
