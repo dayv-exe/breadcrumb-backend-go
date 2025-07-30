@@ -39,7 +39,7 @@ func (asd *AbortSignupDependencies) AbortSignupHandler(ctx context.Context, req 
 
 	if user.UserStatus != types.UserStatusTypeUnconfirmed {
 		// if user has been confirmed their signup cannot be aborted
-		return models.InvalidRequestErrorResponse("Invalid request"), nil
+		return models.SuccessfulRequestResponse("took no action.", false), nil
 	}
 
 	input := &cognitoidentityprovider.AdminDeleteUserInput{
@@ -53,5 +53,5 @@ func (asd *AbortSignupDependencies) AbortSignupHandler(ctx context.Context, req 
 		return models.ServerSideErrorResponse("An error occurred while trying to delete the user", fmt.Errorf("error occurred while trying to delete a user %w", err)), err
 	}
 
-	return models.SuccessfulRequestResponse("", false), nil
+	return models.SuccessfulRequestResponse("successfully cancelled signup.", false), nil
 }

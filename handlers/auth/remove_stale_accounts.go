@@ -29,7 +29,7 @@ func (rsaDeps RemoveStaleAccountsDependencies) HandleRemoveStaleAccounts(ctx con
 	for {
 		input := &cognitoidentityprovider.ListUsersInput{
 			UserPoolId: &rsaDeps.UserPoolId,
-			Filter:     aws.String("status=\"UNCONFIRMED\""),
+			Filter:     aws.String("cognito:user_status=\"UNCONFIRMED\""),
 			Limit:      aws.Int32(60),
 		}
 

@@ -14,7 +14,6 @@ type User struct {
 	Userid      string
 	Nickname    string
 	Name        string
-	Email       string
 	DpUrl       string
 	isSuspended bool
 	UserLogs    UserLogs
@@ -37,7 +36,7 @@ func (u User) DatabaseFormat() (map[string]types.AttributeValue, error) {
 	}
 
 	return map[string]types.AttributeValue{
-		"pk":           &types.AttributeValueMemberS{Value: fmt.Sprintf("USERS#%s", u.Userid)},
+		"pk":           &types.AttributeValueMemberS{Value: fmt.Sprintf("USER#%s", u.Userid)},
 		"sk":           &types.AttributeValueMemberS{Value: "PROFILE"},
 		"name":         &types.AttributeValueMemberS{Value: u.Name},
 		"nickname":     &types.AttributeValueMemberS{Value: strings.ToLower(u.Nickname)},
