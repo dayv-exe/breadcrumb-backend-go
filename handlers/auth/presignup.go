@@ -39,7 +39,7 @@ func (deps *PreSignupDependencies) PreSignupHandler(ctx context.Context, event e
 	validBirthdate, err := utils.BirthdateIsValid(birthdate)
 
 	if err != nil {
-		return event, fmt.Errorf("An error occurred while validating birthdate! Reason: %s. Expected format is dd/mm/yyyy", err)
+		return event, fmt.Errorf("Birthdate is in a wrong format, it should be DD/MM/YYYY! ERROR: %s.", err)
 	}
 
 	if !validBirthdate {

@@ -71,7 +71,11 @@ func (rsaDeps RemoveStaleAccountsDependencies) HandleRemoveStaleAccounts(ctx con
 
 		// escape clause
 		currLoops++
-		if res.PaginationToken == nil || currLoops >= maxLoops {
+		if res.PaginationToken == nil {
+			break
+		}
+		if currLoops >= maxLoops {
+			log.Print("Maximum loops reached, ending function execution prematurely.")
 			break
 		}
 
