@@ -93,7 +93,7 @@ func TestBirthdateValid(t *testing.T) {
 		},
 		{
 			name:      "too damn old",
-			birthdate: time.Now().AddDate(-90, 0, 0).Format("02/01/2006"),
+			birthdate: time.Now().AddDate(-100, 0, 0).Format("02/01/2006"),
 			wantValid: false,
 			wantError: false,
 		},

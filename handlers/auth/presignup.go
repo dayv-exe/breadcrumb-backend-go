@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"breadcrumb-backend-go/constants"
 	"breadcrumb-backend-go/utils"
 	"context"
 	"fmt"
@@ -19,6 +20,7 @@ func (deps *PreSignupDependencies) PreSignupHandler(ctx context.Context, event e
 
 	nickname := event.Request.UserAttributes["nickname"]
 	birthdate := event.Request.UserAttributes["birthdate"]
+	fullname := event.Request.UserAttributes["name"]
 
 	// nickname check
 	if !utils.IsNicknameValid(nickname) {
@@ -43,7 +45,12 @@ func (deps *PreSignupDependencies) PreSignupHandler(ctx context.Context, event e
 	}
 
 	if !validBirthdate {
-		return event, fmt.Errorf("Birthdate is invalid, users must be between 13 and 85 years old, expected format is dd/mm/yyyy")
+		return event, fmt.Errorf("Birthdate is invalid, users must be between %d and %d years old, expected format is dd/mm/yyyy", constants.MIN_AGE, constants.MAX_AGE)
+	}
+
+	// fullname check
+	if len(fullname) > constants.MAX_FULLNAME_CHARS {
+		return event, fmt.Errorf("Fullname cannot be longer than %d characters", constants.MAX_FULLNAME_CHARS)
 	}
 
 	return event, nil

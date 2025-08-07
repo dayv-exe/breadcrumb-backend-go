@@ -146,7 +146,6 @@ Resources:
   NicknameAvailableFunction:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: NicknameAvailableFunction
       CodeUri: bin/nickname_available/nickname_available.zip
       Handler: bootstrap
       Architectures: [arm64]

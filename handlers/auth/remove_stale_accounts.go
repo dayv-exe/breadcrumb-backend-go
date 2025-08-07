@@ -3,6 +3,7 @@
 package auth
 
 import (
+	"breadcrumb-backend-go/constants"
 	"context"
 	"fmt"
 	"log"
@@ -13,7 +14,6 @@ import (
 )
 
 var (
-	maxLoops  = 5
 	currLoops = 0
 )
 
@@ -74,7 +74,7 @@ func (rsaDeps RemoveStaleAccountsDependencies) HandleRemoveStaleAccounts(ctx con
 		if res.PaginationToken == nil {
 			break
 		}
-		if currLoops >= maxLoops {
+		if currLoops >= constants.MAX_STALE_ACCOUNTS_LOOPS {
 			log.Print("Maximum loops reached, ending function execution prematurely.")
 			break
 		}

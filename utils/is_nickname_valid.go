@@ -1,12 +1,13 @@
 package utils
 
 import (
+	"breadcrumb-backend-go/constants"
 	"regexp"
 	"strings"
 )
 
 func IsNicknameValid(nickname string) bool {
-	if len(nickname) < 3 || len(nickname) > 15 {
+	if len(nickname) < constants.MIN_USERNAME_CHARS || len(nickname) > constants.MAX_USERNAME_CHARS {
 		return false
 	}
 

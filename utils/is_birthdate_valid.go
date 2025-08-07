@@ -1,21 +1,21 @@
 package utils
 
-import "time"
+import (
+	"breadcrumb-backend-go/constants"
+	"time"
+)
 
 func BirthdateIsValid(date string) (bool, error) {
 	// returns true if date is valid
 	// format is dd/mm/yyyy
-	layout := "02/01/2006"
-	maxAge := 85
-	minAge := 18
-	birthdate, err := time.Parse(layout, date)
+	birthdate, err := time.Parse(constants.DATE_LAYOUT, date)
 
 	if err != nil {
 		return false, err
 	}
 
-	minAgeDate := time.Now().AddDate(-minAge, 0, 0)
-	maxAgeDate := time.Now().AddDate(-maxAge, 0, 0)
+	minAgeDate := time.Now().AddDate(-constants.MIN_AGE, 0, 0)
+	maxAgeDate := time.Now().AddDate(-constants.MAX_AGE, 0, 0)
 
 	if birthdate.After(maxAgeDate) || birthdate.Equal(maxAgeDate) {
 		if birthdate.Before(minAgeDate) || birthdate.Equal(minAgeDate) {
