@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"breadcrumb-backend-go/constants"
 	"testing"
 	"time"
 )
@@ -68,14 +69,14 @@ func TestBirthdateValid(t *testing.T) {
 		wantError bool
 	}{
 		{
-			name:      "17 years and 11 months old",
-			birthdate: time.Now().AddDate(-18, 1, 0).Format("02/01/2006"),
+			name:      "*min age - 1 month* 12 years and 11 months old",
+			birthdate: time.Now().AddDate(-constants.MIN_AGE, 1, 0).Format(constants.DATE_LAYOUT),
 			wantValid: false,
 			wantError: false,
 		},
 		{
 			name:      "today years old",
-			birthdate: time.Now().Format("02/01/2006"),
+			birthdate: time.Now().Format(constants.DATE_LAYOUT),
 			wantValid: false,
 			wantError: false,
 		},
@@ -86,14 +87,14 @@ func TestBirthdateValid(t *testing.T) {
 			wantError: true,
 		},
 		{
-			name:      "18 year old",
-			birthdate: time.Now().AddDate(-18, 0, 0).Format("02/01/2006"),
+			name:      "*min age* 18 year old",
+			birthdate: time.Now().AddDate(-constants.MIN_AGE, 0, 0).Format(constants.DATE_LAYOUT),
 			wantValid: true,
 			wantError: false,
 		},
 		{
 			name:      "too damn old",
-			birthdate: time.Now().AddDate(-100, 0, 0).Format("02/01/2006"),
+			birthdate: time.Now().AddDate(-100, 0, 0).Format(constants.DATE_LAYOUT),
 			wantValid: false,
 			wantError: false,
 		},
