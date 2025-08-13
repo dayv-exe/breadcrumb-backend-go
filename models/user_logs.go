@@ -7,21 +7,26 @@ import (
 )
 
 type UserLogs struct {
-	DateJoined           string
-	BirthdateChangeCount int
-	LastNicknameChange   string
-	LastEmailChange      string
-	LastLogin            string
-	forceChangeNickname  bool
-	suspensionReason     string
+	DateJoined               string
+	BirthdateChangeCount     int
+	LastNicknameChange       string
+	LastEmailChange          string
+	LastLogin                string
+	forceChangeNickname      bool
+	suspensionReason         string
+	defaultProfilePicFgColor string
+	defaultProfilePicBgColor string
 }
 
 func NewUserLogs() UserLogs {
+	defaultColors := utils.GenerateRandomColorPair()
 	return UserLogs{
-		DateJoined:           utils.GetTimeNow(),
-		BirthdateChangeCount: 0,
-		LastLogin:            utils.GetTimeNow(),
-		forceChangeNickname:  false,
+		DateJoined:               utils.GetTimeNow(),
+		BirthdateChangeCount:     0,
+		LastLogin:                utils.GetTimeNow(),
+		forceChangeNickname:      false,
+		defaultProfilePicFgColor: defaultColors.Foreground,
+		defaultProfilePicBgColor: defaultColors.Background,
 	}
 }
 
@@ -33,6 +38,8 @@ func (ul UserLogs) DatabaseFormat() map[string]string {
 		"last_email_change":      ul.LastEmailChange,
 		"last_login":             ul.LastLogin,
 		"force_change_nickname":  strings.ToLower(fmt.Sprint(ul.forceChangeNickname)),
+		"default_pic_fg":         ul.defaultProfilePicFgColor,
+		"default_pic_bg":         ul.defaultProfilePicBgColor,
 		"suspension_reason":      ul.suspensionReason,
 	}
 }

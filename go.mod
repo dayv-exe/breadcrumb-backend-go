@@ -9,6 +9,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.29.17
 	github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider v1.53.5
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.44.0
+	github.com/lucasb-eyer/go-colorful v1.2.0
 )
 
 require (

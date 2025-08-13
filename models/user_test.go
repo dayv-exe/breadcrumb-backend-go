@@ -23,12 +23,13 @@ func TestUser_DatabaseFormat(t *testing.T) {
 	}
 
 	expect := map[string]string{
-		"pk":           "USER#123",
-		"sk":           "PROFILE",
-		"name":         "David Arubuike",
-		"nickname":     "david", // should be lowercased
-		"dpUrl":        "https://example.com/profile.jpg",
-		"is_suspended": "true",
+		"pk":             "USER#123",
+		"sk":             "PROFILE",
+		"name":           "David Arubuike",
+		"nickname":       "david",
+		"dpUrl":          "https://example.com/profile.jpg",
+		"is_suspended":   "true",
+		"is_deactivated": "false",
 	}
 
 	for key, val := range expect {
