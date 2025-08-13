@@ -14,6 +14,7 @@ type User struct {
 	Userid        string
 	Nickname      string
 	Name          string
+	Bio           string
 	DpUrl         string
 	isSuspended   bool
 	isDeactivated bool
@@ -25,6 +26,7 @@ func NewUser(userid string, nickname string, name string, isSuspended bool) User
 		Userid:        userid,
 		Nickname:      nickname,
 		Name:          name,
+		Bio:           "",
 		isSuspended:   isSuspended,
 		isDeactivated: false,
 		UserLogs:      NewUserLogs(),
@@ -42,6 +44,7 @@ func (u User) DatabaseFormat() (map[string]types.AttributeValue, error) {
 		"sk":             &types.AttributeValueMemberS{Value: "PROFILE"},
 		"name":           &types.AttributeValueMemberS{Value: u.Name},
 		"nickname":       &types.AttributeValueMemberS{Value: strings.ToLower(u.Nickname)},
+		"bio":            &types.AttributeValueMemberS{Value: ""},
 		"dpUrl":          &types.AttributeValueMemberS{Value: u.DpUrl},
 		"is_suspended":   &types.AttributeValueMemberS{Value: strings.ToLower(fmt.Sprint(u.isSuspended))},
 		"is_deactivated": &types.AttributeValueMemberS{Value: strings.ToLower(fmt.Sprint(u.isDeactivated))},

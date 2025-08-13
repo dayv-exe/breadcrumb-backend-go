@@ -27,6 +27,7 @@ func TestUser_DatabaseFormat(t *testing.T) {
 		"sk":             "PROFILE",
 		"name":           "David Arubuike",
 		"nickname":       "david",
+		"bio":            "",
 		"dpUrl":          "https://example.com/profile.jpg",
 		"is_suspended":   "true",
 		"is_deactivated": "false",
