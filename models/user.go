@@ -3,7 +3,6 @@ package models
 // standard user db model
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -33,11 +32,8 @@ func NewUser(userid string, nickname string, name string, isSuspended bool) User
 	}
 }
 
-func (u User) DatabaseFormat() (map[string]types.AttributeValue, error) {
-	logsJSON, err := json.Marshal(u.UserLogs.DatabaseFormat())
-	if err != nil {
-		return nil, err
-	}
+func (u User) DatabaseFormat() map[string]types.AttributeValue {
+	logsJSON := u.UserLogs.DatabaseFormat()
 
 	return map[string]types.AttributeValue{
 		"pk":             &types.AttributeValueMemberS{Value: fmt.Sprintf("USER#%s", u.Userid)},
@@ -46,8 +42,8 @@ func (u User) DatabaseFormat() (map[string]types.AttributeValue, error) {
 		"nickname":       &types.AttributeValueMemberS{Value: strings.ToLower(u.Nickname)},
 		"bio":            &types.AttributeValueMemberS{Value: ""},
 		"dpUrl":          &types.AttributeValueMemberS{Value: u.DpUrl},
-		"is_suspended":   &types.AttributeValueMemberS{Value: strings.ToLower(fmt.Sprint(u.isSuspended))},
-		"is_deactivated": &types.AttributeValueMemberS{Value: strings.ToLower(fmt.Sprint(u.isDeactivated))},
-		"userLogs":       &types.AttributeValueMemberS{Value: string(logsJSON)},
-	}, nil
+		"is_suspended":   &types.AttributeValueMemberBOOL{Value: u.isSuspended},
+		"is_deactivated": &types.AttributeValueMemberBOOL{Value: u.isDeactivated},
+		"user_logs":      &types.AttributeValueMemberM{Value: logsJSON},
+	}
 }

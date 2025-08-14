@@ -1,7 +1,10 @@
 package models
 
 import (
+	"reflect"
 	"testing"
+
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
 
 func TestNewUserLogs_DefaultValues(t *testing.T) {
@@ -37,19 +40,37 @@ func TestUserLogs_DatabaseFormat(t *testing.T) {
 
 	result := userLogs.DatabaseFormat()
 
-	expected := map[string]string{
-		"date_joined":            "2025-07-25T12:00:00Z",
-		"birthdate_change_count": "2",
-		"last_nickname_change":   "2025-07-20T10:00:00Z",
-		"last_email_change":      "2025-07-21T08:00:00Z",
-		"last_login":             "2025-07-25T11:00:00Z",
-		"force_change_nickname":  "false",
-		"suspension_reason":      "Inappropriate content",
+	expected := map[string]types.AttributeValue{
+		"date_joined":            &types.AttributeValueMemberS{Value: "2025-07-25T12:00:00Z"},
+		"birthdate_change_count": &types.AttributeValueMemberN{Value: "2"},
+		"last_nickname_change":   &types.AttributeValueMemberS{Value: "2025-07-20T10:00:00Z"},
+		"last_email_change":      &types.AttributeValueMemberS{Value: "2025-07-21T08:00:00Z"},
+		"last_login":             &types.AttributeValueMemberS{Value: "2025-07-25T11:00:00Z"},
+		"force_change_nickname":  &types.AttributeValueMemberBOOL{Value: false},
+		"suspension_reason":      &types.AttributeValueMemberS{Value: "Inappropriate content"},
+		"default_pic_fg":         &types.AttributeValueMemberS{Value: userLogs.defaultProfilePicFgColor},
+		"default_pic_bg":         &types.AttributeValueMemberS{Value: userLogs.defaultProfilePicBgColor},
 	}
 
-	for key, expectedValue := range expected {
-		if result[key] != expectedValue {
-			t.Errorf("expected %s to be '%s', got '%s'", key, expectedValue, result[key])
+	if len(result) != len(expected) {
+		t.Fatalf("Expected %d keys, got %d", len(expected), len(result))
+	}
+
+	for key, expVal := range expected {
+		val, exists := result[key]
+		if !exists {
+			t.Errorf("Missing key: %v", key)
+			continue
+		}
+
+		if reflect.TypeOf(val) != reflect.TypeOf(expVal) {
+			t.Errorf("For key %v: expected type: %v, but got type: %v", key, reflect.TypeOf(expVal), reflect.TypeOf(val))
+			continue
+		}
+
+		if !reflect.DeepEqual(expVal, val) {
+			t.Errorf("For key %v: expected %v, got %v", key, expVal, val)
+			continue
 		}
 	}
 }

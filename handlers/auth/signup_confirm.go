@@ -34,10 +34,7 @@ func HandlePostConfirmation(ctx context.Context, event events.CognitoEventUserPo
 	name := event.Request.UserAttributes["name"]
 
 	// create new user
-	newUser, uErr := models.NewUser(userID, nickName, name, false).DatabaseFormat()
-	if uErr != nil {
-		log.Fatalf("AN ERROR OCCURRED WHILE ADDING NEW USER! %v", uErr)
-	}
+	newUser := models.NewUser(userID, nickName, name, false).DatabaseFormat()
 
 	// add to db
 	_, err := utils.PutItemInDDbTable(newUser, usersTable, db, ctx)

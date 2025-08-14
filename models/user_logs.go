@@ -3,7 +3,8 @@ package models
 import (
 	"breadcrumb-backend-go/utils"
 	"fmt"
-	"strings"
+
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
 
 type UserLogs struct {
@@ -30,16 +31,16 @@ func NewUserLogs() UserLogs {
 	}
 }
 
-func (ul UserLogs) DatabaseFormat() map[string]string {
-	return map[string]string{
-		"date_joined":            ul.DateJoined,
-		"birthdate_change_count": fmt.Sprintf("%v", ul.BirthdateChangeCount),
-		"last_nickname_change":   ul.LastNicknameChange,
-		"last_email_change":      ul.LastEmailChange,
-		"last_login":             ul.LastLogin,
-		"force_change_nickname":  strings.ToLower(fmt.Sprint(ul.forceChangeNickname)),
-		"default_pic_fg":         ul.defaultProfilePicFgColor,
-		"default_pic_bg":         ul.defaultProfilePicBgColor,
-		"suspension_reason":      ul.suspensionReason,
+func (ul UserLogs) DatabaseFormat() map[string]types.AttributeValue {
+	return map[string]types.AttributeValue{
+		"date_joined":            &types.AttributeValueMemberS{Value: ul.DateJoined},
+		"birthdate_change_count": &types.AttributeValueMemberN{Value: fmt.Sprintf("%v", ul.BirthdateChangeCount)},
+		"last_nickname_change":   &types.AttributeValueMemberS{Value: ul.LastNicknameChange},
+		"last_email_change":      &types.AttributeValueMemberS{Value: ul.LastEmailChange},
+		"last_login":             &types.AttributeValueMemberS{Value: ul.LastLogin},
+		"force_change_nickname":  &types.AttributeValueMemberBOOL{Value: ul.forceChangeNickname},
+		"default_pic_fg":         &types.AttributeValueMemberS{Value: ul.defaultProfilePicFgColor},
+		"default_pic_bg":         &types.AttributeValueMemberS{Value: ul.defaultProfilePicBgColor},
+		"suspension_reason":      &types.AttributeValueMemberS{Value: ul.suspensionReason},
 	}
 }
