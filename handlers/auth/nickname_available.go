@@ -22,11 +22,11 @@ func (deps *NicknameDependencies) HandleNicknameAvailable(ctx context.Context, r
 
 	// if nickname is invalid return false immediately
 	nickname := strings.ToLower(req.PathParameters["nickname"])
-	if nickname == "" || !utils.IsNicknameValid(nickname) {
+	if nickname == "" || !utils.NicknameValid(nickname) {
 		return models.SuccessfulRequestResponse(fmt.Sprintf("%v", false), false), nil
 	}
 
-	isAvailable, dbErr := utils.IsNicknameAvailableInDynamodb(nickname, deps.TableName, deps.DdbClient, ctx)
+	isAvailable, dbErr := utils.NickNameAvailable(nickname, deps.TableName, deps.DdbClient, ctx)
 
 	if dbErr != nil {
 		return models.ServerSideErrorResponse("An error has occurred, try again.", dbErr), nil

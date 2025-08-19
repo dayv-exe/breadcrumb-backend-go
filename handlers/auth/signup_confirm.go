@@ -37,7 +37,7 @@ func HandlePostConfirmation(ctx context.Context, event events.CognitoEventUserPo
 	newUser := models.NewUser(userID, nickName, name, false).DatabaseFormat()
 
 	// add to db
-	_, err := utils.PutItemInDDbTable(newUser, usersTable, db, ctx)
+	_, err := utils.PutItem(newUser, usersTable, db, ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to write user to DynamoDB: %w", err)
 	}

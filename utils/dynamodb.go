@@ -11,7 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
 
-func PutItemInDDbTable(newItem map[string]types.AttributeValue, tableName string, ddbClient *dynamodb.Client, ctx context.Context) (*dynamodb.PutItemOutput, error) {
+func PutItem(newItem map[string]types.AttributeValue, tableName string, ddbClient *dynamodb.Client, ctx context.Context) (*dynamodb.PutItemOutput, error) {
 	input := &dynamodb.PutItemInput{
 		TableName: aws.String(tableName),
 		Item:      newItem,

@@ -23,11 +23,11 @@ func (deps *PreSignupDependencies) PreSignupHandler(ctx context.Context, event e
 	fullname := event.Request.UserAttributes["name"]
 
 	// nickname check
-	if !utils.IsNicknameValid(nickname) {
+	if !utils.NicknameValid(nickname) {
 		return event, fmt.Errorf("invalid nickname")
 	}
 
-	nicknameAvail, err := utils.IsNicknameAvailableInDynamodb(nickname, deps.TableName, deps.DdbClient, ctx)
+	nicknameAvail, err := utils.NickNameAvailable(nickname, deps.TableName, deps.DdbClient, ctx)
 
 	if err != nil {
 		return event, fmt.Errorf("error checking nickname availability %w", err)
