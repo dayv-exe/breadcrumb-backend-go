@@ -4,6 +4,7 @@ package models
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
@@ -29,6 +30,18 @@ type CognitoInfo struct {
 	Birthdate string `json:"birthdate"`
 }
 
+type UserDbHelper struct {
+	DbClient  *dynamodb.Client
+	TableName string
+	Ctx       *context.Context
+}
+
+type UserCognitoHelper struct {
+	UserPoolId    string
+	CognitoClient *cognitoidentityprovider.Client
+	Ctx           *context.Context
+}
+
 func NewUser(userid string, nickname string, name string, isSuspended bool) *User {
 	return &User{
 		Userid:        userid,
@@ -39,6 +52,54 @@ func NewUser(userid string, nickname string, name string, isSuspended bool) *Use
 		IsDeactivated: false,
 		UserLogs:      NewUserLogs().DatabaseFormat(),
 	}
+}
+
+func (deps UserDbHelper) AddNewUser(userid string, nickname string, name string, isSuspended bool) error {
+	// create user
+	defaultUserLogs := NewUserLogs().DatabaseFormat()
+
+	if defaultUserLogs == nil {
+		return fmt.Errorf("Failed to create user logs")
+	}
+
+	user := NewUser(userid, nickname, name, false)
+
+	nicknameItem := GetNicknameDbItem(user)
+
+	if nicknameItem == nil {
+		return fmt.Errorf("Unable to create nickname item.")
+	}
+
+	// add to db
+	input := &dynamodb.TransactWriteItemsInput{
+		TransactItems: []types.TransactWriteItem{
+			{
+				// add user to db
+				Put: &types.Put{
+					TableName: aws.String(deps.TableName),
+					Item:      user.DatabaseFormat(),
+				},
+			},
+
+			{
+				// adds nickname item to reserve name
+				Put: &types.Put{
+					TableName: aws.String(deps.TableName),
+					Item:      nicknameItem,
+					// if this fails most likely because nickname is already in use everything will roll back
+					ConditionExpression: aws.String("attribute_not_exists(pk)"),
+				},
+			},
+		},
+	}
+
+	_, err := deps.DbClient.TransactWriteItems(*deps.Ctx, input)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (u *User) DatabaseFormat() map[string]types.AttributeValue {
@@ -54,14 +115,14 @@ func (u *User) DatabaseFormat() map[string]types.AttributeValue {
 	return item
 }
 
-func GetCognitoInfo(sub string, cognitoClient *cognitoidentityprovider.Client, ctx *context.Context, userPoolId string) (*CognitoInfo, error) {
+func (deps UserCognitoHelper) GetCognitoInfo(sub string) (*CognitoInfo, error) {
 	input := &cognitoidentityprovider.AdminGetUserInput{
-		UserPoolId: aws.String(userPoolId),
+		UserPoolId: aws.String(deps.UserPoolId),
 		Username:   aws.String(sub),
 	}
 
 	user, err := getCognitoInfoQueryRunner(func() (*cognitoidentityprovider.AdminGetUserOutput, error) {
-		return cognitoClient.AdminGetUser(*ctx, input)
+		return deps.CognitoClient.AdminGetUser(*deps.Ctx, input)
 	})
 
 	if err != nil {
@@ -102,9 +163,9 @@ func convertToUser(item map[string]types.AttributeValue) (*User, error) {
 	return &u, nil
 }
 
-func FindByNickname(nickname string, tableName string, ctx *context.Context, ddbClient *dynamodb.Client) (*User, error) {
+func (deps UserDbHelper) FindByNickname(nickname string) (*User, error) {
 	input := &dynamodb.QueryInput{
-		TableName:              aws.String(tableName),
+		TableName:              aws.String(deps.TableName),
 		IndexName:              aws.String("NicknameIndex"),
 		KeyConditionExpression: aws.String("nickname = :nick"),
 		ExpressionAttributeValues: map[string]types.AttributeValue{
@@ -113,7 +174,7 @@ func FindByNickname(nickname string, tableName string, ctx *context.Context, ddb
 		Limit: aws.Int32(1),
 	}
 
-	output, err := ddbClient.Query(*ctx, input)
+	output, err := deps.DbClient.Query(*deps.Ctx, input)
 
 	if err != nil {
 		return nil, err

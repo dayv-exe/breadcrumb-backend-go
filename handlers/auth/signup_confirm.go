@@ -2,9 +2,9 @@ package auth
 
 import (
 	"breadcrumb-backend-go/models"
-	"breadcrumb-backend-go/utils"
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
@@ -23,18 +23,18 @@ func (deps PostConfirmationDependencies) HandlePostConfirmation(ctx context.Cont
 	name := event.Request.UserAttributes["name"]
 
 	// create new user
-	newUser := models.NewUser(userID, nickName, name, false).DatabaseFormat()
-
-	database := utils.DynamoDbHelper{
+	user := models.UserDbHelper{
+		DbClient:  deps.DdbClient,
 		TableName: deps.TableName,
-		Client:    deps.DdbClient,
 		Ctx:       &ctx,
 	}
 
-	// add to db
-	_, err := database.PutItem(newUser)
+	err := user.AddNewUser(userID, nickName, name, false)
+
 	if err != nil {
-		return nil, fmt.Errorf("failed to write user to DynamoDB: %w", err)
+		log.Println("ERROR IN SIGNUP CONFIRM GO FUNC: " + err.Error())
+		return nil, fmt.Errorf("Something went wrong while creating new account, try again.")
 	}
+
 	return event, nil
 }

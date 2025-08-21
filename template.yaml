@@ -186,6 +186,35 @@ Resources:
               - cognito-idp:AdminDeleteUser
             Resource: "*"
 
+  GetUserDetails:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: bin/get_user_details/get_user_details.zip
+      Handler: bootstrap
+      Architectures: [arm64]
+      Description: returns user details
+      Environment:
+        Variables:
+          USER_POOL_ID: !Ref CognitoUserPool
+          USERS_TABLE: !Ref UsersTable
+      Events:
+        ApiRequest:
+          Type: HttpApi
+          Properties:
+            Path: /user/{nickname}
+            Method: GET
+            ApiId: !Ref BreadApi
+            Auth:
+              Authorizer: CognitoAuthorizer
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref UsersTable
+        - Statement:
+            Effect: Allow
+            Action:
+              - cognito-idp:AdminGetUser
+            Resource: "*"
+
   RemoveStaleAccountsFunction:
     Type: AWS::Serverless::Function
     Properties:

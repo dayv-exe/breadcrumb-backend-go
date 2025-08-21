@@ -2,6 +2,7 @@ package apis
 
 import (
 	"breadcrumb-backend-go/models"
+	"breadcrumb-backend-go/utils"
 	"context"
 
 	"github.com/aws/aws-lambda-go/events"
@@ -12,7 +13,7 @@ import (
 // if a user request their details, this function will return all their info from cognito and dynamodb
 // if a user request details of another user, it will only return profile picture url, nickname, username, and maybe mutual friends
 
-type UserDetailsDependencies struct {
+type GetUserDetailsDependencies struct {
 	// cognito stuff
 	CognitoClient *cognitoidentityprovider.Client
 	UserPoolId    string
@@ -34,27 +35,15 @@ type fullUserInfo struct {
 	models.CognitoInfo
 }
 
-func getAuthUserId(req *events.APIGatewayProxyRequest) string {
-	claims, ok := req.RequestContext.Authorizer["claims"].(map[string]interface{})
-	if !ok {
-		// missing claims
-		return ""
-	}
-
-	sub, ok := claims["sub"].(string)
-	if !ok {
-		// missing sub
-		return ""
-	}
-
-	return sub
-}
-
 func isAuthenticatedUser(req *events.APIGatewayProxyRequest, userId string) bool {
-	return getAuthUserId(req) == userId
+	sub := utils.GetAuthUserId(req)
+	if sub == "" {
+		return false
+	}
+	return sub == userId
 }
 
-func (deps *UserDetailsDependencies) HandleOtherUserDetails(ctx *context.Context, req *events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+func (deps *GetUserDetailsDependencies) HandleGetUserDetails(ctx context.Context, req *events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	// gets user details from db, returns only public information, if user requesting is not the user being requested.
 
 	nickname, exists := req.PathParameters["nickname"]
@@ -63,19 +52,32 @@ func (deps *UserDetailsDependencies) HandleOtherUserDetails(ctx *context.Context
 		return models.InvalidRequestErrorResponse(""), nil
 	}
 
-	user, err := models.FindByNickname(nickname, deps.TableName, ctx, deps.DdbClient)
+	userDbHelper := models.UserDbHelper{
+		DbClient:  deps.DdbClient,
+		TableName: deps.TableName,
+		Ctx:       &ctx,
+	}
 
+	user, err := userDbHelper.FindByNickname(nickname)
+
+	// error
 	if err != nil {
 		return models.ServerSideErrorResponse("", err), nil
 	}
 
+	// no user found
 	if user == nil {
 		return models.NotFoundResponse("User not found"), nil
 	}
 
 	if isAuthenticatedUser(req, user.Userid) {
 		// if the logged in user is requesting their own information
-		userCognitoInfo, err := models.GetCognitoInfo(user.Userid, deps.CognitoClient, ctx, deps.UserPoolId)
+		userCognitoHelper := models.UserCognitoHelper{
+			UserPoolId:    deps.UserPoolId,
+			CognitoClient: deps.CognitoClient,
+			Ctx:           &ctx,
+		}
+		userCognitoInfo, err := userCognitoHelper.GetCognitoInfo(user.Userid)
 
 		if err != nil {
 			return models.ServerSideErrorResponse("Something went wrong.", err), nil
