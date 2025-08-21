@@ -39,7 +39,7 @@ func TestUser_DatabaseFormat(t *testing.T) {
 		false,
 	)
 
-	result := user.DatabaseFormat()
+	result := user.databaseFormat()
 
 	result["default_pic_fg"] = &dbTypes.AttributeValueMemberS{Value: ""}
 	result["default_pic_bg"] = &dbTypes.AttributeValueMemberS{Value: ""}

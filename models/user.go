@@ -92,7 +92,7 @@ func (deps *UserDbHelper) AddNewUser(userid string, nickname string, name string
 				// add user to db
 				Put: &types.Put{
 					TableName: aws.String(deps.TableName),
-					Item:      user.DatabaseFormat(),
+					Item:      user.databaseFormat(),
 				},
 			},
 
@@ -117,7 +117,7 @@ func (deps *UserDbHelper) AddNewUser(userid string, nickname string, name string
 	return nil
 }
 
-func (u *User) DatabaseFormat() map[string]types.AttributeValue {
+func (u *User) databaseFormat() map[string]types.AttributeValue {
 	u.Userid = "USER#" + u.Userid
 	u.DbDescription = "PROFILE"
 	item, err := attributevalue.MarshalMap(u)

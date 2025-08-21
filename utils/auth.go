@@ -8,6 +8,7 @@ import (
 
 func GetAuthUserId(req *events.APIGatewayProxyRequest) string {
 	claims, ok := req.RequestContext.Authorizer["claims"].(map[string]interface{})
+	log.Println(req.RequestContext.Authorizer)
 	if !ok {
 		// missing claims
 		log.Println("missing claims")
