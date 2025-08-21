@@ -5,6 +5,7 @@ package models
 import (
 	"context"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
@@ -164,6 +165,7 @@ func convertToUser(item map[string]types.AttributeValue) (*User, error) {
 }
 
 func (deps UserDbHelper) FindByNickname(nickname string) (*User, error) {
+	log.Println("finding by nickname")
 	input := &dynamodb.QueryInput{
 		TableName:              aws.String(deps.TableName),
 		IndexName:              aws.String("NicknameIndex"),
@@ -184,5 +186,6 @@ func (deps UserDbHelper) FindByNickname(nickname string) (*User, error) {
 		return nil, nil
 	}
 
+	log.Println("converting to user")
 	return convertToUser(output.Items[0])
 }

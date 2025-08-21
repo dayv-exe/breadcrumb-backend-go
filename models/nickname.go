@@ -13,7 +13,7 @@ type nicknameType struct {
 
 func GetNicknameDbItem(user *User) map[string]types.AttributeValue {
 	n := nicknameType{
-		PK:     user.Nickname,
+		PK:     "NICKNAME#" + user.Nickname,
 		Sk:     "NICKNAME",
 		UserId: user.Userid,
 	}
