@@ -14,7 +14,7 @@ func TestNewUserLogs_DefaultValues(t *testing.T) {
 		t.Errorf("expected birthdate change count to be 0, got %d", userLogs.BirthdateChangeCount)
 	}
 
-	if userLogs.forceChangeNickname != false {
+	if userLogs.ForceChangeNickname != false {
 		t.Errorf("expected force change nickname to be false, got true")
 	}
 
@@ -34,8 +34,8 @@ func TestUserLogs_DatabaseFormat(t *testing.T) {
 		LastNicknameChange:   "2025-07-20T10:00:00Z",
 		LastEmailChange:      "2025-07-21T08:00:00Z",
 		LastLogin:            "2025-07-25T11:00:00Z",
-		forceChangeNickname:  false,
-		suspensionReason:     "Inappropriate content",
+		ForceChangeNickname:  false,
+		SuspensionReason:     "Inappropriate content",
 	}
 
 	result := userLogs.DatabaseFormat()
@@ -48,8 +48,8 @@ func TestUserLogs_DatabaseFormat(t *testing.T) {
 		"last_login":             &types.AttributeValueMemberS{Value: "2025-07-25T11:00:00Z"},
 		"force_change_nickname":  &types.AttributeValueMemberBOOL{Value: false},
 		"suspension_reason":      &types.AttributeValueMemberS{Value: "Inappropriate content"},
-		"default_pic_fg":         &types.AttributeValueMemberS{Value: userLogs.defaultProfilePicFgColor},
-		"default_pic_bg":         &types.AttributeValueMemberS{Value: userLogs.defaultProfilePicBgColor},
+		"default_pic_fg":         &types.AttributeValueMemberS{Value: userLogs.DefaultProfilePicFgColor},
+		"default_pic_bg":         &types.AttributeValueMemberS{Value: userLogs.DefaultProfilePicBgColor},
 	}
 
 	if len(result) != len(expected) {

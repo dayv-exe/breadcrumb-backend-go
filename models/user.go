@@ -4,9 +4,9 @@ package models
 
 import (
 	"context"
-	"fmt"
 	"strings"
 
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
@@ -14,56 +14,54 @@ import (
 )
 
 type User struct {
-	Userid        string
-	Nickname      string
-	Name          string
-	Bio           string
-	DpUrl         string
-	isSuspended   bool
-	isDeactivated bool
-	UserLogs      UserLogs
+	Userid        string                          `dynamodbav:"pk" json:"userId"`
+	Nickname      string                          `dynamodbav:"nickname" json:"nickname"`
+	Name          string                          `dynamodbav:"name" json:"name"`
+	Bio           string                          `dynamodbav:"bio" json:"bio"`
+	DpUrl         string                          `dynamodbav:"dpUrl" json:"dpUrl"`
+	IsSuspended   bool                            `dynamodbav:"is_suspended" json:"isSuspended"`
+	IsDeactivated bool                            `dynamodbav:"is_deactivated" json:"isDeactivated"`
+	UserLogs      map[string]types.AttributeValue `dynamodbav:"user_logs" json:"userLogs"`
 }
 
 type CognitoInfo struct {
-	Cognito map[string]string `json:"cognito"`
+	Email     string `json:"email"`
+	Birthdate string `json:"birthdate"`
 }
 
-func NewUser(userid string, nickname string, name string, isSuspended bool) User {
-	return User{
+func NewUser(userid string, nickname string, name string, isSuspended bool) *User {
+	return &User{
 		Userid:        userid,
 		Nickname:      nickname,
 		Name:          name,
 		Bio:           "",
-		isSuspended:   isSuspended,
-		isDeactivated: false,
-		UserLogs:      NewUserLogs(),
+		IsSuspended:   isSuspended,
+		IsDeactivated: false,
+		UserLogs:      NewUserLogs().DatabaseFormat(),
 	}
 }
 
-func (u User) DatabaseFormat() map[string]types.AttributeValue {
-	logsJSON := u.UserLogs.DatabaseFormat()
+func (u *User) DatabaseFormat() map[string]types.AttributeValue {
+	item, err := attributevalue.MarshalMap(u)
 
-	return map[string]types.AttributeValue{
-		"pk":             &types.AttributeValueMemberS{Value: fmt.Sprintf("USER#%s", u.Userid)},
-		"sk":             &types.AttributeValueMemberS{Value: "PROFILE"},
-		"name":           &types.AttributeValueMemberS{Value: u.Name},
-		"nickname":       &types.AttributeValueMemberS{Value: strings.ToLower(u.Nickname)},
-		"bio":            &types.AttributeValueMemberS{Value: ""},
-		"dpUrl":          &types.AttributeValueMemberS{Value: u.DpUrl},
-		"is_suspended":   &types.AttributeValueMemberBOOL{Value: u.isSuspended},
-		"is_deactivated": &types.AttributeValueMemberBOOL{Value: u.isDeactivated},
-		"user_logs":      &types.AttributeValueMemberM{Value: logsJSON},
+	if err != nil {
+		return nil
 	}
+
+	item["pk"] = &types.AttributeValueMemberS{Value: "USER#" + u.Userid}
+	item["sk"] = &types.AttributeValueMemberS{Value: "PROFILE"}
+
+	return item
 }
 
-func GetCognitoInfo(sub string, cognitoClient *cognitoidentityprovider.Client, ctx context.Context, userPoolId string) (*CognitoInfo, error) {
+func GetCognitoInfo(sub string, cognitoClient *cognitoidentityprovider.Client, ctx *context.Context, userPoolId string) (*CognitoInfo, error) {
 	input := &cognitoidentityprovider.AdminGetUserInput{
 		UserPoolId: aws.String(userPoolId),
 		Username:   aws.String(sub),
 	}
 
 	user, err := getCognitoInfoQueryRunner(func() (*cognitoidentityprovider.AdminGetUserOutput, error) {
-		return cognitoClient.AdminGetUser(ctx, input)
+		return cognitoClient.AdminGetUser(*ctx, input)
 	})
 
 	if err != nil {
@@ -88,25 +86,42 @@ func getCognitoInfoQueryRunner(queryFn func() (*cognitoidentityprovider.AdminGet
 	}
 
 	return &CognitoInfo{
-		Cognito: map[string]string{
-			"email":     userInfo["email"],
-			"birthdate": userInfo["birthdate"],
-		},
+		Email:     userInfo["email"],
+		Birthdate: userInfo["birthdate"],
 	}, nil
 }
 
-func GetDbInfo(username string, tableName string, ctx context.Context, dbClient dynamodb.Client) (*User, error) {
-	return nil, nil
+func convertToUser(item map[string]types.AttributeValue) (*User, error) {
+	var u User
+	if err := attributevalue.UnmarshalMap(item, &u); err != nil {
+		return nil, err
+	}
+
+	u.Userid = strings.TrimPrefix(u.Userid, "USER#")
+
+	return &u, nil
 }
 
-func getDbInfoQueryRunner(queryFn func() (*dynamodb.QueryOutput, error)) (*User, error) {
-	_, err := queryFn()
+func FindByNickname(nickname string, tableName string, ctx *context.Context, ddbClient *dynamodb.Client) (*User, error) {
+	input := &dynamodb.QueryInput{
+		TableName:              aws.String(tableName),
+		IndexName:              aws.String("NicknameIndex"),
+		KeyConditionExpression: aws.String("nickname = :nick"),
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":nick": &types.AttributeValueMemberS{Value: nickname},
+		},
+		Limit: aws.Int32(1),
+	}
+
+	output, err := ddbClient.Query(*ctx, input)
 
 	if err != nil {
 		return nil, err
 	}
 
-	user := User{}
+	if output.Count < 1 {
+		return nil, nil
+	}
 
-	return &user, nil
+	return convertToUser(output.Items[0])
 }

@@ -9,8 +9,12 @@ import (
 	"github.com/aws/aws-lambda-go/events"
 )
 
+type ResponseBody struct {
+	Message interface{} `json:"message"`
+}
+
 // buildResponse builds a standard API Gateway proxy response
-func buildResponse(statusCode int, body map[string]string) events.APIGatewayProxyResponse {
+func buildResponse(statusCode int, body ResponseBody) events.APIGatewayProxyResponse {
 	jsonBody, _ := json.Marshal(body)
 
 	return events.APIGatewayProxyResponse{
@@ -22,25 +26,26 @@ func buildResponse(statusCode int, body map[string]string) events.APIGatewayProx
 	}
 }
 
-// responseMessage formats a message or error into a response
-func responseMessage(statusCode int, message string) events.APIGatewayProxyResponse {
-	var msgKey string
-	if statusCode >= 300 {
-		msgKey = "error"
-	} else {
-		msgKey = "message"
-	}
-
-	return buildResponse(statusCode, map[string]string{
-		msgKey: message,
-	})
-}
-
 func InvalidRequestErrorResponse(msg string) events.APIGatewayProxyResponse {
 	if msg == "" {
 		msg = "Invalid request body."
 	}
-	return responseMessage(400, msg)
+	return buildResponse(400, ResponseBody{msg})
+}
+
+func UnauthorizedErrorResponse(msg string) events.APIGatewayProxyResponse {
+	if msg == "" {
+		msg = "Unauthorized request."
+	}
+	return buildResponse(401, ResponseBody{msg})
+}
+
+func NotFoundResponse(msg string) events.APIGatewayProxyResponse {
+	if msg == "" {
+		msg = "Resource not found."
+	}
+
+	return buildResponse(404, ResponseBody{msg})
 }
 
 func ServerSideErrorResponse(msg string, error error) events.APIGatewayProxyResponse {
@@ -48,7 +53,7 @@ func ServerSideErrorResponse(msg string, error error) events.APIGatewayProxyResp
 		msg = "An error has occurred on our end, try again."
 	}
 	log.Println(error)
-	return responseMessage(500, msg)
+	return buildResponse(500, ResponseBody{msg})
 }
 
 func SuccessfulRequestResponse(msg string, createdResource bool) events.APIGatewayProxyResponse {
@@ -61,5 +66,11 @@ func SuccessfulRequestResponse(msg string, createdResource bool) events.APIGatew
 		sCode = 201
 	}
 
-	return responseMessage(sCode, msg)
+	return buildResponse(sCode, ResponseBody{msg})
+}
+
+func SuccessfulGetRequestResponse(body interface{}) events.APIGatewayProxyResponse {
+	return buildResponse(200, ResponseBody{
+		body,
+	})
 }

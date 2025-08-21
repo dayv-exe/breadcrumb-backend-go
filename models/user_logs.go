@@ -2,45 +2,44 @@ package models
 
 import (
 	"breadcrumb-backend-go/utils"
-	"fmt"
 
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
 
 type UserLogs struct {
-	DateJoined               string
-	BirthdateChangeCount     int
-	LastNicknameChange       string
-	LastEmailChange          string
-	LastLogin                string
-	forceChangeNickname      bool
-	suspensionReason         string
-	defaultProfilePicFgColor string
-	defaultProfilePicBgColor string
+	DateJoined               string `dynamodbav:"date_joined" json:"dateJoined"`
+	BirthdateChangeCount     int    `dynamodbav:"birthdate_change_count" json:"birthdateChangeCount"`
+	LastNicknameChange       string `dynamodbav:"last_nickname_change" json:"lastNicknameChange"`
+	LastEmailChange          string `dynamodbav:"last_email_change" json:"lastEmailChange"`
+	LastLogin                string `dynamodbav:"last_login" json:"lastLogin"`
+	ForceChangeNickname      bool   `dynamodbav:"force_change_nickname" json:"forceChangeNickname"`
+	SuspensionReason         string `dynamodbav:"suspension_reason" json:"suspensionReason"`
+	DefaultProfilePicFgColor string `dynamodbav:"default_pic_fg" json:"defaultPicFg"`
+	DefaultProfilePicBgColor string `dynamodbav:"default_pic_bg" json:"defaultPicBg"`
 }
 
-func NewUserLogs() UserLogs {
+func NewUserLogs() *UserLogs {
 	defaultColors := utils.GenerateRandomColorPair()
-	return UserLogs{
+	return &UserLogs{
 		DateJoined:               utils.GetTimeNow(),
 		BirthdateChangeCount:     0,
+		LastNicknameChange:       "",
+		LastEmailChange:          "",
 		LastLogin:                utils.GetTimeNow(),
-		forceChangeNickname:      false,
-		defaultProfilePicFgColor: defaultColors.Foreground,
-		defaultProfilePicBgColor: defaultColors.Background,
+		ForceChangeNickname:      false,
+		SuspensionReason:         "",
+		DefaultProfilePicFgColor: defaultColors.Foreground,
+		DefaultProfilePicBgColor: defaultColors.Background,
 	}
 }
 
-func (ul UserLogs) DatabaseFormat() map[string]types.AttributeValue {
-	return map[string]types.AttributeValue{
-		"date_joined":            &types.AttributeValueMemberS{Value: ul.DateJoined},
-		"birthdate_change_count": &types.AttributeValueMemberN{Value: fmt.Sprintf("%v", ul.BirthdateChangeCount)},
-		"last_nickname_change":   &types.AttributeValueMemberS{Value: ul.LastNicknameChange},
-		"last_email_change":      &types.AttributeValueMemberS{Value: ul.LastEmailChange},
-		"last_login":             &types.AttributeValueMemberS{Value: ul.LastLogin},
-		"force_change_nickname":  &types.AttributeValueMemberBOOL{Value: ul.forceChangeNickname},
-		"default_pic_fg":         &types.AttributeValueMemberS{Value: ul.defaultProfilePicFgColor},
-		"default_pic_bg":         &types.AttributeValueMemberS{Value: ul.defaultProfilePicBgColor},
-		"suspension_reason":      &types.AttributeValueMemberS{Value: ul.suspensionReason},
+func (ul *UserLogs) DatabaseFormat() map[string]types.AttributeValue {
+	logs, err := attributevalue.MarshalMap(ul)
+
+	if err != nil {
+		return nil
 	}
+
+	return logs
 }

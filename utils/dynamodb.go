@@ -11,13 +11,19 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
 
-func PutItem(newItem map[string]types.AttributeValue, tableName string, ddbClient *dynamodb.Client, ctx context.Context) (*dynamodb.PutItemOutput, error) {
+type DynamoDbHelper struct {
+	TableName string
+	Client    *dynamodb.Client
+	Ctx       *context.Context
+}
+
+func (deps DynamoDbHelper) PutItem(newItem map[string]types.AttributeValue) (*dynamodb.PutItemOutput, error) {
 	input := &dynamodb.PutItemInput{
-		TableName: aws.String(tableName),
+		TableName: aws.String(deps.TableName),
 		Item:      newItem,
 	}
 
-	out, err := ddbClient.PutItem(ctx, input)
+	out, err := deps.Client.PutItem(*deps.Ctx, input)
 	if err != nil {
 		return nil, fmt.Errorf("failed to write user to DynamoDB: %w", err)
 	}
