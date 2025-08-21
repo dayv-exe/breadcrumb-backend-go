@@ -95,6 +95,7 @@ func TestUserCognitoDetails(t *testing.T) {
 }
 
 func TestConvertToUser(t *testing.T) {
+	defaultLogs := NewUserLogs()
 	expect := User{
 		Userid:        "123",
 		Nickname:      "test",
@@ -103,7 +104,7 @@ func TestConvertToUser(t *testing.T) {
 		DpUrl:         "",
 		IsSuspended:   false,
 		IsDeactivated: false,
-		UserLogs:      *NewUserLogs(),
+		UserLogs:      *defaultLogs,
 	}
 
 	result, err := convertToUser(map[string]dbTypes.AttributeValue{
@@ -114,7 +115,7 @@ func TestConvertToUser(t *testing.T) {
 		"dpUrl":          &dbTypes.AttributeValueMemberS{Value: ""},
 		"is_suspended":   &dbTypes.AttributeValueMemberBOOL{Value: false},
 		"is_deactivated": &dbTypes.AttributeValueMemberBOOL{Value: false},
-		"user_logs":      &dbTypes.AttributeValueMemberM{Value: NewUserLogs().DatabaseFormat()},
+		"user_logs":      &dbTypes.AttributeValueMemberM{Value: defaultLogs.DatabaseFormat()},
 	})
 
 	if err != nil {
