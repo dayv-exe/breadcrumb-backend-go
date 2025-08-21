@@ -11,37 +11,44 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 )
 
+var testUserDynamo = map[string]dbTypes.AttributeValue{
+	"pk":                     &dbTypes.AttributeValueMemberS{Value: "USER#123"},
+	"sk":                     &dbTypes.AttributeValueMemberS{Value: "PROFILE"},
+	"nickname":               &dbTypes.AttributeValueMemberS{Value: "test"},
+	"name":                   &dbTypes.AttributeValueMemberS{Value: "test test"},
+	"bio":                    &dbTypes.AttributeValueMemberS{Value: ""},
+	"dpUrl":                  &dbTypes.AttributeValueMemberS{Value: ""},
+	"is_suspended":           &dbTypes.AttributeValueMemberBOOL{Value: false},
+	"is_deactivated":         &dbTypes.AttributeValueMemberBOOL{Value: false},
+	"date_joined":            &dbTypes.AttributeValueMemberS{Value: utils.GetTimeNow()},
+	"birthdate_change_count": &dbTypes.AttributeValueMemberN{Value: "0"},
+	"last_nickname_change":   &dbTypes.AttributeValueMemberS{Value: ""},
+	"last_email_change":      &dbTypes.AttributeValueMemberS{Value: ""},
+	"last_login":             &dbTypes.AttributeValueMemberS{Value: utils.GetTimeNow()},
+	"force_change_nickname":  &dbTypes.AttributeValueMemberBOOL{Value: false},
+	"suspension_reason":      &dbTypes.AttributeValueMemberS{Value: ""},
+	"default_pic_fg":         &dbTypes.AttributeValueMemberS{Value: ""},
+	"default_pic_bg":         &dbTypes.AttributeValueMemberS{Value: ""},
+}
+
 func TestUser_DatabaseFormat(t *testing.T) {
 	user := NewUser(
 		"123",
-		"david",
-		"David Arubuike",
-		true,
+		"test",
+		"test test",
+		false,
 	)
-
-	user.DpUrl = "https://example.com/profile.jpg"
 
 	result := user.DatabaseFormat()
 
-	result["user_logs"] = nil
+	result["default_pic_fg"] = &dbTypes.AttributeValueMemberS{Value: ""}
+	result["default_pic_bg"] = &dbTypes.AttributeValueMemberS{Value: ""}
 
-	expected := map[string]dbTypes.AttributeValue{
-		"pk":             &dbTypes.AttributeValueMemberS{Value: "USER#123"},
-		"sk":             &dbTypes.AttributeValueMemberS{Value: "PROFILE"},
-		"name":           &dbTypes.AttributeValueMemberS{Value: "David Arubuike"},
-		"nickname":       &dbTypes.AttributeValueMemberS{Value: "david"},
-		"bio":            &dbTypes.AttributeValueMemberS{Value: ""},
-		"dpUrl":          &dbTypes.AttributeValueMemberS{Value: "https://example.com/profile.jpg"},
-		"is_suspended":   &dbTypes.AttributeValueMemberBOOL{Value: true},
-		"is_deactivated": &dbTypes.AttributeValueMemberBOOL{Value: false},
-		"user_logs":      nil,
+	if len(testUserDynamo) != len(result) {
+		t.Fatalf("Expected %d keys, got %d", len(testUserDynamo), len(result))
 	}
 
-	if len(expected) != len(result) {
-		t.Fatalf("Expected %d keys, got %d", len(expected), len(result))
-	}
-
-	for key, expVal := range expected {
+	for key, expVal := range testUserDynamo {
 		val, exists := result[key]
 		if !exists {
 			t.Errorf("Missing key: %v", key)
@@ -95,7 +102,6 @@ func TestUserCognitoDetails(t *testing.T) {
 }
 
 func TestConvertToUser(t *testing.T) {
-	defaultLogs := NewUserLogs()
 	expect := User{
 		Userid:        "123",
 		Nickname:      "test",
@@ -104,7 +110,6 @@ func TestConvertToUser(t *testing.T) {
 		DpUrl:         "",
 		IsSuspended:   false,
 		IsDeactivated: false,
-		UserLogs:      defaultLogs,
 	}
 
 	result, err := convertToUser(map[string]dbTypes.AttributeValue{
@@ -115,7 +120,6 @@ func TestConvertToUser(t *testing.T) {
 		"dpUrl":          &dbTypes.AttributeValueMemberS{Value: ""},
 		"is_suspended":   &dbTypes.AttributeValueMemberBOOL{Value: false},
 		"is_deactivated": &dbTypes.AttributeValueMemberBOOL{Value: false},
-		"user_logs":      &dbTypes.AttributeValueMemberM{Value: defaultLogs.DatabaseFormat()},
 	})
 
 	if err != nil {

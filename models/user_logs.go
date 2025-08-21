@@ -2,6 +2,8 @@ package models
 
 import (
 	"breadcrumb-backend-go/utils"
+	"encoding/json"
+	"log"
 
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
@@ -17,6 +19,38 @@ type UserLogs struct {
 	SuspensionReason         string `dynamodbav:"suspension_reason" json:"suspensionReason"`
 	DefaultProfilePicFgColor string `dynamodbav:"default_pic_fg" json:"defaultPicFg"`
 	DefaultProfilePicBgColor string `dynamodbav:"default_pic_bg" json:"defaultPicBg"`
+}
+
+func (ul *UserLogs) ToMap() map[string]interface{} {
+	data, err := json.Marshal(ul)
+	if err != nil {
+		log.Fatalf("Error marshaling UserLogs: %v", err)
+		return nil
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal(data, &result); err != nil {
+		log.Fatalf("Error unmarshaling UserLogs to map: %v", err)
+		return nil
+	}
+
+	return result
+}
+
+func ToStruct(m map[string]interface{}) (*UserLogs, error) {
+	// Convert map to JSON
+	data, err := json.Marshal(m)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert JSON to struct
+	var ul UserLogs
+	if err := json.Unmarshal(data, &ul); err != nil {
+		return nil, err
+	}
+
+	return &ul, nil
 }
 
 func NewUserLogs() UserLogs {

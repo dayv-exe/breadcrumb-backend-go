@@ -3,6 +3,7 @@ package models
 // standard user db model
 
 import (
+	"breadcrumb-backend-go/utils"
 	"context"
 	"fmt"
 	"log"
@@ -16,15 +17,23 @@ import (
 )
 
 type User struct {
-	Userid        string   `dynamodbav:"pk" json:"userId"`
-	DbDescription string   `dynamodbav:"sk"`
-	Nickname      string   `dynamodbav:"nickname" json:"nickname"`
-	Name          string   `dynamodbav:"name" json:"name"`
-	Bio           string   `dynamodbav:"bio" json:"bio"`
-	DpUrl         string   `dynamodbav:"dpUrl" json:"dpUrl"`
-	IsSuspended   bool     `dynamodbav:"is_suspended" json:"isSuspended"`
-	IsDeactivated bool     `dynamodbav:"is_deactivated" json:"isDeactivated"`
-	UserLogs      UserLogs `dynamodbav:"user_logs" json:"userLogs"`
+	Userid                   string `dynamodbav:"pk" json:"userId"`
+	DbDescription            string `dynamodbav:"sk"`
+	Nickname                 string `dynamodbav:"nickname" json:"nickname"`
+	Name                     string `dynamodbav:"name" json:"name"`
+	Bio                      string `dynamodbav:"bio" json:"bio"`
+	DpUrl                    string `dynamodbav:"dpUrl" json:"dpUrl"`
+	IsSuspended              bool   `dynamodbav:"is_suspended" json:"isSuspended"`
+	IsDeactivated            bool   `dynamodbav:"is_deactivated" json:"isDeactivated"`
+	DateJoined               string `dynamodbav:"date_joined" json:"dateJoined"`
+	BirthdateChangeCount     int    `dynamodbav:"birthdate_change_count" json:"birthdateChangeCount"`
+	LastNicknameChange       string `dynamodbav:"last_nickname_change" json:"lastNicknameChange"`
+	LastEmailChange          string `dynamodbav:"last_email_change" json:"lastEmailChange"`
+	LastLogin                string `dynamodbav:"last_login" json:"lastLogin"`
+	ForceChangeNickname      bool   `dynamodbav:"force_change_nickname" json:"forceChangeNickname"`
+	SuspensionReason         string `dynamodbav:"suspension_reason" json:"suspensionReason"`
+	DefaultProfilePicFgColor string `dynamodbav:"default_pic_fg" json:"defaultPicFg"`
+	DefaultProfilePicBgColor string `dynamodbav:"default_pic_bg" json:"defaultPicBg"`
 }
 
 type CognitoInfo struct {
@@ -44,19 +53,29 @@ type UserCognitoHelper struct {
 	Ctx           context.Context
 }
 
-func NewUser(userid string, nickname string, name string, isSuspended bool) User {
-	return User{
-		Userid:        userid,
-		Nickname:      nickname,
-		Name:          name,
-		Bio:           "",
-		IsSuspended:   isSuspended,
-		IsDeactivated: false,
-		UserLogs:      NewUserLogs(),
+func NewUser(userid string, nickname string, name string, isSuspended bool) *User {
+	defaultColors := utils.GenerateRandomColorPair()
+
+	return &User{
+		Userid:                   userid,
+		Nickname:                 nickname,
+		Name:                     name,
+		Bio:                      "",
+		IsSuspended:              isSuspended,
+		IsDeactivated:            false,
+		DateJoined:               utils.GetTimeNow(),
+		BirthdateChangeCount:     0,
+		LastNicknameChange:       "",
+		LastEmailChange:          "",
+		LastLogin:                utils.GetTimeNow(),
+		ForceChangeNickname:      false,
+		SuspensionReason:         "",
+		DefaultProfilePicFgColor: defaultColors.Foreground,
+		DefaultProfilePicBgColor: defaultColors.Background,
 	}
 }
 
-func (deps UserDbHelper) AddNewUser(userid string, nickname string, name string, isSuspended bool) error {
+func (deps *UserDbHelper) AddNewUser(userid string, nickname string, name string, isSuspended bool) error {
 	// create user
 	user := NewUser(userid, nickname, name, false)
 
@@ -98,7 +117,7 @@ func (deps UserDbHelper) AddNewUser(userid string, nickname string, name string,
 	return nil
 }
 
-func (u User) DatabaseFormat() map[string]types.AttributeValue {
+func (u *User) DatabaseFormat() map[string]types.AttributeValue {
 	u.Userid = "USER#" + u.Userid
 	u.DbDescription = "PROFILE"
 	item, err := attributevalue.MarshalMap(u)
@@ -109,7 +128,7 @@ func (u User) DatabaseFormat() map[string]types.AttributeValue {
 	return item
 }
 
-func (deps UserCognitoHelper) GetCognitoInfo(sub string) (*CognitoInfo, error) {
+func (deps *UserCognitoHelper) GetCognitoInfo(sub string) (*CognitoInfo, error) {
 	input := &cognitoidentityprovider.AdminGetUserInput{
 		UserPoolId: aws.String(deps.UserPoolId),
 		Username:   aws.String(sub),
@@ -159,7 +178,7 @@ func convertToUser(item map[string]types.AttributeValue) (*User, error) {
 	return &u, nil
 }
 
-func (deps UserDbHelper) FindByNickname(nickname string) (*User, error) {
+func (deps *UserDbHelper) FindByNickname(nickname string) (*User, error) {
 	input := &dynamodb.QueryInput{
 		TableName:              aws.String(deps.TableName),
 		IndexName:              aws.String("NicknameIndex"),

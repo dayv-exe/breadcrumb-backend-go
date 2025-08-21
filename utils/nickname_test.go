@@ -78,7 +78,7 @@ func TestIsNicknameValid(t *testing.T) {
 		{"john_.doe", false},
 		{"john.doe_", false},
 		{".johndoe", false},
-		{"8david_arubs9", true},
+		{"4ksf_sqmd1", true},
 		{"john.doe001234ed", false},
 		{"14792384913", true},
 	}
