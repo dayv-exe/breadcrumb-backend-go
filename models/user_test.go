@@ -93,3 +93,35 @@ func TestUserCognitoDetails(t *testing.T) {
 		t.Fatalf("For key birthdate: expected %v, got %v", expect.Birthdate, result.Birthdate)
 	}
 }
+
+func TestConvertToUser(t *testing.T) {
+	expect := User{
+		Userid:        "123",
+		Nickname:      "test",
+		Name:          "test",
+		Bio:           "",
+		DpUrl:         "",
+		IsSuspended:   false,
+		IsDeactivated: false,
+		UserLogs:      *NewUserLogs(),
+	}
+
+	result, err := convertToUser(map[string]dbTypes.AttributeValue{
+		"pk":             &dbTypes.AttributeValueMemberS{Value: "USER#123"},
+		"nickname":       &dbTypes.AttributeValueMemberS{Value: "test"},
+		"name":           &dbTypes.AttributeValueMemberS{Value: "test"},
+		"bio":            &dbTypes.AttributeValueMemberS{Value: ""},
+		"dpUrl":          &dbTypes.AttributeValueMemberS{Value: ""},
+		"is_suspended":   &dbTypes.AttributeValueMemberBOOL{Value: false},
+		"is_deactivated": &dbTypes.AttributeValueMemberBOOL{Value: false},
+		"user_logs":      &dbTypes.AttributeValueMemberM{Value: NewUserLogs().DatabaseFormat()},
+	})
+
+	if err != nil {
+		t.Fatalf("An unexpected error occurred %v", err.Error())
+	}
+
+	if !reflect.DeepEqual(*result, expect) {
+		t.Errorf("Result: %v does not match expected: %v", result, expect)
+	}
+}

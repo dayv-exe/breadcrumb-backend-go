@@ -5,7 +5,6 @@ package models
 import (
 	"context"
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
@@ -16,14 +15,14 @@ import (
 )
 
 type User struct {
-	Userid        string                          `dynamodbav:"pk" json:"userId"`
-	Nickname      string                          `dynamodbav:"nickname" json:"nickname"`
-	Name          string                          `dynamodbav:"name" json:"name"`
-	Bio           string                          `dynamodbav:"bio" json:"bio"`
-	DpUrl         string                          `dynamodbav:"dpUrl" json:"dpUrl"`
-	IsSuspended   bool                            `dynamodbav:"is_suspended" json:"isSuspended"`
-	IsDeactivated bool                            `dynamodbav:"is_deactivated" json:"isDeactivated"`
-	UserLogs      map[string]types.AttributeValue `dynamodbav:"user_logs" json:"userLogs"`
+	Userid        string   `dynamodbav:"pk" json:"userId"`
+	Nickname      string   `dynamodbav:"nickname" json:"nickname"`
+	Name          string   `dynamodbav:"name" json:"name"`
+	Bio           string   `dynamodbav:"bio" json:"bio"`
+	DpUrl         string   `dynamodbav:"dpUrl" json:"dpUrl"`
+	IsSuspended   bool     `dynamodbav:"is_suspended" json:"isSuspended"`
+	IsDeactivated bool     `dynamodbav:"is_deactivated" json:"isDeactivated"`
+	UserLogs      UserLogs `dynamodbav:"user_logs" json:"userLogs"`
 }
 
 type CognitoInfo struct {
@@ -51,7 +50,7 @@ func NewUser(userid string, nickname string, name string, isSuspended bool) *Use
 		Bio:           "",
 		IsSuspended:   isSuspended,
 		IsDeactivated: false,
-		UserLogs:      NewUserLogs().DatabaseFormat(),
+		UserLogs:      *NewUserLogs(),
 	}
 }
 
@@ -165,7 +164,6 @@ func convertToUser(item map[string]types.AttributeValue) (*User, error) {
 }
 
 func (deps UserDbHelper) FindByNickname(nickname string) (*User, error) {
-	log.Println("finding by nickname")
 	input := &dynamodb.QueryInput{
 		TableName:              aws.String(deps.TableName),
 		IndexName:              aws.String("NicknameIndex"),
@@ -186,6 +184,5 @@ func (deps UserDbHelper) FindByNickname(nickname string) (*User, error) {
 		return nil, nil
 	}
 
-	log.Println("converting to user")
 	return convertToUser(output.Items[0])
 }
