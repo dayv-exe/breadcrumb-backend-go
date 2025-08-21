@@ -26,7 +26,7 @@ func (deps PostConfirmationDependencies) HandlePostConfirmation(ctx context.Cont
 	user := models.UserDbHelper{
 		DbClient:  deps.DdbClient,
 		TableName: deps.TableName,
-		Ctx:       &ctx,
+		Ctx:       ctx,
 	}
 
 	err := user.AddNewUser(userID, nickName, name, false)
