@@ -104,7 +104,7 @@ func TestConvertToUser(t *testing.T) {
 		DpUrl:         "",
 		IsSuspended:   false,
 		IsDeactivated: false,
-		UserLogs:      *defaultLogs,
+		UserLogs:      defaultLogs,
 	}
 
 	result, err := convertToUser(map[string]dbTypes.AttributeValue{

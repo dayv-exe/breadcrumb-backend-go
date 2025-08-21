@@ -5,6 +5,7 @@ package models
 import (
 	"context"
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
@@ -34,24 +35,24 @@ type CognitoInfo struct {
 type UserDbHelper struct {
 	DbClient  *dynamodb.Client
 	TableName string
-	Ctx       *context.Context
+	Ctx       context.Context
 }
 
 type UserCognitoHelper struct {
 	UserPoolId    string
 	CognitoClient *cognitoidentityprovider.Client
-	Ctx           *context.Context
+	Ctx           context.Context
 }
 
-func NewUser(userid string, nickname string, name string, isSuspended bool) *User {
-	return &User{
+func NewUser(userid string, nickname string, name string, isSuspended bool) User {
+	return User{
 		Userid:        userid,
 		Nickname:      nickname,
 		Name:          name,
 		Bio:           "",
 		IsSuspended:   isSuspended,
 		IsDeactivated: false,
-		UserLogs:      *NewUserLogs(),
+		UserLogs:      NewUserLogs(),
 	}
 }
 
@@ -88,7 +89,7 @@ func (deps UserDbHelper) AddNewUser(userid string, nickname string, name string,
 		},
 	}
 
-	_, err := deps.DbClient.TransactWriteItems(*deps.Ctx, input)
+	_, err := deps.DbClient.TransactWriteItems(deps.Ctx, input)
 
 	if err != nil {
 		return err
@@ -115,7 +116,7 @@ func (deps UserCognitoHelper) GetCognitoInfo(sub string) (*CognitoInfo, error) {
 	}
 
 	user, err := getCognitoInfoQueryRunner(func() (*cognitoidentityprovider.AdminGetUserOutput, error) {
-		return deps.CognitoClient.AdminGetUser(*deps.Ctx, input)
+		return deps.CognitoClient.AdminGetUser(deps.Ctx, input)
 	})
 
 	if err != nil {
@@ -147,12 +148,14 @@ func getCognitoInfoQueryRunner(queryFn func() (*cognitoidentityprovider.AdminGet
 
 func convertToUser(item map[string]types.AttributeValue) (*User, error) {
 	var u User
+	log.Println("Started converting user")
 	if err := attributevalue.UnmarshalMap(item, &u); err != nil {
 		return nil, err
 	}
 
 	u.Userid = strings.TrimPrefix(u.Userid, "USER#")
 
+	log.Println("done converting user")
 	return &u, nil
 }
 
@@ -167,7 +170,7 @@ func (deps UserDbHelper) FindByNickname(nickname string) (*User, error) {
 		Limit: aws.Int32(1),
 	}
 
-	output, err := deps.DbClient.Query(*deps.Ctx, input)
+	output, err := deps.DbClient.Query(deps.Ctx, input)
 
 	if err != nil {
 		return nil, err
@@ -176,6 +179,8 @@ func (deps UserDbHelper) FindByNickname(nickname string) (*User, error) {
 	if output.Count < 1 {
 		return nil, nil
 	}
+
+	log.Println("Done fetching user, got %w", output.Items[0])
 
 	return convertToUser(output.Items[0])
 }

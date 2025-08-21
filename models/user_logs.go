@@ -19,9 +19,9 @@ type UserLogs struct {
 	DefaultProfilePicBgColor string `dynamodbav:"default_pic_bg" json:"defaultPicBg"`
 }
 
-func NewUserLogs() *UserLogs {
+func NewUserLogs() UserLogs {
 	defaultColors := utils.GenerateRandomColorPair()
-	return &UserLogs{
+	return UserLogs{
 		DateJoined:               utils.GetTimeNow(),
 		BirthdateChangeCount:     0,
 		LastNicknameChange:       "",
@@ -34,7 +34,7 @@ func NewUserLogs() *UserLogs {
 	}
 }
 
-func (ul *UserLogs) DatabaseFormat() map[string]types.AttributeValue {
+func (ul UserLogs) DatabaseFormat() map[string]types.AttributeValue {
 	logs, err := attributevalue.MarshalMap(ul)
 
 	if err != nil {

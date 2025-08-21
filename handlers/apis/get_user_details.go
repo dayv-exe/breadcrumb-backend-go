@@ -56,7 +56,7 @@ func (deps *GetUserDetailsDependencies) HandleGetUserDetails(ctx context.Context
 	userDbHelper := models.UserDbHelper{
 		DbClient:  deps.DdbClient,
 		TableName: deps.TableName,
-		Ctx:       &ctx,
+		Ctx:       ctx,
 	}
 
 	user, dbErr := userDbHelper.FindByNickname(nickname)
@@ -76,7 +76,7 @@ func (deps *GetUserDetailsDependencies) HandleGetUserDetails(ctx context.Context
 		userCognitoHelper := models.UserCognitoHelper{
 			UserPoolId:    deps.UserPoolId,
 			CognitoClient: deps.CognitoClient,
-			Ctx:           &ctx,
+			Ctx:           ctx,
 		}
 
 		userCognitoInfo, cogErr := userCognitoHelper.GetCognitoInfo(user.Userid)
