@@ -7,19 +7,20 @@ import (
 )
 
 func GetAuthUserId(req *events.APIGatewayProxyRequest) string {
-	claims, ok := req.RequestContext.Authorizer["claims"].(map[string]interface{})
-	log.Println(req.RequestContext.Authorizer)
+	jwtMap, ok := req.RequestContext.Authorizer["jwt"].(map[string]interface{})
 	if !ok {
-		// missing claims
+		log.Println("missing jwt map")
+		return ""
+	}
+
+	claims, ok := jwtMap["claims"].(map[string]interface{})
+	if !ok {
 		log.Println("missing claims")
 		return ""
 	}
 
-	log.Println(claims)
-
 	sub, ok := claims["sub"].(string)
 	if !ok {
-		// missing sub
 		log.Println("missing sub")
 		return ""
 	}
