@@ -4,6 +4,7 @@ import (
 	"breadcrumb-backend-go/models"
 	"breadcrumb-backend-go/utils"
 	"context"
+	"fmt"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
@@ -58,11 +59,11 @@ func (deps *GetUserDetailsDependencies) HandleGetUserDetails(ctx context.Context
 		Ctx:       &ctx,
 	}
 
-	user, err := userDbHelper.FindByNickname(nickname)
+	user, dbErr := userDbHelper.FindByNickname(nickname)
 
 	// error
-	if err != nil {
-		return models.ServerSideErrorResponse("", err), nil
+	if dbErr != nil {
+		return models.ServerSideErrorResponse("", fmt.Errorf("Find by nickname error: %w", dbErr)), nil
 	}
 
 	// no user found
@@ -78,10 +79,10 @@ func (deps *GetUserDetailsDependencies) HandleGetUserDetails(ctx context.Context
 			Ctx:           &ctx,
 		}
 
-		userCognitoInfo, err := userCognitoHelper.GetCognitoInfo(user.Userid)
+		userCognitoInfo, cogErr := userCognitoHelper.GetCognitoInfo(user.Userid)
 
-		if err != nil {
-			return models.ServerSideErrorResponse("Something went wrong.", err), nil
+		if cogErr != nil {
+			return models.ServerSideErrorResponse("", fmt.Errorf("Get cognito info error: %w", cogErr)), nil
 		}
 
 		if userCognitoInfo == nil {

@@ -16,6 +16,7 @@ import (
 
 type User struct {
 	Userid        string   `dynamodbav:"pk" json:"userId"`
+	DbDescription string   `dynamodbav:"sk"`
 	Nickname      string   `dynamodbav:"nickname" json:"nickname"`
 	Name          string   `dynamodbav:"name" json:"name"`
 	Bio           string   `dynamodbav:"bio" json:"bio"`
@@ -56,12 +57,6 @@ func NewUser(userid string, nickname string, name string, isSuspended bool) *Use
 
 func (deps UserDbHelper) AddNewUser(userid string, nickname string, name string, isSuspended bool) error {
 	// create user
-	defaultUserLogs := NewUserLogs().DatabaseFormat()
-
-	if defaultUserLogs == nil {
-		return fmt.Errorf("Failed to create user logs")
-	}
-
 	user := NewUser(userid, nickname, name, false)
 
 	nicknameItem := GetNicknameDbItem(user)
@@ -102,16 +97,14 @@ func (deps UserDbHelper) AddNewUser(userid string, nickname string, name string,
 	return nil
 }
 
-func (u *User) DatabaseFormat() map[string]types.AttributeValue {
+func (u User) DatabaseFormat() map[string]types.AttributeValue {
+	u.Userid = "USER#" + u.Userid
+	u.DbDescription = "PROFILE"
 	item, err := attributevalue.MarshalMap(u)
 
 	if err != nil {
 		return nil
 	}
-
-	item["pk"] = &types.AttributeValueMemberS{Value: "USER#" + u.Userid}
-	item["sk"] = &types.AttributeValueMemberS{Value: "PROFILE"}
-
 	return item
 }
 

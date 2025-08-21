@@ -189,6 +189,7 @@ Resources:
   GetUserDetails:
     Type: AWS::Serverless::Function
     Properties:
+      MemorySize: 512
       CodeUri: bin/get_user_details/get_user_details.zip
       Handler: bootstrap
       Architectures: [arm64]
