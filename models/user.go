@@ -18,7 +18,7 @@ import (
 
 type User struct {
 	Userid                   string `dynamodbav:"pk" json:"userId"`
-	DbDescription            string `dynamodbav:"sk"`
+	DbDescription            string `dynamodbav:"sk" json:"type"`
 	Nickname                 string `dynamodbav:"nickname" json:"nickname"`
 	Name                     string `dynamodbav:"name" json:"name"`
 	Bio                      string `dynamodbav:"bio" json:"bio"`
@@ -34,6 +34,23 @@ type User struct {
 	SuspensionReason         string `dynamodbav:"suspension_reason" json:"suspensionReason"`
 	DefaultProfilePicFgColor string `dynamodbav:"default_pic_fg" json:"defaultPicFg"`
 	DefaultProfilePicBgColor string `dynamodbav:"default_pic_bg" json:"defaultPicBg"`
+}
+
+type MinUserInfo struct {
+	// the least amount of information on any user
+	Nickname                 string `json:"nickname"`
+	Name                     string `json:"name"`
+	DpUrl                    string `json:"dpUrl"`
+	DefaultProfilePicFgColor string `json:"defaultPicFg"`
+	DefaultProfilePicBgColor string `json:"defaultPicBg"`
+	IsSuspended              bool   `json:"isSuspended"`
+	IsDeactivated            bool   `json:"isDeactivated"`
+}
+
+type FullUserInfo struct {
+	// most amount of information to be returned on a user
+	User
+	CognitoInfo
 }
 
 type CognitoInfo struct {
@@ -58,7 +75,7 @@ func NewUser(userid string, nickname string, name string, isSuspended bool) *Use
 
 	return &User{
 		Userid:                   userid,
-		Nickname:                 nickname,
+		Nickname:                 strings.ToLower(nickname),
 		Name:                     name,
 		Bio:                      "",
 		IsSuspended:              isSuspended,
@@ -184,7 +201,7 @@ func (deps *UserDbHelper) FindByNickname(nickname string) (*User, error) {
 		IndexName:              aws.String("NicknameIndex"),
 		KeyConditionExpression: aws.String("nickname = :nick"),
 		ExpressionAttributeValues: map[string]types.AttributeValue{
-			":nick": &types.AttributeValueMemberS{Value: nickname},
+			":nick": &types.AttributeValueMemberS{Value: strings.ToLower(nickname)},
 		},
 		Limit: aws.Int32(1),
 	}
@@ -202,4 +219,22 @@ func (deps *UserDbHelper) FindByNickname(nickname string) (*User, error) {
 	log.Println("Done fetching user, got %w", output.Items[0])
 
 	return convertToUser(output.Items[0])
+}
+
+func (deps *UserDbHelper) FindById(id string) (*User, error) {
+	input := dynamodb.GetItemInput{
+		Key: map[string]types.AttributeValue{
+			"pk": &types.AttributeValueMemberS{Value: "USER#" + id},
+			"sk": &types.AttributeValueMemberS{Value: "PROFILE"},
+		},
+		TableName: &deps.TableName,
+	}
+
+	output, err := deps.DbClient.GetItem(deps.Ctx, &input)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return convertToUser(output.Item)
 }

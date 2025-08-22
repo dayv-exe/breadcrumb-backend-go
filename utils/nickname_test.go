@@ -11,16 +11,16 @@ import (
 func TestIsNicknameAvailableInDynamodb(t *testing.T) {
 	tests := []struct {
 		name          string
-		queryFn       func() (*dynamodb.QueryOutput, error)
+		queryFn       func() (*dynamodb.GetItemOutput, error)
 		wantAvailable bool
 		wantErr       bool
 	}{
 		{
 			name: "nickname taken",
-			queryFn: func() (*dynamodb.QueryOutput, error) {
-				return &dynamodb.QueryOutput{
-					Items: []map[string]ddbTypes.AttributeValue{
-						{"nickname": &ddbTypes.AttributeValueMemberS{Value: "taken"}},
+			queryFn: func() (*dynamodb.GetItemOutput, error) {
+				return &dynamodb.GetItemOutput{
+					Item: map[string]ddbTypes.AttributeValue{
+						"nickname": &ddbTypes.AttributeValueMemberS{Value: "taken"},
 					},
 				}, nil
 			},
@@ -29,9 +29,9 @@ func TestIsNicknameAvailableInDynamodb(t *testing.T) {
 		},
 		{
 			name: "nickname not taken",
-			queryFn: func() (*dynamodb.QueryOutput, error) {
-				return &dynamodb.QueryOutput{
-					Items: []map[string]ddbTypes.AttributeValue{},
+			queryFn: func() (*dynamodb.GetItemOutput, error) {
+				return &dynamodb.GetItemOutput{
+					Item: nil,
 				}, nil
 			},
 			wantAvailable: true,
@@ -39,7 +39,7 @@ func TestIsNicknameAvailableInDynamodb(t *testing.T) {
 		},
 		{
 			name: "query returns error",
-			queryFn: func() (*dynamodb.QueryOutput, error) {
+			queryFn: func() (*dynamodb.GetItemOutput, error) {
 				return nil, errors.New("dynamo error")
 			},
 			wantAvailable: false,

@@ -8,8 +8,13 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
-	"github.com/aws/aws-sdk-go/aws"
 )
+
+type NicknameDependencies struct {
+	TableName string
+	DbClient  *dynamodb.Client
+	Ctx       context.Context
+}
 
 func NicknameValid(nickname string) bool {
 	if len(nickname) < constants.MIN_USERNAME_CHARS || len(nickname) > constants.MAX_USERNAME_CHARS {
@@ -33,28 +38,26 @@ func NicknameValid(nickname string) bool {
 	return true
 }
 
-func NickNameAvailable(nickname string, TableName string, DdbClient *dynamodb.Client, ctx context.Context) (bool, error) {
-	// returns true if the nickname parsed is not taken in the db
-	return nicknameAvailableQueryRunner(func() (*dynamodb.QueryOutput, error) {
-		return DdbClient.Query(ctx, &dynamodb.QueryInput{
-			TableName:              aws.String(TableName),
-			IndexName:              aws.String("NicknameIndex"),
-			KeyConditionExpression: aws.String("nickname = :nick"),
-			ExpressionAttributeValues: map[string]types.AttributeValue{
-				":nick": &types.AttributeValueMemberS{Value: nickname},
-			},
-			Limit: aws.Int32(1),
-		})
+func (deps NicknameDependencies) NicknameAvailable(nickname string) (bool, error) {
+	input := dynamodb.GetItemInput{
+		Key: map[string]types.AttributeValue{
+			"pk": &types.AttributeValueMemberS{Value: strings.ToLower(nickname)},
+			"sk": &types.AttributeValueMemberS{Value: "NICKNAME"},
+		},
+	}
+
+	return nicknameAvailableQueryRunner(func() (*dynamodb.GetItemOutput, error) {
+		return deps.DbClient.GetItem(deps.Ctx, &input)
 	})
 }
 
-func nicknameAvailableQueryRunner(queryFn func() (*dynamodb.QueryOutput, error)) (bool, error) {
+func nicknameAvailableQueryRunner(queryFn func() (*dynamodb.GetItemOutput, error)) (bool, error) {
 	result, err := queryFn()
 
 	if err != nil {
 		return false, err
 	}
 
-	isAvailable := len(result.Items) < 1
+	isAvailable := result.Item == nil
 	return isAvailable, nil
 }

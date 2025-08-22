@@ -1,6 +1,8 @@
 package models
 
 import (
+	"strings"
+
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
@@ -13,7 +15,7 @@ type nicknameType struct {
 
 func GetNicknameDbItem(user *User) map[string]types.AttributeValue {
 	n := nicknameType{
-		PK:     "NICKNAME#" + user.Nickname,
+		PK:     "NICKNAME#" + strings.ToLower(user.Nickname),
 		Sk:     "NICKNAME",
 		UserId: user.Userid,
 	}

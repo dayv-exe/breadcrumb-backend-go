@@ -24,18 +24,6 @@ type GetUserDetailsDependencies struct {
 	TableName string
 }
 
-type minUserInfo struct {
-	// the least amount of information on any user
-	Nickname string `json:"nickname"`
-	Name     string `json:"name"`
-	DpUrl    string `json:"dpUrl"`
-}
-
-type fullUserInfo struct {
-	models.User
-	models.CognitoInfo
-}
-
 func isAuthenticatedUser(req *events.APIGatewayProxyRequest, userId string) bool {
 	sub := utils.GetAuthUserId(req)
 	if sub == "" {
@@ -89,16 +77,20 @@ func (deps *GetUserDetailsDependencies) HandleGetUserDetails(ctx context.Context
 			return models.NotFoundResponse("User details not found."), nil
 		}
 
-		return models.SuccessfulGetRequestResponse(fullUserInfo{
+		return models.SuccessfulGetRequestResponse(models.FullUserInfo{
 			User:        *user,
 			CognitoInfo: *userCognitoInfo,
 		}), nil
 	}
 
 	// only return nickname, name, profile picture
-	return models.SuccessfulGetRequestResponse(minUserInfo{
-		Nickname: user.Nickname,
-		Name:     user.Name,
-		DpUrl:    user.DpUrl,
+	return models.SuccessfulGetRequestResponse(models.MinUserInfo{
+		Nickname:                 user.Nickname,
+		Name:                     user.Name,
+		DpUrl:                    user.DpUrl,
+		DefaultProfilePicFgColor: user.DefaultProfilePicFgColor,
+		DefaultProfilePicBgColor: user.DefaultProfilePicBgColor,
+		IsSuspended:              user.IsSuspended,
+		IsDeactivated:            user.IsDeactivated,
 	}), nil
 }
