@@ -2,20 +2,9 @@ package utils
 
 import (
 	"breadcrumb-backend-go/constants"
-	"context"
 	"regexp"
 	"strings"
-
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
-
-type NicknameDependencies struct {
-	TableName string
-	DbClient  *dynamodb.Client
-	Ctx       context.Context
-}
 
 func NicknameValid(nickname string) bool {
 	if len(nickname) < constants.MIN_USERNAME_CHARS || len(nickname) > constants.MAX_USERNAME_CHARS {
@@ -37,29 +26,4 @@ func NicknameValid(nickname string) bool {
 	}
 
 	return true
-}
-
-func (deps *NicknameDependencies) NicknameAvailable(nickname string) (bool, error) {
-	input := dynamodb.GetItemInput{
-		Key: map[string]types.AttributeValue{
-			"pk": &types.AttributeValueMemberS{Value: "NICKNAME#" + strings.ToLower(nickname)},
-			"sk": &types.AttributeValueMemberS{Value: "NICKNAME"},
-		},
-		TableName: aws.String(deps.TableName),
-	}
-
-	return nicknameAvailableQueryRunner(func() (*dynamodb.GetItemOutput, error) {
-		return deps.DbClient.GetItem(deps.Ctx, &input)
-	})
-}
-
-func nicknameAvailableQueryRunner(queryFn func() (*dynamodb.GetItemOutput, error)) (bool, error) {
-	result, err := queryFn()
-
-	if err != nil {
-		return false, err
-	}
-
-	isAvailable := result.Item == nil
-	return isAvailable, nil
 }

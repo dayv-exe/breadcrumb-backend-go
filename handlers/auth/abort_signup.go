@@ -32,7 +32,7 @@ func (asd *AbortSignupDependencies) AbortSignupHandler(ctx context.Context, req 
 	err := userCognitoHelper.DeleteFromCognito(userId, true)
 
 	if err != nil {
-		return models.ServerSideErrorResponse("An error occurred while trying to remove your account.", err), nil
+		return models.ServerSideErrorResponse("An error occurred while trying to remove your account.", err, "error while trying to delete user from cognito"), nil
 	}
 
 	return models.SuccessfulRequestResponse("successfully cancelled signup.", false), nil

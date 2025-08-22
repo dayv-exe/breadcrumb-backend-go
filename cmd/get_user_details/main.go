@@ -1,7 +1,7 @@
 package main
 
 import (
-	"breadcrumb-backend-go/handlers/apis"
+	apis "breadcrumb-backend-go/handlers/account"
 	"context"
 	"fmt"
 	"log"

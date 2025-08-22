@@ -1,0 +1,67 @@
+package account
+
+import (
+	"breadcrumb-backend-go/models"
+	"breadcrumb-backend-go/utils"
+	"context"
+	"encoding/json"
+
+	"github.com/aws/aws-lambda-go/events"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+)
+
+type EditUserInfoDependency struct {
+	DdbClient *dynamodb.Client
+	TableName string
+}
+
+type editUserInfoReq struct {
+	Target  string `json:"target"`
+	Payload string `json:"payload"`
+}
+
+func (deps *EditUserInfoDependency) HandleEditUserInfo(ctx context.Context, req *events.APIGatewayProxyRequest) events.APIGatewayProxyResponse {
+	var reqBody editUserInfoReq
+	if umErr := json.Unmarshal([]byte(req.Body), &reqBody); umErr != nil {
+		return models.InvalidRequestErrorResponse("")
+	}
+
+	userId := utils.GetAuthUserId(req)
+
+	if userId == "" {
+		return models.UnauthorizedErrorResponse("")
+	}
+
+	userHelper := models.UserDbHelper{
+		DbClient:  deps.DdbClient,
+		TableName: deps.TableName,
+		Ctx:       ctx,
+	}
+
+	// allows update of nickname, full name, bio
+
+	switch reqBody.Target {
+	case "nickname":
+		// update nickname (its called username in the front end)
+		newNickname := reqBody.Payload
+		nnErr := userHelper.UpdateNickname(userId, newNickname)
+		if nnErr != nil {
+			return models.ServerSideErrorResponse("Something went wrong while trying to update nickname!", nnErr, "trying to update nickname")
+		}
+
+	case "name":
+		// update full name
+		newName := reqBody.Payload
+		nErr := userHelper.UpdateName(userId, newName)
+
+		if nErr != nil {
+			return models.ServerSideErrorResponse("Something went wrong while trying to update full name!", nErr, "trying to update full name")
+		}
+
+	default:
+		// invalid target
+		return models.InvalidRequestErrorResponse("")
+	}
+
+	return models.SuccessfulRequestResponse("Resource updated successfully!", false)
+}

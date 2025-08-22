@@ -1,4 +1,4 @@
-package apis
+package account
 
 import (
 	"breadcrumb-backend-go/models"
@@ -51,7 +51,7 @@ func (deps *GetUserDetailsDependencies) HandleGetUserDetails(ctx context.Context
 
 	// error
 	if dbErr != nil {
-		return models.ServerSideErrorResponse("", fmt.Errorf("Find by nickname error: %w", dbErr)), nil
+		return models.ServerSideErrorResponse("", fmt.Errorf("Find by nickname error: %w", dbErr), "error while trying to find user by nickname"), nil
 	}
 
 	// no user found
@@ -70,7 +70,7 @@ func (deps *GetUserDetailsDependencies) HandleGetUserDetails(ctx context.Context
 		userCognitoInfo, cogErr := userCognitoHelper.GetCognitoInfo(user.Userid)
 
 		if cogErr != nil {
-			return models.ServerSideErrorResponse("", fmt.Errorf("Get cognito info error: %w", cogErr)), nil
+			return models.ServerSideErrorResponse("", fmt.Errorf("Get cognito info error: %w", cogErr), "while trying to get users cognito info"), nil
 		}
 
 		if userCognitoInfo == nil {

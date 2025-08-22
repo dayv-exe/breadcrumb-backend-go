@@ -26,7 +26,7 @@ func (deps *HandleNicknameAvailableDependencies) HandleNicknameAvailable(ctx con
 		return models.SuccessfulRequestResponse(fmt.Sprintf("%v", false), false), nil
 	}
 
-	nnHelper := utils.NicknameDependencies{
+	nnHelper := models.UserDbHelper{
 		TableName: deps.TableName,
 		DbClient:  deps.DdbClient,
 		Ctx:       ctx,
@@ -35,7 +35,7 @@ func (deps *HandleNicknameAvailableDependencies) HandleNicknameAvailable(ctx con
 	isAvailable, dbErr := nnHelper.NicknameAvailable(nickname)
 
 	if dbErr != nil {
-		return models.ServerSideErrorResponse("An error has occurred, try again.", dbErr), nil
+		return models.ServerSideErrorResponse("An error has occurred, try again.", dbErr, "error while trying to check if nickname is available"), nil
 	}
 
 	return models.SuccessfulRequestResponse(fmt.Sprintf("%v", isAvailable), false), nil

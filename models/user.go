@@ -98,7 +98,7 @@ func (deps *UserDbHelper) AddNewUser(userid string, nickname string, name string
 	// create user
 	user := NewUser(userid, nickname, name, false)
 
-	nicknameItem := GetNicknameDbItem(user)
+	nicknameItem := GetNicknameDbItem(user.Userid, user.Nickname)
 
 	if nicknameItem == nil {
 		return fmt.Errorf("Unable to create nickname item.")
@@ -334,4 +334,96 @@ func (deps *UserDbHelper) DeleteFromDynamo(userId string, nickname string) error
 	}
 
 	return nil
+}
+
+func (deps *UserDbHelper) UpdateNickname(userId string, nickname string) error {
+	if !utils.NicknameValid(nickname) {
+		return fmt.Errorf("Nickname is invalid!")
+	}
+
+	nicknameAvail, err := deps.NicknameAvailable(strings.ToLower(nickname))
+
+	if err != nil {
+		return fmt.Errorf("Error while trying to check nickname availability: "+err.Error(), nil)
+	}
+
+	if !nicknameAvail {
+		return fmt.Errorf(nickname+" is already in use", nil)
+	}
+
+	// delete old nickname item
+	// update user details nickname
+	// put new nickname item
+
+	input := &dynamodb.TransactWriteItemsInput{
+		TransactItems: []types.TransactWriteItem{
+			{
+				Delete: &types.Delete{
+					Key:       nicknameKey(nickname),
+					TableName: aws.String(deps.TableName),
+				},
+			},
+			{
+				Update: &types.Update{
+					Key:              profileKey(userId),
+					TableName:        aws.String(deps.TableName),
+					UpdateExpression: aws.String("SET nickname = :n"),
+					ExpressionAttributeValues: map[string]types.AttributeValue{
+						":n": &types.AttributeValueMemberS{Value: strings.ToLower(nickname)},
+					},
+				},
+			},
+			{
+				Put: &types.Put{
+					Item:      GetNicknameDbItem(userId, nickname),
+					TableName: aws.String(deps.TableName),
+				},
+			},
+		},
+	}
+
+	_, upErr := deps.DbClient.TransactWriteItems(deps.Ctx, input)
+
+	if upErr != nil {
+		return fmt.Errorf("An error occurred while trying to update nickname: "+upErr.Error(), nil)
+	}
+
+	return nil
+}
+
+func (deps *UserDbHelper) UpdateName(userId string, name string) error {
+	return nil
+}
+
+func (deps *UserDbHelper) UpdateBio(userId string, bio string) error {
+	return nil
+}
+
+func (deps *UserDbHelper) UpdateDpUrl(userId string, url string) error {
+	return nil
+}
+
+func (deps *UserDbHelper) NicknameAvailable(nickname string) (bool, error) {
+	input := dynamodb.GetItemInput{
+		Key: map[string]types.AttributeValue{
+			"pk": &types.AttributeValueMemberS{Value: "NICKNAME#" + strings.ToLower(nickname)},
+			"sk": &types.AttributeValueMemberS{Value: "NICKNAME"},
+		},
+		TableName: aws.String(deps.TableName),
+	}
+
+	return nicknameAvailableQueryRunner(func() (*dynamodb.GetItemOutput, error) {
+		return deps.DbClient.GetItem(deps.Ctx, &input)
+	})
+}
+
+func nicknameAvailableQueryRunner(queryFn func() (*dynamodb.GetItemOutput, error)) (bool, error) {
+	result, err := queryFn()
+
+	if err != nil {
+		return false, err
+	}
+
+	isAvailable := result.Item == nil
+	return isAvailable, nil
 }

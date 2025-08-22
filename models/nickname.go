@@ -13,11 +13,11 @@ type nicknameType struct {
 	UserId string `dynamodbav:"userId" json:"userId"`
 }
 
-func GetNicknameDbItem(user *User) map[string]types.AttributeValue {
+func GetNicknameDbItem(userId string, nickname string) map[string]types.AttributeValue {
 	n := nicknameType{
-		PK:     "NICKNAME#" + strings.ToLower(user.Nickname),
+		PK:     "NICKNAME#" + strings.ToLower(nickname),
 		Sk:     "NICKNAME",
-		UserId: user.Userid,
+		UserId: userId,
 	}
 
 	item, err := attributevalue.MarshalMap(n)

@@ -2,6 +2,7 @@ package auth
 
 import (
 	"breadcrumb-backend-go/constants"
+	"breadcrumb-backend-go/models"
 	"breadcrumb-backend-go/utils"
 	"context"
 	"fmt"
@@ -27,7 +28,7 @@ func (deps *PreSignupDependencies) PreSignupHandler(ctx context.Context, event e
 		return event, fmt.Errorf("invalid nickname")
 	}
 
-	nnHelper := utils.NicknameDependencies{
+	nnHelper := models.UserDbHelper{
 		DbClient:  deps.DdbClient,
 		TableName: deps.TableName,
 		Ctx:       ctx,
@@ -55,7 +56,7 @@ func (deps *PreSignupDependencies) PreSignupHandler(ctx context.Context, event e
 	}
 
 	// fullname check
-	if len(fullname) > constants.MAX_FULLNAME_CHARS {
+	if !utils.NameIsValid(&fullname) {
 		return event, fmt.Errorf("Fullname cannot be longer than %d characters", constants.MAX_FULLNAME_CHARS)
 	}
 

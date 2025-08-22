@@ -222,6 +222,30 @@ Resources:
               - cognito-idp:AdminGetUser
             Resource: "*"
 
+  EditUserInfo:
+    Type: AWS::Serverless::Function
+    Properties:
+      MemorySize: 512
+      CodeUri: bin/edit_user_info/edit_user_info.zip
+      Handler: bootstrap
+      Architectures: [arm64]
+      Description: allows user to edit some of their account information
+      Environment:
+        Variables:
+          USERS_TABLE: !Ref UsersTable
+      Events:
+        ApiRequest:
+          Type: HttpApi
+          Properties:
+            Path: /edit/profile
+            Method: POST
+            ApiId: !Ref BreadApi
+            Auth:
+              Authorizer: CognitoAuthorizer
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref UsersTable
+
   RemoveStaleAccountsFunction:
     Type: AWS::Serverless::Function
     Properties:
