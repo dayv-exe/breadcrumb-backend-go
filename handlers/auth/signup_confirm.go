@@ -36,12 +36,6 @@ func (deps PostConfirmationDependencies) HandlePostConfirmation(ctx context.Cont
 	if err != nil {
 		log.Println("ERROR IN SIGNUP CONFIRM GO FUNC: " + err.Error())
 
-		ddbErr := user.DeleteFromDynamo(userID, nickName)
-		if ddbErr != nil {
-			log.Println("Error occurred while trying to remove user dynamodb details: " + ddbErr.Error())
-			return nil, fmt.Errorf("Something went wrong while creating new account, try again.")
-		}
-
 		userCognito := models.UserCognitoHelper{
 			UserPoolId:    event.UserPoolID,
 			CognitoClient: deps.CognitoClient,

@@ -305,11 +305,17 @@ func (deps *UserDbHelper) DeleteFromDynamo(userId string, nickname string) error
 		TransactItems: []types.TransactWriteItem{
 			{
 				// delete account metadata
-				Delete: &types.Delete{Key: profileKey(userId)},
+				Delete: &types.Delete{
+					Key:       profileKey(userId),
+					TableName: aws.String(deps.TableName),
+				},
 			},
 			{
 				// delete nickname reservation
-				Delete: &types.Delete{Key: nicknameKey(nickname)},
+				Delete: &types.Delete{
+					Key:       nicknameKey(nickname),
+					TableName: aws.String(deps.TableName),
+				},
 			},
 		},
 	}
