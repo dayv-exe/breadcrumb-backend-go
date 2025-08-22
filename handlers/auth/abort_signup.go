@@ -3,12 +3,9 @@ package auth
 import (
 	"breadcrumb-backend-go/models"
 	"context"
-	"fmt"
 
 	"github.com/aws/aws-lambda-go/events"
-	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
-	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
 )
 
 // deletes an unverified user from cognito when the user cancels verification process on the frontend
@@ -26,31 +23,16 @@ func (asd *AbortSignupDependencies) AbortSignupHandler(ctx context.Context, req 
 		return models.InvalidRequestErrorResponse(""), nil
 	}
 
-	// if user is verified then sign up has been completed and they thus cannot be deleted
-	getUserInput := &cognitoidentityprovider.AdminGetUserInput{
-		UserPoolId: aws.String(asd.UserPoolId),
-		Username:   aws.String(userId),
-	}
-	user, uErr := asd.Client.AdminGetUser(ctx, getUserInput)
-	if uErr != nil {
-		// if we cannot get user, most likely user id is invalid
-		return models.InvalidRequestErrorResponse("invalid request"), nil
+	userCognitoHelper := models.UserCognitoHelper{
+		UserPoolId:    asd.UserPoolId,
+		CognitoClient: asd.Client,
+		Ctx:           ctx,
 	}
 
-	if user.UserStatus != types.UserStatusTypeUnconfirmed {
-		// if user has been confirmed their signup cannot be aborted
-		return models.SuccessfulRequestResponse("took no action.", false), nil
-	}
-
-	input := &cognitoidentityprovider.AdminDeleteUserInput{
-		UserPoolId: aws.String(asd.UserPoolId),
-		Username:   aws.String(userId),
-	}
-
-	_, err := asd.Client.AdminDeleteUser(ctx, input)
+	err := userCognitoHelper.DeleteFromCognito(userId, false)
 
 	if err != nil {
-		return models.ServerSideErrorResponse("An error occurred while trying to delete the user", fmt.Errorf("error occurred while trying to delete a user %w", err)), err
+		return models.ServerSideErrorResponse("An error occurred while trying to remove your account.", err), nil
 	}
 
 	return models.SuccessfulRequestResponse("successfully cancelled signup.", false), nil

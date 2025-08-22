@@ -42,7 +42,7 @@ func NicknameValid(nickname string) bool {
 func (deps *NicknameDependencies) NicknameAvailable(nickname string) (bool, error) {
 	input := dynamodb.GetItemInput{
 		Key: map[string]types.AttributeValue{
-			"pk": &types.AttributeValueMemberS{Value: strings.ToLower(nickname)},
+			"pk": &types.AttributeValueMemberS{Value: "NICKNAME#" + strings.ToLower(nickname)},
 			"sk": &types.AttributeValueMemberS{Value: "NICKNAME"},
 		},
 		TableName: aws.String(deps.TableName),

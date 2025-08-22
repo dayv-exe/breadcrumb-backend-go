@@ -5,12 +5,14 @@ package models
 import (
 	"breadcrumb-backend-go/utils"
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
+	cognitoTypes "github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/aws/aws-sdk-go/aws"
@@ -106,20 +108,20 @@ func (deps *UserDbHelper) AddNewUser(userid string, nickname string, name string
 	input := &dynamodb.TransactWriteItemsInput{
 		TransactItems: []types.TransactWriteItem{
 			{
-				// add user to db
-				Put: &types.Put{
-					TableName: aws.String(deps.TableName),
-					Item:      user.databaseFormat(),
-				},
-			},
-
-			{
 				// adds nickname item to reserve name
 				Put: &types.Put{
 					TableName: aws.String(deps.TableName),
 					Item:      nicknameItem,
 					// if this fails most likely because nickname is already in use everything will roll back
 					ConditionExpression: aws.String("attribute_not_exists(pk)"),
+				},
+			},
+
+			{
+				// add user to db
+				Put: &types.Put{
+					TableName: aws.String(deps.TableName),
+					Item:      user.databaseFormat(),
 				},
 			},
 		},
@@ -223,10 +225,7 @@ func (deps *UserDbHelper) FindByNickname(nickname string) (*User, error) {
 
 func (deps *UserDbHelper) FindById(id string) (*User, error) {
 	input := dynamodb.GetItemInput{
-		Key: map[string]types.AttributeValue{
-			"pk": &types.AttributeValueMemberS{Value: "USER#" + id},
-			"sk": &types.AttributeValueMemberS{Value: "PROFILE"},
-		},
+		Key:       profileKey(id),
 		TableName: &deps.TableName,
 	}
 
@@ -237,4 +236,94 @@ func (deps *UserDbHelper) FindById(id string) (*User, error) {
 	}
 
 	return convertToUser(output.Item)
+}
+
+func nicknameKey(nickname string) map[string]types.AttributeValue {
+	return map[string]types.AttributeValue{
+		"pk": &types.AttributeValueMemberS{Value: "NICKNAME#" + nickname},
+		"sk": &types.AttributeValueMemberS{Value: "NICKNAME"},
+	}
+}
+
+func profileKey(userid string) map[string]types.AttributeValue {
+	return map[string]types.AttributeValue{
+		"pk": &types.AttributeValueMemberS{Value: "USER#" + userid},
+		"sk": &types.AttributeValueMemberS{Value: "PROFILE"},
+	}
+}
+
+func (deps *UserCognitoHelper) DeleteFromCognito(id string, ignoreConfirmationStatus bool) error {
+
+	// deletes unconfirmed users, except ignore confirmation status then it deletes any user
+
+	if !ignoreConfirmationStatus {
+		getUserInput := &cognitoidentityprovider.AdminGetUserInput{
+			UserPoolId: aws.String(deps.UserPoolId),
+			Username:   aws.String(id),
+		}
+
+		getUserOutput, getUserErr := deps.CognitoClient.AdminGetUser(deps.Ctx, getUserInput)
+
+		// return error only if the error is not a user not found exception
+		if getUserErr != nil {
+			var notFoundErr *cognitoTypes.UserNotFoundException
+			if !errors.As(getUserErr, &notFoundErr) {
+				return getUserErr
+			}
+		}
+
+		// end delete process without deleting user if the user is anything but unconfirmed
+		// only deletes unconfirmed user if the ignore confirmation flag is set to true
+		if getUserOutput.UserStatus != cognitoTypes.UserStatusTypeUnconfirmed {
+			log.Println("Failed to delete user because they have been confirmed and function is not ignoring confirmation status")
+			return nil
+		}
+	}
+
+	input := &cognitoidentityprovider.AdminDeleteUserInput{
+		UserPoolId: aws.String(deps.UserPoolId),
+		Username:   aws.String(id),
+	}
+
+	_, err := deps.CognitoClient.AdminDeleteUser(deps.Ctx, input)
+
+	if err != nil {
+		var notFoundErr *cognitoTypes.UserNotFoundException
+		if errors.As(err, &notFoundErr) {
+			log.Println("Could not find user account to delete: " + id)
+			return nil // simulate successful deletion
+		}
+		return fmt.Errorf("error occurred while trying to delete a user %w", err)
+	}
+
+	return nil
+}
+
+func (deps *UserDbHelper) DeleteFromDynamo(userId string, nickname string) error {
+	// delete user profile, nickname, friends, post and allat
+	input := &dynamodb.TransactWriteItemsInput{
+		TransactItems: []types.TransactWriteItem{
+			{
+				// delete account metadata
+				Delete: &types.Delete{Key: profileKey(userId)},
+			},
+			{
+				// delete nickname reservation
+				Delete: &types.Delete{Key: nicknameKey(nickname)},
+			},
+		},
+	}
+
+	_, err := deps.DbClient.TransactWriteItems(deps.Ctx, input)
+
+	if err != nil {
+		var notFoundErr *types.ResourceNotFoundException
+		if errors.As(err, &notFoundErr) {
+			log.Println("Could not find user resource to delete: %w", nickname)
+			return nil
+		}
+		return err
+	}
+
+	return nil
 }
