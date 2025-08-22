@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
@@ -44,6 +45,7 @@ func (deps *NicknameDependencies) NicknameAvailable(nickname string) (bool, erro
 			"pk": &types.AttributeValueMemberS{Value: strings.ToLower(nickname)},
 			"sk": &types.AttributeValueMemberS{Value: "NICKNAME"},
 		},
+		TableName: aws.String(deps.TableName),
 	}
 
 	return nicknameAvailableQueryRunner(func() (*dynamodb.GetItemOutput, error) {
