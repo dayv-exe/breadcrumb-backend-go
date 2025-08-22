@@ -38,7 +38,7 @@ func NicknameValid(nickname string) bool {
 	return true
 }
 
-func (deps NicknameDependencies) NicknameAvailable(nickname string) (bool, error) {
+func (deps *NicknameDependencies) NicknameAvailable(nickname string) (bool, error) {
 	input := dynamodb.GetItemInput{
 		Key: map[string]types.AttributeValue{
 			"pk": &types.AttributeValueMemberS{Value: strings.ToLower(nickname)},

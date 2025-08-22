@@ -11,12 +11,12 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 )
 
-type NicknameDependencies struct {
+type HandleNicknameAvailableDependencies struct {
 	DdbClient *dynamodb.Client
 	TableName string
 }
 
-func (deps *NicknameDependencies) HandleNicknameAvailable(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+func (deps *HandleNicknameAvailableDependencies) HandleNicknameAvailable(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 
 	// returns true if a nickname has not been taken by a user in dynamodb
 
@@ -26,7 +26,13 @@ func (deps *NicknameDependencies) HandleNicknameAvailable(ctx context.Context, r
 		return models.SuccessfulRequestResponse(fmt.Sprintf("%v", false), false), nil
 	}
 
-	isAvailable, dbErr := utils.NickNameAvailable(nickname, deps.TableName, deps.DdbClient, ctx)
+	nnHelper := utils.NicknameDependencies{
+		TableName: deps.TableName,
+		DbClient:  deps.DdbClient,
+		Ctx:       ctx,
+	}
+
+	isAvailable, dbErr := nnHelper.NicknameAvailable(nickname)
 
 	if dbErr != nil {
 		return models.ServerSideErrorResponse("An error has occurred, try again.", dbErr), nil

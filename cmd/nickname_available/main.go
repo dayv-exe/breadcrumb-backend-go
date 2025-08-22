@@ -28,7 +28,7 @@ func init() {
 }
 
 func main() {
-	fd := auth.NicknameDependencies{
+	fd := auth.HandleNicknameAvailableDependencies{
 		DdbClient: ddbClient,
 		TableName: tableName,
 	}

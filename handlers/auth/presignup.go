@@ -27,7 +27,13 @@ func (deps *PreSignupDependencies) PreSignupHandler(ctx context.Context, event e
 		return event, fmt.Errorf("invalid nickname")
 	}
 
-	nicknameAvail, err := utils.NickNameAvailable(nickname, deps.TableName, deps.DdbClient, ctx)
+	nnHelper := utils.NicknameDependencies{
+		DbClient:  deps.DdbClient,
+		TableName: deps.TableName,
+		Ctx:       ctx,
+	}
+
+	nicknameAvail, err := nnHelper.NicknameAvailable(nickname)
 
 	if err != nil {
 		return event, fmt.Errorf("error checking nickname availability %w", err)
