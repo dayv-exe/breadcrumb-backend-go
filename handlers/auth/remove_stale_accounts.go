@@ -4,6 +4,7 @@ package auth
 
 import (
 	"breadcrumb-backend-go/constants"
+	"breadcrumb-backend-go/models"
 	"context"
 	"fmt"
 	"log"
@@ -25,6 +26,11 @@ type RemoveStaleAccountsDependencies struct {
 func (rsaDeps RemoveStaleAccountsDependencies) HandleRemoveStaleAccounts(ctx context.Context) error {
 	var paginationToken *string
 	count := 0
+	userHelper := models.UserCognitoHelper{
+		UserPoolId:    rsaDeps.UserPoolId,
+		CognitoClient: rsaDeps.Client,
+		Ctx:           ctx,
+	}
 
 	for {
 		input := &cognitoidentityprovider.ListUsersInput{
@@ -56,10 +62,7 @@ func (rsaDeps RemoveStaleAccountsDependencies) HandleRemoveStaleAccounts(ctx con
 			}
 
 			username := aws.ToString(user.Username)
-			_, uErr := rsaDeps.Client.AdminDeleteUser(ctx, &cognitoidentityprovider.AdminDeleteUserInput{
-				UserPoolId: &rsaDeps.UserPoolId,
-				Username:   aws.String(username),
-			})
+			uErr := userHelper.DeleteFromCognito(username, false)
 
 			if uErr != nil {
 				log.Printf("FAILED TO DELETE USER %s: %v", username, uErr)

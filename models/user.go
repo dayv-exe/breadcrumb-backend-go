@@ -267,9 +267,11 @@ func (deps *UserCognitoHelper) DeleteFromCognito(id string, ignoreConfirmationSt
 		// return error only if the error is not a user not found exception
 		if getUserErr != nil {
 			var notFoundErr *cognitoTypes.UserNotFoundException
-			if !errors.As(getUserErr, &notFoundErr) {
-				return getUserErr
+			if errors.As(getUserErr, &notFoundErr) {
+				return nil
 			}
+
+			return getUserErr
 		}
 
 		// end delete process without deleting user if the user is anything but unconfirmed
