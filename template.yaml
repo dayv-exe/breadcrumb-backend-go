@@ -113,6 +113,12 @@ Resources:
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref UsersTable
+        - Statement:
+            Effect: Allow
+            Action:
+              - cognito-idp:AdminGetUser
+              - cognito-idp:AdminDeleteUser
+            Resource: "*"
       Environment:
         Variables:
           USERS_TABLE: !Ref UsersTable
