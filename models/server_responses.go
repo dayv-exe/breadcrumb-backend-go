@@ -70,10 +70,6 @@ func SuccessfulRequestResponse(msg string, createdResource bool) events.APIGatew
 }
 
 func SuccessfulGetRequestResponse(body interface{}) events.APIGatewayProxyResponse {
-	log.Println(body)
-	log.Println(buildResponse(200, ResponseBody{
-		body,
-	}))
 	return buildResponse(200, ResponseBody{
 		body,
 	})

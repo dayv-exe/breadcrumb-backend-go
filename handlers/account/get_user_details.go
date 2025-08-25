@@ -27,8 +27,8 @@ type GetUserDetailsDependencies struct {
 
 type completeUserInfo struct {
 	// all the information on a user
-	dbInfo      models.User
-	cognitoInfo helpers.CognitoManagedInfo
+	DbInfo      models.User
+	CognitoInfo helpers.CognitoManagedInfo
 }
 
 type userInfo struct {
@@ -90,8 +90,8 @@ func (deps *GetUserDetailsDependencies) HandleGetUserDetails(ctx context.Context
 
 		return models.SuccessfulGetRequestResponse(completeUserInfo{
 			// return all the users info which is everything in dynamo and somethings in cognito
-			dbInfo:      *user,
-			cognitoInfo: *userCognitoInfo,
+			DbInfo:      *user,
+			CognitoInfo: *userCognitoInfo,
 		}), nil
 	}
 
