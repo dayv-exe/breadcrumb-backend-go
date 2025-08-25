@@ -56,6 +56,7 @@ func NewUser(userid string, nickname string, name string, isSuspended bool) *Use
 func (u *User) DatabaseFormat() map[string]types.AttributeValue {
 	u.Userid = "USER#" + u.Userid
 	u.DbDescription = "PROFILE"
+	u.Nickname = strings.ToLower(u.Nickname)
 	item, err := attributevalue.MarshalMap(u)
 
 	if err != nil {
