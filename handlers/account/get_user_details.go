@@ -1,6 +1,7 @@
 package account
 
 import (
+	"breadcrumb-backend-go/helpers"
 	"breadcrumb-backend-go/models"
 	"breadcrumb-backend-go/utils"
 	"context"
@@ -24,12 +25,21 @@ type GetUserDetailsDependencies struct {
 	TableName string
 }
 
-func isAuthenticatedUser(req *events.APIGatewayProxyRequest, userId string) bool {
-	sub := utils.GetAuthUserId(req)
-	if sub == "" {
-		return false
-	}
-	return sub == userId
+type completeUserInfo struct {
+	// all the information on a user
+	dbInfo      models.User
+	cognitoInfo helpers.CognitoManagedInfo
+}
+
+type userInfo struct {
+	// the least amount of information to return on any user
+	Nickname                 string `json:"nickname"`
+	Name                     string `json:"name"`
+	DpUrl                    string `json:"dpUrl"`
+	DefaultProfilePicFgColor string `json:"defaultPicFg"`
+	DefaultProfilePicBgColor string `json:"defaultPicBg"`
+	IsSuspended              bool   `json:"isSuspended"`
+	IsDeactivated            bool   `json:"isDeactivated"`
 }
 
 func (deps *GetUserDetailsDependencies) HandleGetUserDetails(ctx context.Context, req *events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
@@ -41,13 +51,14 @@ func (deps *GetUserDetailsDependencies) HandleGetUserDetails(ctx context.Context
 		return models.InvalidRequestErrorResponse(""), nil
 	}
 
-	userDbHelper := models.UserDbHelper{
+	// get all info on a user from dynamodb
+	dbHelper := helpers.UserDynamoHelper{
 		DbClient:  deps.DdbClient,
 		TableName: deps.TableName,
 		Ctx:       ctx,
 	}
 
-	user, dbErr := userDbHelper.FindByNickname(nickname)
+	user, dbErr := dbHelper.FindByNickname(nickname)
 
 	// error
 	if dbErr != nil {
@@ -59,15 +70,15 @@ func (deps *GetUserDetailsDependencies) HandleGetUserDetails(ctx context.Context
 		return models.NotFoundResponse("User not found"), nil
 	}
 
-	if isAuthenticatedUser(req, user.Userid) {
+	if utils.IsAuthenticatedUser(req, user.Userid) {
 		// if the logged in user is requesting their own information
-		userCognitoHelper := models.UserCognitoHelper{
-			UserPoolId:    deps.UserPoolId,
+		cognitoHelper := helpers.UserCognitoHelper{
 			CognitoClient: deps.CognitoClient,
+			UserPoolId:    deps.UserPoolId,
 			Ctx:           ctx,
 		}
 
-		userCognitoInfo, cogErr := userCognitoHelper.GetCognitoInfo(user.Userid)
+		userCognitoInfo, cogErr := cognitoHelper.GetManagedInfo(user.Userid)
 
 		if cogErr != nil {
 			return models.ServerSideErrorResponse("", fmt.Errorf("Get cognito info error: %w", cogErr), "while trying to get users cognito info"), nil
@@ -77,14 +88,15 @@ func (deps *GetUserDetailsDependencies) HandleGetUserDetails(ctx context.Context
 			return models.NotFoundResponse("User details not found."), nil
 		}
 
-		return models.SuccessfulGetRequestResponse(models.FullUserInfo{
-			User:        *user,
-			CognitoInfo: *userCognitoInfo,
+		return models.SuccessfulGetRequestResponse(completeUserInfo{
+			// return all the users info which is everything in dynamo and somethings in cognito
+			dbInfo:      *user,
+			cognitoInfo: *userCognitoInfo,
 		}), nil
 	}
 
-	// only return nickname, name, profile picture
-	return models.SuccessfulGetRequestResponse(models.MinUserInfo{
+	// only return nickname, name, profile picture if one user requests another users information
+	return models.SuccessfulGetRequestResponse(userInfo{
 		Nickname:                 user.Nickname,
 		Name:                     user.Name,
 		DpUrl:                    user.DpUrl,

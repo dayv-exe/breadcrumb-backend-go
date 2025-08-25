@@ -4,7 +4,7 @@ package auth
 
 import (
 	"breadcrumb-backend-go/constants"
-	"breadcrumb-backend-go/models"
+	"breadcrumb-backend-go/helpers"
 	"context"
 	"fmt"
 	"log"
@@ -23,18 +23,18 @@ type RemoveStaleAccountsDependencies struct {
 	UserPoolId string
 }
 
-func (rsaDeps RemoveStaleAccountsDependencies) HandleRemoveStaleAccounts(ctx context.Context) error {
+func (deps *RemoveStaleAccountsDependencies) HandleRemoveStaleAccounts(ctx context.Context) error {
 	var paginationToken *string
 	count := 0
-	userHelper := models.UserCognitoHelper{
-		UserPoolId:    rsaDeps.UserPoolId,
-		CognitoClient: rsaDeps.Client,
+	cognitoHelper := helpers.UserCognitoHelper{
+		UserPoolId:    deps.UserPoolId,
+		CognitoClient: deps.Client,
 		Ctx:           ctx,
 	}
 
 	for {
 		input := &cognitoidentityprovider.ListUsersInput{
-			UserPoolId: &rsaDeps.UserPoolId,
+			UserPoolId: aws.String(deps.UserPoolId),
 			Filter:     aws.String("cognito:user_status=\"UNCONFIRMED\""),
 			Limit:      aws.Int32(60),
 		}
@@ -43,7 +43,7 @@ func (rsaDeps RemoveStaleAccountsDependencies) HandleRemoveStaleAccounts(ctx con
 			input.PaginationToken = paginationToken
 		}
 
-		res, err := rsaDeps.Client.ListUsers(ctx, input)
+		res, err := deps.Client.ListUsers(ctx, input)
 		if err != nil {
 			return fmt.Errorf("FAILED TO LIST USERS: %w", err)
 		}
@@ -61,8 +61,9 @@ func (rsaDeps RemoveStaleAccountsDependencies) HandleRemoveStaleAccounts(ctx con
 				continue
 			}
 
+			// delete user at this point (if they are not verified)
 			username := aws.ToString(user.Username)
-			uErr := userHelper.DeleteFromCognito(username, false)
+			uErr := cognitoHelper.DeleteFromCognito(username, false)
 
 			if uErr != nil {
 				log.Printf("FAILED TO DELETE USER %s: %v", username, uErr)

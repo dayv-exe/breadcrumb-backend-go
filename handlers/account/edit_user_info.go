@@ -1,6 +1,7 @@
 package account
 
 import (
+	"breadcrumb-backend-go/helpers"
 	"breadcrumb-backend-go/models"
 	"breadcrumb-backend-go/utils"
 	"context"
@@ -32,7 +33,7 @@ func (deps *EditUserInfoDependency) HandleEditUserInfo(ctx context.Context, req 
 		return models.UnauthorizedErrorResponse("")
 	}
 
-	userHelper := models.UserDbHelper{
+	dbHelper := helpers.UserDynamoHelper{
 		DbClient:  deps.DdbClient,
 		TableName: deps.TableName,
 		Ctx:       ctx,
@@ -44,7 +45,7 @@ func (deps *EditUserInfoDependency) HandleEditUserInfo(ctx context.Context, req 
 	case "nickname":
 		// update nickname (its called username in the front end)
 		newNickname := reqBody.Payload
-		nnErr := userHelper.UpdateNickname(userId, newNickname)
+		nnErr := dbHelper.UpdateNickname(userId, newNickname)
 		if nnErr != nil {
 			return models.ServerSideErrorResponse("Something went wrong while trying to update nickname!", nnErr, "trying to update nickname")
 		}
@@ -52,7 +53,7 @@ func (deps *EditUserInfoDependency) HandleEditUserInfo(ctx context.Context, req 
 	case "name":
 		// update full name
 		newName := reqBody.Payload
-		nErr := userHelper.UpdateName(userId, newName)
+		nErr := dbHelper.UpdateName(userId, newName)
 
 		if nErr != nil {
 			return models.ServerSideErrorResponse("Something went wrong while trying to update full name!", nErr, "trying to update full name")

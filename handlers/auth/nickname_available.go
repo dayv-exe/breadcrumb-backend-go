@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"breadcrumb-backend-go/helpers"
 	"breadcrumb-backend-go/models"
 	"breadcrumb-backend-go/utils"
 	"context"
@@ -26,13 +27,13 @@ func (deps *HandleNicknameAvailableDependencies) HandleNicknameAvailable(ctx con
 		return models.SuccessfulRequestResponse(fmt.Sprintf("%v", false), false), nil
 	}
 
-	nnHelper := models.UserDbHelper{
+	dbHelper := helpers.UserDynamoHelper{
 		TableName: deps.TableName,
 		DbClient:  deps.DdbClient,
 		Ctx:       ctx,
 	}
 
-	isAvailable, dbErr := nnHelper.NicknameAvailable(nickname)
+	isAvailable, dbErr := dbHelper.NicknameAvailable(nickname)
 
 	if dbErr != nil {
 		return models.ServerSideErrorResponse("An error has occurred, try again.", dbErr, "error while trying to check if nickname is available"), nil

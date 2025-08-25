@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"breadcrumb-backend-go/helpers"
 	"breadcrumb-backend-go/models"
 	"context"
 	"fmt"
@@ -24,24 +25,27 @@ func (deps PostConfirmationDependencies) HandlePostConfirmation(ctx context.Cont
 	nickName := event.Request.UserAttributes["nickname"]
 	name := event.Request.UserAttributes["name"]
 
-	// create new user
-	user := models.UserDbHelper{
+	dbHelper := helpers.UserDynamoHelper{
 		DbClient:  deps.DdbClient,
 		TableName: deps.TableName,
 		Ctx:       ctx,
 	}
 
-	err := user.AddNewUser(userID, nickName, name, false)
+	// create new user
+	newUser := models.NewUser(userID, nickName, name, false)
+
+	err := dbHelper.AddUser(newUser)
 
 	if err != nil {
+		// if somthing goes wrong during the signup process deelete user cognito info
 		log.Println("ERROR IN SIGNUP CONFIRM GO FUNC: " + err.Error())
 
-		userCognito := models.UserCognitoHelper{
+		cognitoHelper := helpers.UserCognitoHelper{
 			UserPoolId:    event.UserPoolID,
 			CognitoClient: deps.CognitoClient,
 			Ctx:           ctx,
 		}
-		cognitoErr := userCognito.DeleteFromCognito(userID, true)
+		cognitoErr := cognitoHelper.DeleteFromCognito(userID, true)
 		if cognitoErr != nil {
 			log.Println("Error occurred while trying to remove user cognito account: " + cognitoErr.Error())
 			return nil, fmt.Errorf("Something went wrong while creating new account, try again.")

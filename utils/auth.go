@@ -27,3 +27,11 @@ func GetAuthUserId(req *events.APIGatewayProxyRequest) string {
 
 	return sub
 }
+
+func IsAuthenticatedUser(req *events.APIGatewayProxyRequest, userId string) bool {
+	sub := GetAuthUserId(req)
+	if sub == "" {
+		return false
+	}
+	return sub == userId
+}

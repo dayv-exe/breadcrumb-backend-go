@@ -2,15 +2,10 @@ package models
 
 import (
 	"breadcrumb-backend-go/utils"
-	"errors"
 	"reflect"
 	"testing"
 
-	"github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider"
-	cognitoTypes "github.com/aws/aws-sdk-go-v2/service/cognitoidentityprovider/types"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	dbTypes "github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
-	"github.com/aws/aws-sdk-go/aws"
 )
 
 var testUserDynamo = map[string]dbTypes.AttributeValue{
@@ -41,7 +36,7 @@ func TestUser_DatabaseFormat(t *testing.T) {
 		false,
 	)
 
-	result := user.databaseFormat()
+	result := user.DatabaseFormat()
 
 	result["default_pic_fg"] = &dbTypes.AttributeValueMemberS{Value: ""}
 	result["default_pic_bg"] = &dbTypes.AttributeValueMemberS{Value: ""}
@@ -69,40 +64,6 @@ func TestUser_DatabaseFormat(t *testing.T) {
 	}
 }
 
-func TestUserCognitoDetails(t *testing.T) {
-	bDate := utils.GetTimeNow()
-
-	expect := CognitoInfo{
-		Email:     "test@gmail.com",
-		Birthdate: bDate,
-	}
-
-	query := func() (*cognitoidentityprovider.AdminGetUserOutput, error) {
-		return &cognitoidentityprovider.AdminGetUserOutput{
-			Username: aws.String("12345"),
-			UserAttributes: []cognitoTypes.AttributeType{
-				// mock cognito's response
-				{Name: aws.String("email"), Value: aws.String("test@gmail.com")},
-				{Name: aws.String("birthdate"), Value: aws.String(bDate)},
-			},
-		}, nil
-	}
-
-	result, err := getCognitoInfoQueryRunner(query)
-
-	if err != nil {
-		t.Fatalf("An unexpected error has occurred: %v", err)
-	}
-
-	if result.Email != expect.Email {
-		t.Fatalf("For key email: expected %v, got %v", expect.Email, result.Email)
-	}
-
-	if result.Birthdate != expect.Birthdate {
-		t.Fatalf("For key birthdate: expected %v, got %v", expect.Birthdate, result.Birthdate)
-	}
-}
-
 func TestConvertToUser(t *testing.T) {
 	expect := User{
 		Userid:        "123",
@@ -114,7 +75,7 @@ func TestConvertToUser(t *testing.T) {
 		IsDeactivated: false,
 	}
 
-	result, err := convertToUser(map[string]dbTypes.AttributeValue{
+	result, err := ConvertToUser(map[string]dbTypes.AttributeValue{
 		"pk":             &dbTypes.AttributeValueMemberS{Value: "USER#123"},
 		"nickname":       &dbTypes.AttributeValueMemberS{Value: "test"},
 		"name":           &dbTypes.AttributeValueMemberS{Value: "test"},
@@ -130,57 +91,5 @@ func TestConvertToUser(t *testing.T) {
 
 	if !reflect.DeepEqual(*result, expect) {
 		t.Errorf("Result: %v does not match expected: %v", result, expect)
-	}
-}
-
-func TestIsNicknameAvailableInDynamodb(t *testing.T) {
-	tests := []struct {
-		name          string
-		queryFn       func() (*dynamodb.GetItemOutput, error)
-		wantAvailable bool
-		wantErr       bool
-	}{
-		{
-			name: "nickname taken",
-			queryFn: func() (*dynamodb.GetItemOutput, error) {
-				return &dynamodb.GetItemOutput{
-					Item: map[string]dbTypes.AttributeValue{
-						"nickname": &dbTypes.AttributeValueMemberS{Value: "taken"},
-					},
-				}, nil
-			},
-			wantAvailable: false,
-			wantErr:       false,
-		},
-		{
-			name: "nickname not taken",
-			queryFn: func() (*dynamodb.GetItemOutput, error) {
-				return &dynamodb.GetItemOutput{
-					Item: nil,
-				}, nil
-			},
-			wantAvailable: true,
-			wantErr:       false,
-		},
-		{
-			name: "query returns error",
-			queryFn: func() (*dynamodb.GetItemOutput, error) {
-				return nil, errors.New("dynamo error")
-			},
-			wantAvailable: false,
-			wantErr:       true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := nicknameAvailableQueryRunner(tt.queryFn)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("unexpected error: %v", err)
-			}
-			if got != tt.wantAvailable {
-				t.Errorf("got %v, want %v", got, tt.wantAvailable)
-			}
-		})
 	}
 }
