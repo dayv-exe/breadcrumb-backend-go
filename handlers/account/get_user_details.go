@@ -27,19 +27,8 @@ type GetUserDetailsDependencies struct {
 
 type completeUserInfo struct {
 	// all the information on a user
-	DbInfo      models.User
-	CognitoInfo helpers.CognitoManagedInfo
-}
-
-type userInfo struct {
-	// the least amount of information to return on any user
-	Nickname                 string `json:"nickname"`
-	Name                     string `json:"name"`
-	DpUrl                    string `json:"dpUrl"`
-	DefaultProfilePicFgColor string `json:"defaultPicFg"`
-	DefaultProfilePicBgColor string `json:"defaultPicBg"`
-	IsSuspended              bool   `json:"isSuspended"`
-	IsDeactivated            bool   `json:"isDeactivated"`
+	models.User
+	helpers.CognitoManagedInfo
 }
 
 func (deps *GetUserDetailsDependencies) HandleGetUserDetails(ctx context.Context, req *events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
@@ -96,7 +85,7 @@ func (deps *GetUserDetailsDependencies) HandleGetUserDetails(ctx context.Context
 	}
 
 	// only return nickname, name, profile picture if one user requests another users information
-	return models.SuccessfulGetRequestResponse(userInfo{
+	return models.SuccessfulGetRequestResponse(models.User{
 		Nickname:                 user.Nickname,
 		Name:                     user.Name,
 		DpUrl:                    user.DpUrl,
