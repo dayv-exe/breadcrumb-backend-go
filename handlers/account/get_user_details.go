@@ -90,8 +90,8 @@ func (deps *GetUserDetailsDependencies) HandleGetUserDetails(ctx context.Context
 
 		return models.SuccessfulGetRequestResponse(completeUserInfo{
 			// return all the users info which is everything in dynamo and somethings in cognito
-			DbInfo:      *user,
-			CognitoInfo: *userCognitoInfo,
+			*user,
+			*userCognitoInfo,
 		}), nil
 	}
 
