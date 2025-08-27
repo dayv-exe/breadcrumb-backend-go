@@ -25,7 +25,7 @@ type GetUserDetailsDependencies struct {
 	TableName string
 }
 
-type completeUserInfo struct {
+type completeUserDetails struct {
 	// all the information on a user
 	models.User
 	helpers.CognitoManagedInfo
@@ -77,7 +77,7 @@ func (deps *GetUserDetailsDependencies) HandleGetUserDetails(ctx context.Context
 			return models.NotFoundResponse("User details not found."), nil
 		}
 
-		return models.SuccessfulGetRequestResponse(completeUserInfo{
+		return models.SuccessfulGetRequestResponse(completeUserDetails{
 			// return all the users info which is everything in dynamo and somethings in cognito
 			*user,
 			*userCognitoInfo,

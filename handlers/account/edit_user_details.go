@@ -11,18 +11,18 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 )
 
-type EditUserInfoDependency struct {
+type EditUserDetailsDependency struct {
 	DdbClient *dynamodb.Client
 	TableName string
 }
 
-type editUserInfoReq struct {
+type editUserDetailsReq struct {
 	Target  string `json:"target"`
 	Payload string `json:"payload"`
 }
 
-func (deps *EditUserInfoDependency) HandleEditUserInfo(ctx context.Context, req *events.APIGatewayProxyRequest) events.APIGatewayProxyResponse {
-	var reqBody editUserInfoReq
+func (deps *EditUserDetailsDependency) HandleEditUserDetails(ctx context.Context, req *events.APIGatewayProxyRequest) events.APIGatewayProxyResponse {
+	var reqBody editUserDetailsReq
 	if umErr := json.Unmarshal([]byte(req.Body), &reqBody); umErr != nil {
 		return models.InvalidRequestErrorResponse("")
 	}

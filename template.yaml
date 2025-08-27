@@ -222,11 +222,11 @@ Resources:
               - cognito-idp:AdminGetUser
             Resource: "*"
 
-  EditUserInfo:
+  EditUserDetails:
     Type: AWS::Serverless::Function
     Properties:
       MemorySize: 512
-      CodeUri: bin/edit_user_info/edit_user_info.zip
+      CodeUri: bin/edit_user_details/edit_user_details.zip
       Handler: bootstrap
       Architectures: [arm64]
       Description: allows user to edit some of their account information

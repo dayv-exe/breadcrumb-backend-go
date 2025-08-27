@@ -30,10 +30,10 @@ func init() {
 }
 
 func main() {
-	deps := account.EditUserInfoDependency{
+	deps := account.EditUserDetailsDependency{
 		DdbClient: dbClient,
 		TableName: tableName,
 	}
 
-	lambda.Start(deps.HandleEditUserInfo)
+	lambda.Start(deps.HandleEditUserDetails)
 }
