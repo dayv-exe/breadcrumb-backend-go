@@ -31,14 +31,19 @@ func (deps PostConfirmationDependencies) HandlePostConfirmation(ctx context.Cont
 		Ctx:       ctx,
 	}
 
+	// this function should only run if it is trigger by signup confirm
+	if event.TriggerSource != "PostConfirmation_ConfirmSignUp" {
+		return event, nil
+	}
+
 	// create new user
 	newUser := models.NewUser(userID, nickName, name, false)
 
 	err := dbHelper.AddUser(newUser)
 
 	if err != nil {
-		// if somthing goes wrong during the signup process deelete user cognito info
-		log.Println("ERROR IN SIGNUP CONFIRM GO FUNC: " + err.Error())
+		// if something goes wrong during the signup process deelete user cognito info
+		log.Printf("ERROR IN SIGNUP CONFIRM GO FUNC: %v", err)
 
 		cognitoHelper := helpers.UserCognitoHelper{
 			UserPoolId:    event.UserPoolID,
