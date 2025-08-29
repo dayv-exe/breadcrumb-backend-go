@@ -21,16 +21,16 @@ type editUserDetailsReq struct {
 	Payload string `json:"payload"`
 }
 
-func (deps *EditUserDetailsDependency) HandleEditUserDetails(ctx context.Context, req *events.APIGatewayProxyRequest) events.APIGatewayProxyResponse {
+func (deps *EditUserDetailsDependency) HandleEditUserDetails(ctx context.Context, req *events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	var reqBody editUserDetailsReq
 	if umErr := json.Unmarshal([]byte(req.Body), &reqBody); umErr != nil {
-		return models.InvalidRequestErrorResponse("")
+		return models.InvalidRequestErrorResponse(""), nil
 	}
 
 	userId := utils.GetAuthUserId(req)
 
 	if userId == "" {
-		return models.UnauthorizedErrorResponse("")
+		return models.UnauthorizedErrorResponse(""), nil
 	}
 
 	dbHelper := helpers.UserDynamoHelper{
@@ -47,7 +47,7 @@ func (deps *EditUserDetailsDependency) HandleEditUserDetails(ctx context.Context
 		newNickname := reqBody.Payload
 		nnErr := dbHelper.UpdateNickname(userId, newNickname)
 		if nnErr != nil {
-			return models.ServerSideErrorResponse("Something went wrong while trying to update nickname!", nnErr, "trying to update nickname")
+			return models.ServerSideErrorResponse("Something went wrong while trying to update nickname!", nnErr, "trying to update nickname"), nil
 		}
 
 	case "name":
@@ -56,13 +56,13 @@ func (deps *EditUserDetailsDependency) HandleEditUserDetails(ctx context.Context
 		nErr := dbHelper.UpdateName(userId, newName)
 
 		if nErr != nil {
-			return models.ServerSideErrorResponse("Something went wrong while trying to update full name!", nErr, "trying to update full name")
+			return models.ServerSideErrorResponse("Something went wrong while trying to update full name!", nErr, "trying to update full name"), nil
 		}
 
 	default:
 		// invalid target
-		return models.InvalidRequestErrorResponse("")
+		return models.InvalidRequestErrorResponse(""), nil
 	}
 
-	return models.SuccessfulRequestResponse("Resource updated successfully!", false)
+	return models.SuccessfulRequestResponse("Resource updated successfully!", false), nil
 }
