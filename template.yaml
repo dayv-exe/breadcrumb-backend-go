@@ -246,6 +246,35 @@ Resources:
         - DynamoDBReadPolicy:
             TableName: !Ref UsersTable
 
+  DeleteUser:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: bin/delete_user/delete_user.zip
+      Handler: bootstrap
+      Architectures: [arm64]
+      Description: deletes users details at users request
+      Environment:
+        Variables:
+          USER_POOL_ID: !Ref CognitoUserPool
+          USERS_TABLE: !Ref UsersTable
+      Events:
+        ApiRequest:
+          Type: HttpApi
+          Properties:
+            Path: /delete/user
+            Method: DELETE
+            ApiId: !Ref BreadApi
+            Auth:
+              Authorizer: CognitoAuthorizer
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref UsersTable
+        - Statement:
+            Effect: Allow
+            Action:
+              - cognito-idp:AdminDeleteUser
+            Resource: "*"
+
   RemoveStaleAccountsFunction:
     Type: AWS::Serverless::Function
     Properties:

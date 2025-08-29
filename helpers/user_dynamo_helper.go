@@ -89,6 +89,10 @@ func (deps *UserDynamoHelper) FindById(id string) (*models.User, error) {
 		return nil, err
 	}
 
+	if len(output.Item) < 1 {
+		return nil, nil
+	}
+
 	return models.ConvertToUser(output.Item)
 }
 
