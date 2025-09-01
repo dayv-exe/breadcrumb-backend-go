@@ -22,6 +22,10 @@ type DeleteUserDependencies struct {
 func (deps *DeleteUserDependencies) HandleDeleteUser(ctx context.Context, req *events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	userId := utils.GetAuthUserId(req)
 
+	if userId == "" {
+		return models.UnauthorizedErrorResponse(""), nil
+	}
+
 	// get user details from db
 	dbHelper := helpers.UserDynamoHelper{
 		DbClient:  deps.DbClient,
