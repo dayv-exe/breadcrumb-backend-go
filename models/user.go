@@ -4,7 +4,6 @@ package models
 
 import (
 	"breadcrumb-backend-go/utils"
-	"log"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
@@ -31,6 +30,11 @@ type User struct {
 	DefaultProfilePicBgColor string `dynamodbav:"default_pic_bg" json:"defaultPicBg"`
 }
 
+const (
+	userPkPrefix = "USER#"
+	userSkPrefix = "PROFILE"
+)
+
 func NewUser(userid string, nickname string, name string, isSuspended bool) *User {
 	defaultColors := utils.GenerateRandomColorPair()
 
@@ -55,14 +59,14 @@ func NewUser(userid string, nickname string, name string, isSuspended bool) *Use
 
 func UserKey(userid string) map[string]types.AttributeValue {
 	return map[string]types.AttributeValue{
-		"pk": &types.AttributeValueMemberS{Value: "USER#" + userid},
-		"sk": &types.AttributeValueMemberS{Value: "PROFILE"},
+		"pk": &types.AttributeValueMemberS{Value: userPkPrefix + userid},
+		"sk": &types.AttributeValueMemberS{Value: userSkPrefix},
 	}
 }
 
 func (u *User) DatabaseFormat() map[string]types.AttributeValue {
-	u.Userid = "USER#" + u.Userid
-	u.DbDescription = "PROFILE"
+	u.Userid = userPkPrefix + u.Userid
+	u.DbDescription = userSkPrefix
 	u.Nickname = strings.ToLower(u.Nickname)
 	item, err := attributevalue.MarshalMap(u)
 
@@ -74,13 +78,11 @@ func (u *User) DatabaseFormat() map[string]types.AttributeValue {
 
 func ConvertToUser(item map[string]types.AttributeValue) (*User, error) {
 	var u User
-	log.Println("Started converting user")
 	if err := attributevalue.UnmarshalMap(item, &u); err != nil {
 		return nil, err
 	}
 
-	u.Userid = strings.TrimPrefix(u.Userid, "USER#")
+	u.Userid = strings.TrimPrefix(u.Userid, userPkPrefix)
 
-	log.Println("done converting user")
 	return &u, nil
 }

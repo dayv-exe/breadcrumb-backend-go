@@ -177,6 +177,16 @@ func (deps *UserDynamoHelper) UpdateNicknameAndFullname(userId string, nickname 
 				},
 			},
 			{
+				Update: &types.Update{
+					Key:              models.UserKey(userId),
+					TableName:        aws.String(deps.TableName),
+					UpdateExpression: aws.String("SET name = :fn"),
+					ExpressionAttributeValues: map[string]types.AttributeValue{
+						":fn": &types.AttributeValueMemberS{Value: fullname},
+					},
+				},
+			},
+			{
 				Put: &types.Put{
 					Item:      newNickname.DatabaseFormat(),
 					TableName: aws.String(deps.TableName),
