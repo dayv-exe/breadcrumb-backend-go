@@ -53,6 +53,13 @@ func NewUser(userid string, nickname string, name string, isSuspended bool) *Use
 	}
 }
 
+func UserKey(userid string) map[string]types.AttributeValue {
+	return map[string]types.AttributeValue{
+		"pk": &types.AttributeValueMemberS{Value: "USER#" + userid},
+		"sk": &types.AttributeValueMemberS{Value: "PROFILE"},
+	}
+}
+
 func (u *User) DatabaseFormat() map[string]types.AttributeValue {
 	u.Userid = "USER#" + u.Userid
 	u.DbDescription = "PROFILE"

@@ -21,13 +21,14 @@ type UserDynamoHelper struct {
 }
 
 func (deps *UserDynamoHelper) AddUser(u *models.User) error {
+	newNickname := models.NewNickname(u.Nickname, u.Name, u.Userid)
 	input := &dynamodb.TransactWriteItemsInput{
 		TransactItems: []types.TransactWriteItem{
 			{
 				// adds nickname item to reserve name
 				Put: &types.Put{
 					TableName: aws.String(deps.TableName),
-					Item:      utils.GetNicknameDbItem(u.Userid, u.Nickname),
+					Item:      newNickname.DatabaseFormat(),
 					// if this fails most likely because nickname is already in use everything will roll back
 					ConditionExpression: aws.String("attribute_not_exists(pk)"),
 				},
@@ -79,7 +80,7 @@ func (deps *UserDynamoHelper) FindByNickname(nickname string) (*models.User, err
 
 func (deps *UserDynamoHelper) FindById(id string) (*models.User, error) {
 	input := dynamodb.GetItemInput{
-		Key:       profileKey(id),
+		Key:       models.UserKey(id),
 		TableName: &deps.TableName,
 	}
 
@@ -96,20 +97,6 @@ func (deps *UserDynamoHelper) FindById(id string) (*models.User, error) {
 	return models.ConvertToUser(output.Item)
 }
 
-func nicknameKey(nickname string) map[string]types.AttributeValue {
-	return map[string]types.AttributeValue{
-		"pk": &types.AttributeValueMemberS{Value: "NICKNAME#" + nickname},
-		"sk": &types.AttributeValueMemberS{Value: "NICKNAME"},
-	}
-}
-
-func profileKey(userid string) map[string]types.AttributeValue {
-	return map[string]types.AttributeValue{
-		"pk": &types.AttributeValueMemberS{Value: "USER#" + userid},
-		"sk": &types.AttributeValueMemberS{Value: "PROFILE"},
-	}
-}
-
 func (deps *UserDynamoHelper) DeleteFromDynamo(userId string, nickname string) error {
 	// delete user profile, nickname, friends, post and allat
 	input := &dynamodb.TransactWriteItemsInput{
@@ -117,14 +104,14 @@ func (deps *UserDynamoHelper) DeleteFromDynamo(userId string, nickname string) e
 			{
 				// delete account metadata
 				Delete: &types.Delete{
-					Key:       profileKey(userId),
+					Key:       models.UserKey(userId),
 					TableName: aws.String(deps.TableName),
 				},
 			},
 			{
 				// delete nickname reservation
 				Delete: &types.Delete{
-					Key:       nicknameKey(nickname),
+					Key:       models.NicknameKey(nickname),
 					TableName: aws.String(deps.TableName),
 				},
 			},
@@ -145,7 +132,12 @@ func (deps *UserDynamoHelper) DeleteFromDynamo(userId string, nickname string) e
 	return nil
 }
 
-func (deps *UserDynamoHelper) UpdateNickname(userId string, nickname string) error {
+func (deps *UserDynamoHelper) UpdateNicknameAndFullname(userId string, nickname string, fullname string) error {
+
+	if !utils.NameIsValid(&fullname) {
+		return fmt.Errorf("Name is invalid!")
+	}
+
 	if !utils.NicknameValid(nickname) {
 		return fmt.Errorf("Nickname is invalid!")
 	}
@@ -164,17 +156,19 @@ func (deps *UserDynamoHelper) UpdateNickname(userId string, nickname string) err
 	// update user details nickname
 	// put new nickname item
 
+	newNickname := models.NewNickname(nickname, fullname, userId)
+
 	input := &dynamodb.TransactWriteItemsInput{
 		TransactItems: []types.TransactWriteItem{
 			{
 				Delete: &types.Delete{
-					Key:       nicknameKey(nickname),
+					Key:       models.NicknameKey(nickname),
 					TableName: aws.String(deps.TableName),
 				},
 			},
 			{
 				Update: &types.Update{
-					Key:              profileKey(userId),
+					Key:              models.UserKey(userId),
 					TableName:        aws.String(deps.TableName),
 					UpdateExpression: aws.String("SET nickname = :n"),
 					ExpressionAttributeValues: map[string]types.AttributeValue{
@@ -184,7 +178,7 @@ func (deps *UserDynamoHelper) UpdateNickname(userId string, nickname string) err
 			},
 			{
 				Put: &types.Put{
-					Item:      utils.GetNicknameDbItem(userId, nickname),
+					Item:      newNickname.DatabaseFormat(),
 					TableName: aws.String(deps.TableName),
 				},
 			},
@@ -197,10 +191,6 @@ func (deps *UserDynamoHelper) UpdateNickname(userId string, nickname string) err
 		return fmt.Errorf("An error occurred while trying to update nickname: "+upErr.Error(), nil)
 	}
 
-	return nil
-}
-
-func (deps *UserDynamoHelper) UpdateName(userId string, name string) error {
 	return nil
 }
 

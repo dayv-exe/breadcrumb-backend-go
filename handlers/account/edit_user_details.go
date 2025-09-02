@@ -17,8 +17,13 @@ type EditUserDetailsDependency struct {
 }
 
 type editUserDetailsReq struct {
-	Target  string `json:"target"`
-	Payload string `json:"payload"`
+	Target  string          `json:"target"`
+	Payload json.RawMessage `json:"payload"`
+}
+
+type editNamePayload struct {
+	Nickname string `json:"nickname"`
+	Name     string `json:"fullname"`
 }
 
 func (deps *EditUserDetailsDependency) HandleEditUserDetails(ctx context.Context, req *events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
@@ -42,21 +47,16 @@ func (deps *EditUserDetailsDependency) HandleEditUserDetails(ctx context.Context
 	// allows update of nickname, full name, bio
 
 	switch reqBody.Target {
-	case "nickname":
-		// update nickname (its called username in the front end)
-		newNickname := reqBody.Payload
-		nnErr := dbHelper.UpdateNickname(userId, newNickname)
-		if nnErr != nil {
-			return models.ServerSideErrorResponse("Something went wrong while trying to update nickname!", nnErr, "trying to update nickname"), nil
+	case "names":
+		// update nickname and fullname (its called username in the front end)
+		var namePayload editNamePayload
+		if umErr := json.Unmarshal([]byte(reqBody.Payload), &namePayload); umErr != nil {
+			return models.InvalidRequestErrorResponse(""), nil
 		}
 
-	case "name":
-		// update full name
-		newName := reqBody.Payload
-		nErr := dbHelper.UpdateName(userId, newName)
-
-		if nErr != nil {
-			return models.ServerSideErrorResponse("Something went wrong while trying to update full name!", nErr, "trying to update full name"), nil
+		nnErr := dbHelper.UpdateNicknameAndFullname(userId, namePayload.Nickname, namePayload.Name)
+		if nnErr != nil {
+			return models.ServerSideErrorResponse("Something went wrong while trying to update nickname!", nnErr, "trying to update nickname"), nil
 		}
 
 	default:
