@@ -7,7 +7,7 @@ import (
 
 type Nickname struct {
 	Nickname      string `dynamodbav:"pk" json:"nickname"`
-	dbDescription string `dynamodbav:"sk"`
+	DbDescription string `dynamodbav:"sk"`
 	UserId        string `dynamodbav:"userId" json:"userId"`
 	Fullname      string `dynamodbav:"name" json:"fullname"`
 }
@@ -15,7 +15,7 @@ type Nickname struct {
 func NewNickname(nicknameStr string, name string, userid string) *Nickname {
 	return &Nickname{
 		Nickname:      "NICKNAME#" + nicknameStr,
-		dbDescription: "NICKNAME",
+		DbDescription: "NICKNAME",
 		UserId:        userid,
 		Fullname:      name,
 	}
