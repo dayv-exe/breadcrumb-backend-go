@@ -28,12 +28,12 @@ func NicknameKey(nickname string) map[string]types.AttributeValue {
 	}
 }
 
-func (n *Nickname) DatabaseFormat() map[string]types.AttributeValue {
+func (n *Nickname) DatabaseFormat() *map[string]types.AttributeValue {
 	item, err := attributevalue.MarshalMap(n)
 
 	if err != nil {
 		return nil
 	}
 
-	return item
+	return &item
 }

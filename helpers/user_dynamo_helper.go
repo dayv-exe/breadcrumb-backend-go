@@ -22,13 +22,15 @@ type UserDynamoHelper struct {
 
 func (deps *UserDynamoHelper) AddUser(u *models.User) error {
 	newNickname := models.NewNickname(u.Nickname, u.Name, u.Userid)
+	log.Printf("nickname: %v", *newNickname.DatabaseFormat())
+	log.Printf("user: %v", *u.DatabaseFormat())
 	input := &dynamodb.TransactWriteItemsInput{
 		TransactItems: []types.TransactWriteItem{
 			{
 				// adds nickname item to reserve name
 				Put: &types.Put{
 					TableName: aws.String(deps.TableName),
-					Item:      newNickname.DatabaseFormat(),
+					Item:      *newNickname.DatabaseFormat(),
 					// if this fails most likely because nickname is already in use everything will roll back
 					ConditionExpression: aws.String("attribute_not_exists(pk)"),
 				},
@@ -37,11 +39,13 @@ func (deps *UserDynamoHelper) AddUser(u *models.User) error {
 				// add user to db
 				Put: &types.Put{
 					TableName: aws.String(deps.TableName),
-					Item:      u.DatabaseFormat(),
+					Item:      *u.DatabaseFormat(),
 				},
 			},
 		},
 	}
+
+	log.Printf("input: %v", *input)
 
 	_, err := deps.DbClient.TransactWriteItems(deps.Ctx, input)
 
@@ -188,7 +192,7 @@ func (deps *UserDynamoHelper) UpdateNicknameAndFullname(userId string, nickname 
 			},
 			{
 				Put: &types.Put{
-					Item:      newNickname.DatabaseFormat(),
+					Item:      *newNickname.DatabaseFormat(),
 					TableName: aws.String(deps.TableName),
 				},
 			},

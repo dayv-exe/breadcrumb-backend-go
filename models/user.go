@@ -64,7 +64,7 @@ func UserKey(userid string) map[string]types.AttributeValue {
 	}
 }
 
-func (u *User) DatabaseFormat() map[string]types.AttributeValue {
+func (u *User) DatabaseFormat() *map[string]types.AttributeValue {
 	u.Userid = userPkPrefix + u.Userid
 	u.DbDescription = userSkPrefix
 	u.Nickname = strings.ToLower(u.Nickname)
@@ -73,7 +73,7 @@ func (u *User) DatabaseFormat() map[string]types.AttributeValue {
 	if err != nil {
 		return nil
 	}
-	return item
+	return &item
 }
 
 func ConvertToUser(item map[string]types.AttributeValue) (*User, error) {
