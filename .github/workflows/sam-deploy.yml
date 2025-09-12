@@ -69,7 +69,6 @@ jobs:
             --s3-bucket breadcrumb-sam-${{ env.AWS_REGION }} \
             --stack-name breadcrumb-stack \
             --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
-            --resolve-s3 \
             --region ${{env.AWS_REGION}} \
             --no-confirm-changeset \
             --no-fail-on-empty-changeset
