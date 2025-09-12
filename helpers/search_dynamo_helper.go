@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
@@ -135,6 +136,8 @@ func (deps *SearchDynamoHelper) DeleteUserIndexes(user *models.User) error {
 	input := &dynamodb.TransactWriteItemsInput{
 		TransactItems: items,
 	}
+
+	log.Println(keys)
 
 	_, err := deps.DbClient.TransactWriteItems(deps.Ctx, input)
 	if err != nil {
