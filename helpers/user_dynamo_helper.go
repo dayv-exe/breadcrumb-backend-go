@@ -50,7 +50,7 @@ func (deps *UserDynamoHelper) AddUser(u *models.User) error {
 		var tce *types.TransactionCanceledException
 		if errors.As(err, &tce) {
 			for i, reason := range tce.CancellationReasons {
-				fmt.Printf("Cancellation %d: Code=%s, Message=%s\n",
+				fmt.Printf("add user Cancellation %d: Code=%s, Message=%s\n",
 					i,
 					aws.ToString(reason.Code),
 					aws.ToString(reason.Message),
@@ -139,7 +139,7 @@ func (deps *UserDynamoHelper) DeleteFromDynamo(userId string, nickname string) e
 		var tce *types.TransactionCanceledException
 		if errors.As(err, &tce) {
 			for i, reason := range tce.CancellationReasons {
-				fmt.Printf("Cancellation %d: Code=%s, Message=%s\n",
+				fmt.Printf("delete user from dbCancellation %d: Code=%s, Message=%s\n",
 					i,
 					aws.ToString(reason.Code),
 					aws.ToString(reason.Message),
@@ -222,7 +222,7 @@ func (deps *UserDynamoHelper) UpdateNicknameAndFullname(userId string, nickname 
 		var tce *types.TransactionCanceledException
 		if errors.As(upErr, &tce) {
 			for i, reason := range tce.CancellationReasons {
-				fmt.Printf("Cancellation %d: Code=%s, Message=%s\n",
+				fmt.Printf("update names Cancellation %d: Code=%s, Message=%s\n",
 					i,
 					aws.ToString(reason.Code),
 					aws.ToString(reason.Message),

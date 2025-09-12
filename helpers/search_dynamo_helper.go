@@ -94,7 +94,7 @@ func (deps *SearchDynamoHelper) AddUserSearchIndex(user *models.User) error {
 		var tce *types.TransactionCanceledException
 		if errors.As(dbErr, &tce) {
 			for i, reason := range tce.CancellationReasons {
-				fmt.Printf("Cancellation %d: Code=%s, Message=%s\n",
+				fmt.Printf("add user search index Cancellation %d: Code=%s, Message=%s\n",
 					i,
 					aws.ToString(reason.Code),
 					aws.ToString(reason.Message),
@@ -142,7 +142,7 @@ func (deps *SearchDynamoHelper) DeleteUserIndexes(user *models.User) error {
 		var tce *types.TransactionCanceledException
 		if errors.As(err, &tce) {
 			for i, reason := range tce.CancellationReasons {
-				fmt.Printf("Cancellation %d: Code=%s, Message=%s\n",
+				fmt.Printf("delete user index Cancellation %d: Code=%s, Message=%s\n",
 					i,
 					aws.ToString(reason.Code),
 					aws.ToString(reason.Message),
