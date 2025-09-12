@@ -65,7 +65,7 @@ func UserKey(userid string) map[string]types.AttributeValue {
 	}
 }
 
-func (u User) DatabaseFormat() *map[string]types.AttributeValue {
+func (u *User) DatabaseFormat() *map[string]types.AttributeValue {
 	u.Userid = utils.AddPrefix(userPkPrefix, u.Userid)
 	u.DbDescription = userSkPrefix
 
