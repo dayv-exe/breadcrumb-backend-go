@@ -56,7 +56,7 @@ func (deps PostConfirmationDependencies) HandlePostConfirmation(ctx context.Cont
 		if err != nil {
 			log.Printf("ERROR IN SIGNUP CONFIRM GO FUNC: %v", err)
 		} else {
-			log.Printf("ERROR IN SIGNUP CONFIRM GO FUNC: %v", indexErr)
+			log.Printf("ERROR IN SIGNUP CONFIRM GO INDEX FUNC: %v", indexErr)
 		}
 
 		// remove the users info from cognito
@@ -80,6 +80,8 @@ func (deps PostConfirmationDependencies) HandlePostConfirmation(ctx context.Cont
 				log.Println("Error occurred while trying to remove user dynamodb details: " + dynamodbErr.Error())
 				return nil, fmt.Errorf("Something went wrong while setting up account, try again.")
 			}
+
+			log.Print("DELETED FROM DYNAMO USERS")
 		} else if err != nil && indexErr == nil {
 			// if we are unable to add the user to dynamodb, then delete the users names index from search table
 			delIndexErr := searchHelper.DeleteUserIndexes(newUser)
@@ -87,6 +89,8 @@ func (deps PostConfirmationDependencies) HandlePostConfirmation(ctx context.Cont
 				log.Println("Error occurred while trying to remove user search indexes: " + delIndexErr.Error())
 				return nil, fmt.Errorf("Something went wrong while setting up account, try again.")
 			}
+
+			log.Print("DELETED FROM DYNAMO INDEX")
 		}
 
 		return nil, fmt.Errorf("Something went wrong while creating new account, try again.")
