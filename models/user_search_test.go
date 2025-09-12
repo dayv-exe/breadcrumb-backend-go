@@ -259,10 +259,6 @@ func TestGetUserSearchIndexesKeysNickName(t *testing.T) {
 					"pk": &types.AttributeValueMemberS{Value: "USER_INDEX#jo"},
 					"sk": &types.AttributeValueMemberS{Value: "john#123"},
 				},
-				{
-					"pk": &types.AttributeValueMemberS{Value: "USER_INDEX#jo"},
-					"sk": &types.AttributeValueMemberS{Value: "john#123"},
-				},
 			},
 		},
 		{
