@@ -6,6 +6,9 @@ import (
 	"strings"
 )
 
+// not in use yet
+var bannedNicknameSubstrings = []string{"user", ""}
+
 func NicknameValid(nickname string) bool {
 	if len(nickname) < constants.MIN_USERNAME_CHARS || len(nickname) > constants.MAX_USERNAME_CHARS {
 		return false
@@ -17,6 +20,19 @@ func NicknameValid(nickname string) bool {
 		return false
 	}
 
+	// to allow striping the username and placing it in the search index table for easier searching
+
+	// block patterns like a_1, b.2, a_b, c.d
+	if len(strings.Replace(nickname, ".", "", 1)) < 3 || len(strings.Replace(nickname, "_", "", 1)) < 3 {
+		return false
+	}
+
+	// block if username contains no letters
+	if ok, _ := regexp.MatchString(`[a-zA-Z]`, nickname); !ok {
+		return false
+	}
+
+	// can only contain on dot or underscore
 	if strings.Contains(nickname, "..") || strings.Contains(nickname, "__") {
 		return false
 	}

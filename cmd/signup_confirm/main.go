@@ -14,7 +14,8 @@ import (
 
 var (
 	db            *dynamodb.Client
-	usersTable    = os.Getenv("USERS_TABLE")
+	usersTable    string
+	searchTable   string
 	cognitoClient *cognitoidentityprovider.Client
 )
 
@@ -25,14 +26,25 @@ func init() {
 	}
 	db = dynamodb.NewFromConfig(cfg)
 	cognitoClient = cognitoidentityprovider.NewFromConfig(cfg)
+
+	usersTable = os.Getenv("USERS_TABLE")
+	if usersTable == "" {
+		panic("USERS_TABLE environment variable not set")
+	}
+
+	searchTable = os.Getenv("SEARCH_TABLE")
+	if searchTable == "" {
+		panic("SEARCH_TABLE environment variable not set")
+	}
 }
 
 func main() {
 
 	hpc := auth.PostConfirmationDependencies{
-		DdbClient:     db,
-		TableName:     usersTable,
-		CognitoClient: cognitoClient,
+		DdbClient:       db,
+		TableName:       usersTable,
+		SearchTableName: searchTable,
+		CognitoClient:   cognitoClient,
 	}
 
 	lambda.Start(hpc.HandlePostConfirmation)

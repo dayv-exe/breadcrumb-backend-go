@@ -1,0 +1,34 @@
+FRIEND ITEM
+
+pk: USER#{sender uuid} sk: FRIEND#{reciver uuid} date: {time_sent} status: pending | active is_sender: true
+
+pk: USER#{reciver uuid} sk: FRIEND#{sender uuid} date: {time_sent} status: pending | active is_sender: false
+
+REQUEST ITEM
+
+pk: USER#{recipients uuid} sk: FREIND_REQUEST#{senders uuid} date: {time_sent}
+
+NICKNAME ITEM
+pk: NICKNAME#{nickname} sk FULLNAME#{fullname} userId: {userid}
+
+FULLNAME ITEM
+pk: FULLNAME#{fullname} sk: NICKNAME#{nickname} userId: {userid}
+
+// nickname shard should be 'NICKNAME#' + first 2 or 3 chars of nickname
+// fullname sharding should be 'FULLNAME#' + 
+SEARCH ITEM
+pk: NICKNAME#AA sk: NICKNAME#{nickname}
+pk FULLNAME# sk: FULLNAME#{fullname}
+
+david.arubuike
+NICKNAME#dav david.arubuike
+NICKNAME#dav dave
+NICKNAME#dav david.a
+NICKNAME#dav
+
+john doe
+
+FULLNAME#joh john doe
+
+how we will handle searching by full name
+when you enter your full name 

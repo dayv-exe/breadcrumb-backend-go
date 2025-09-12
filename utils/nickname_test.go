@@ -24,7 +24,10 @@ func TestIsNicknameValid(t *testing.T) {
 		{".johndoe", false},
 		{"4ksf_sqmd1", true},
 		{"john.doe001234ed", false},
-		{"14792384913", true},
+		{"14792384913", false},
+		{"a.1", false},
+		{"ab.1", true},
+		{"p_12345", true},
 	}
 
 	for _, tt := range tests {

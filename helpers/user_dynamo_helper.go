@@ -22,8 +22,6 @@ type UserDynamoHelper struct {
 
 func (deps *UserDynamoHelper) AddUser(u *models.User) error {
 	newNickname := models.NewNickname(u.Nickname, u.Name, u.Userid)
-	log.Printf("nickname: %v", *newNickname.DatabaseFormat())
-	log.Printf("user: %v", *u.DatabaseFormat())
 	input := &dynamodb.TransactWriteItemsInput{
 		TransactItems: []types.TransactWriteItem{
 			{
@@ -44,8 +42,6 @@ func (deps *UserDynamoHelper) AddUser(u *models.User) error {
 			},
 		},
 	}
-
-	log.Printf("input: %v", *input)
 
 	_, err := deps.DbClient.TransactWriteItems(deps.Ctx, input)
 
@@ -76,8 +72,6 @@ func (deps *UserDynamoHelper) FindByNickname(nickname string) (*models.User, err
 	if output.Count < 1 {
 		return nil, nil
 	}
-
-	log.Println("Done fetching user, got %w", output.Items[0])
 
 	return models.ConvertToUser(output.Items[0])
 }
@@ -218,10 +212,7 @@ func (deps *UserDynamoHelper) UpdateDpUrl(userId string, url string) error {
 
 func (deps *UserDynamoHelper) NicknameAvailable(nickname string) (bool, error) {
 	input := dynamodb.GetItemInput{
-		Key: map[string]types.AttributeValue{
-			"pk": &types.AttributeValueMemberS{Value: "NICKNAME#" + strings.ToLower(nickname)},
-			"sk": &types.AttributeValueMemberS{Value: "NICKNAME"},
-		},
+		Key:       models.NicknameKey(nickname),
 		TableName: aws.String(deps.TableName),
 	}
 

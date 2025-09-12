@@ -89,6 +89,7 @@ func (deps *GetUserDetailsDependencies) HandleGetUserDetails(ctx context.Context
 		Nickname:                 user.Nickname,
 		Name:                     user.Name,
 		DpUrl:                    user.DpUrl,
+		Bio:                      user.Bio,
 		DefaultProfilePicFgColor: user.DefaultProfilePicFgColor,
 		DefaultProfilePicBgColor: user.DefaultProfilePicBgColor,
 		IsSuspended:              user.IsSuspended,

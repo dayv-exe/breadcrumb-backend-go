@@ -54,20 +54,20 @@ func NewUser(userid string, nickname string, name string, isSuspended bool) *Use
 		SuspensionReason:         "",
 		DefaultProfilePicFgColor: defaultColors.Foreground,
 		DefaultProfilePicBgColor: defaultColors.Background,
+		DbDescription:            userSkPrefix,
 	}
 }
 
 func UserKey(userid string) map[string]types.AttributeValue {
 	return map[string]types.AttributeValue{
-		"pk": &types.AttributeValueMemberS{Value: userPkPrefix + userid},
+		"pk": &types.AttributeValueMemberS{Value: utils.AddPrefix(userPkPrefix, userid)},
 		"sk": &types.AttributeValueMemberS{Value: userSkPrefix},
 	}
 }
 
-func (u *User) DatabaseFormat() *map[string]types.AttributeValue {
-	u.Userid = userPkPrefix + u.Userid
-	u.DbDescription = userSkPrefix
-	u.Nickname = strings.ToLower(u.Nickname)
+func (u User) DatabaseFormat() *map[string]types.AttributeValue {
+	u.Userid = utils.AddPrefix(userPkPrefix, u.Userid)
+
 	item, err := attributevalue.MarshalMap(u)
 
 	if err != nil {
