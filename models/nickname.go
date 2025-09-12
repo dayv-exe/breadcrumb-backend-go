@@ -10,7 +10,7 @@ import (
 
 type Nickname struct {
 	Nickname    string `dynamodbav:"pk" json:"nickname"`
-	Description string `dynamodbav:"SK"`
+	Description string `dynamodbav:"sk"`
 	UserId      string `dynamodbav:"userId" json:"userId"`
 }
 
@@ -41,7 +41,6 @@ func NicknameKey(nickname string) map[string]types.AttributeValue {
 
 func (n *Nickname) DatabaseFormat() *map[string]types.AttributeValue {
 	n.Nickname = utils.AddPrefix(nicknamePkPrefix, n.Nickname)
-	n.Description = nicknameSkPrefix
 	item, err := attributevalue.MarshalMap(n)
 
 	if err != nil {
