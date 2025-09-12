@@ -138,6 +138,17 @@ func (deps *SearchDynamoHelper) DeleteUserIndexes(user *models.User) error {
 
 	_, err := deps.DbClient.TransactWriteItems(deps.Ctx, input)
 	if err != nil {
+		// Check for transaction cancellation reasons
+		var tce *types.TransactionCanceledException
+		if errors.As(err, &tce) {
+			for i, reason := range tce.CancellationReasons {
+				fmt.Printf("Cancellation %d: Code=%s, Message=%s\n",
+					i,
+					aws.ToString(reason.Code),
+					aws.ToString(reason.Message),
+				)
+			}
+		}
 		return err
 	}
 

@@ -46,6 +46,17 @@ func (deps *UserDynamoHelper) AddUser(u *models.User) error {
 	_, err := deps.DbClient.TransactWriteItems(deps.Ctx, input)
 
 	if err != nil {
+		// Check for transaction cancellation reasons
+		var tce *types.TransactionCanceledException
+		if errors.As(err, &tce) {
+			for i, reason := range tce.CancellationReasons {
+				fmt.Printf("Cancellation %d: Code=%s, Message=%s\n",
+					i,
+					aws.ToString(reason.Code),
+					aws.ToString(reason.Message),
+				)
+			}
+		}
 		return err
 	}
 
@@ -124,6 +135,17 @@ func (deps *UserDynamoHelper) DeleteFromDynamo(userId string, nickname string) e
 			log.Println("Could not find user resource to delete: %w", nickname)
 			return nil
 		}
+		// Check for transaction cancellation reasons
+		var tce *types.TransactionCanceledException
+		if errors.As(err, &tce) {
+			for i, reason := range tce.CancellationReasons {
+				fmt.Printf("Cancellation %d: Code=%s, Message=%s\n",
+					i,
+					aws.ToString(reason.Code),
+					aws.ToString(reason.Message),
+				)
+			}
+		}
 		return err
 	}
 
@@ -196,7 +218,18 @@ func (deps *UserDynamoHelper) UpdateNicknameAndFullname(userId string, nickname 
 	_, upErr := deps.DbClient.TransactWriteItems(deps.Ctx, input)
 
 	if upErr != nil {
-		return fmt.Errorf("An error occurred while trying to update nickname: "+upErr.Error(), nil)
+		// Check for transaction cancellation reasons
+		var tce *types.TransactionCanceledException
+		if errors.As(upErr, &tce) {
+			for i, reason := range tce.CancellationReasons {
+				fmt.Printf("Cancellation %d: Code=%s, Message=%s\n",
+					i,
+					aws.ToString(reason.Code),
+					aws.ToString(reason.Message),
+				)
+			}
+		}
+		return upErr
 	}
 
 	return nil
