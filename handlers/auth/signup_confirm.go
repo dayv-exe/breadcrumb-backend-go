@@ -53,7 +53,11 @@ func (deps PostConfirmationDependencies) HandlePostConfirmation(ctx context.Cont
 
 	if err != nil || indexErr != nil {
 		// if something goes wrong during the signup process deelete user cognito info
-		log.Printf("ERROR IN SIGNUP CONFIRM GO FUNC: %v", err)
+		if err != nil {
+			log.Printf("ERROR IN SIGNUP CONFIRM GO FUNC: %v", err)
+		} else {
+			log.Printf("ERROR IN SIGNUP CONFIRM GO FUNC: %v", indexErr)
+		}
 
 		// remove the users info from cognito
 		cognitoHelper := helpers.UserCognitoHelper{
@@ -66,6 +70,7 @@ func (deps PostConfirmationDependencies) HandlePostConfirmation(ctx context.Cont
 			log.Println("Error occurred while trying to remove user cognito account: " + cognitoErr.Error())
 			return nil, fmt.Errorf("Something went wrong while setting up account, try again.")
 		}
+		log.Print("DELETED FROM COGNITO")
 
 		if err == nil && indexErr != nil {
 			// if we are unable to add the users names(nickname and full name) to the search table, we will delete the user from dynamo since they must have already been added to users table at this point
