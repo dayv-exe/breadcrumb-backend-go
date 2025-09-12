@@ -75,15 +75,22 @@ func DeconstructSearchIndexItem(item *map[string]types.AttributeValue) (*UserSea
 
 func GetUserSearchIndexesKeys(indexItems []map[string]types.AttributeValue) []map[string]types.AttributeValue {
 	var keys []map[string]types.AttributeValue
+	seen := make(map[string]struct{})
+
 	for _, item := range indexItems {
 		pkAttr, pkOk := item["pk"].(*types.AttributeValueMemberS)
 		skAttr, skOk := item["sk"].(*types.AttributeValueMemberS)
 
 		if pkOk && skOk {
-			keys = append(keys, map[string]types.AttributeValue{
-				"pk": pkAttr,
-				"sk": skAttr,
-			})
+			compositeKey := pkAttr.Value + "#" + skAttr.Value
+
+			if _, exists := seen[compositeKey]; !exists {
+				seen[compositeKey] = struct{}{}
+				keys = append(keys, map[string]types.AttributeValue{
+					"pk": pkAttr,
+					"sk": skAttr,
+				})
+			}
 		}
 	}
 
