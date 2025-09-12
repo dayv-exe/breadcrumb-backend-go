@@ -3,6 +3,7 @@ package helpers
 import (
 	"breadcrumb-backend-go/models"
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -89,6 +90,17 @@ func (deps *SearchDynamoHelper) AddUserSearchIndex(user *models.User) error {
 	_, dbErr := deps.DbClient.TransactWriteItems(deps.Ctx, input)
 
 	if dbErr != nil {
+		// Check for transaction cancellation reasons
+		var tce *types.TransactionCanceledException
+		if errors.As(dbErr, &tce) {
+			for i, reason := range tce.CancellationReasons {
+				fmt.Printf("Cancellation %d: Code=%s, Message=%s\n",
+					i,
+					aws.ToString(reason.Code),
+					aws.ToString(reason.Message),
+				)
+			}
+		}
 		return dbErr
 	}
 

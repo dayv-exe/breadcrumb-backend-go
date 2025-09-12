@@ -57,6 +57,7 @@ func (u *UserSearch) buildNicknameIndexItem() ([]map[string]types.AttributeValue
 }
 
 func (u *UserSearch) buildFullnameIndexItem() ([]map[string]types.AttributeValue, error) {
+	u.Name = strings.ToLower(u.Name)
 	u.Name = strings.TrimSpace(u.Name)
 	chunks := utils.SplitOnDelimiter(utils.NormalizeString(u.Name), " ", "_", ".")
 	// adds id as suffix to make each db item unique
