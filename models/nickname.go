@@ -39,8 +39,9 @@ func NicknameKey(nickname string) map[string]types.AttributeValue {
 	}
 }
 
-func (n Nickname) DatabaseFormat() *map[string]types.AttributeValue {
+func (n *Nickname) DatabaseFormat() *map[string]types.AttributeValue {
 	n.Nickname = utils.AddPrefix(nicknamePkPrefix, n.Nickname)
+	n.Description = nicknameSkPrefix
 	item, err := attributevalue.MarshalMap(n)
 
 	if err != nil {
