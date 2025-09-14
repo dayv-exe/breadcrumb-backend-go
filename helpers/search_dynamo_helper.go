@@ -60,20 +60,20 @@ func (deps *SearchDynamoHelper) SearchUser(searchStr string) ([]models.UserSearc
 
 func (deps *SearchDynamoHelper) AddUserSearchIndex(user *models.User) error {
 	// Adds items to search table to allow for queries where search string is similar to nickname or full name
-	searchBuilder := models.UserSearch{
+	builder := models.UserSearch{
 		UserId:   user.Userid,
 		Nickname: user.Nickname,
 		Name:     user.Name,
 		DpUrl:    user.DpUrl,
 	}
 
-	indexes, err := searchBuilder.BuildSearchIndexes()
+	indexes, err := builder.BuildSearchIndexes()
 
 	if err != nil {
 		return err
 	}
 
-	// list transact items
+	// creates slice of items
 	var items []types.TransactWriteItem
 	for _, index := range indexes {
 		items = append(items, types.TransactWriteItem{
@@ -110,14 +110,14 @@ func (deps *SearchDynamoHelper) AddUserSearchIndex(user *models.User) error {
 
 func (deps *SearchDynamoHelper) DeleteUserIndexes(user *models.User) error {
 	// rebuild indexes, then query them and delete
-	searchBuilder := models.UserSearch{
+	builder := models.UserSearch{
 		UserId:   user.Userid,
 		Nickname: user.Nickname,
 		Name:     user.Name,
 		DpUrl:    user.DpUrl,
 	}
 
-	indexes, builderErr := searchBuilder.BuildSearchIndexes()
+	indexes, builderErr := builder.BuildSearchIndexes()
 	if builderErr != nil {
 		return builderErr
 	}

@@ -6,243 +6,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
 
-func TestNicknameSearchIndex(t *testing.T) {
-
-	tests := []struct {
-		nickname string
-		fullname string
-		expected []map[string]types.AttributeValue
-		wantErr  bool
-	}{
-		{
-			"john.test",
-			"johnny test",
-			[]map[string]types.AttributeValue{
-				{
-					"pk": &types.AttributeValueMemberS{Value: "USER_INDEX#" + "jo"},
-					"sk": &types.AttributeValueMemberS{Value: "john.test#123"},
-				},
-				{
-					"pk": &types.AttributeValueMemberS{Value: "USER_INDEX#" + "jo"},
-					"sk": &types.AttributeValueMemberS{Value: "john#123"},
-				},
-				{
-					"pk": &types.AttributeValueMemberS{Value: "USER_INDEX#" + "te"},
-					"sk": &types.AttributeValueMemberS{Value: "test#123"},
-				},
-			},
-			false,
-		},
-		{
-			"john_test",
-			"johnny test",
-			[]map[string]types.AttributeValue{
-				{
-					"pk": &types.AttributeValueMemberS{Value: "USER_INDEX#" + "jo"},
-					"sk": &types.AttributeValueMemberS{Value: "john_test#123"},
-				},
-				{
-					"pk": &types.AttributeValueMemberS{Value: "USER_INDEX#" + "jo"},
-					"sk": &types.AttributeValueMemberS{Value: "john#123"},
-				},
-				{
-					"pk": &types.AttributeValueMemberS{Value: "USER_INDEX#" + "te"},
-					"sk": &types.AttributeValueMemberS{Value: "test#123"},
-				},
-			},
-			false,
-		},
-		{
-			"john",
-			"johnny test",
-			[]map[string]types.AttributeValue{
-				{
-					"pk": &types.AttributeValueMemberS{Value: "USER_INDEX#" + "jo"},
-					"sk": &types.AttributeValueMemberS{Value: "john#123"},
-				},
-			},
-			false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.nickname, func(t *testing.T) {
-			us := UserSearch{
-				UserId:   "123",
-				Nickname: tt.nickname,
-				Name:     tt.fullname,
-				DpUrl:    "",
-			}
-			res, err := us.buildNicknameIndexItem()
-
-			if err != nil && !tt.wantErr {
-				t.Fatalf("An unexpected error has occurred: %v", err)
-			} else if err == nil && tt.wantErr {
-				t.Fatalf("An expected error has NOT occurred.")
-			}
-
-			if len(res) != len(tt.expected) {
-				t.Fatalf("Expected %d items, got %d", len(tt.expected), len(res))
-			}
-
-			for i, expectedItem := range tt.expected {
-				gotItem := res[i]
-
-				for k, expectedVal := range expectedItem {
-					gotVal, exists := gotItem[k]
-					if !exists {
-						t.Errorf("Item %d missing key %q", i, k)
-						continue
-					}
-
-					gotStr, ok := gotVal.(*types.AttributeValueMemberS)
-					if !ok {
-						t.Errorf("Item %d key %q: expected AttributeValueMemberS, got %T", i, k, gotVal)
-						continue
-					}
-
-					expStr := expectedVal.(*types.AttributeValueMemberS)
-					if gotStr.Value != expStr.Value {
-						t.Errorf("Item %d key %q: expected value %q, got %q", i, k, expStr.Value, gotStr.Value)
-					}
-				}
-			}
-		})
-	}
-}
-
-func TestFullnameSearchIndex(t *testing.T) {
-
-	tests := []struct {
-		fullname string
-		nickname string
-		expected []map[string]types.AttributeValue
-		wantErr  bool
-	}{
-		{
-			"john test",
-			"john.test",
-			[]map[string]types.AttributeValue{
-				{
-					"pk": &types.AttributeValueMemberS{Value: "USER_INDEX#" + "jo"},
-					"sk": &types.AttributeValueMemberS{Value: "john test#123"},
-				},
-				{
-					"pk": &types.AttributeValueMemberS{Value: "USER_INDEX#" + "jo"},
-					"sk": &types.AttributeValueMemberS{Value: "john#123"},
-				},
-				{
-					"pk": &types.AttributeValueMemberS{Value: "USER_INDEX#" + "te"},
-					"sk": &types.AttributeValueMemberS{Value: "test#123"},
-				},
-			},
-			false,
-		},
-		{
-			"j😍ohn",
-			"john.test",
-			[]map[string]types.AttributeValue{
-				{
-					"pk":   &types.AttributeValueMemberS{Value: "USER_INDEX#" + "jo"},
-					"sk":   &types.AttributeValueMemberS{Value: "john#123"},
-					"name": &types.AttributeValueMemberS{Value: "j😍ohn"},
-				},
-			},
-			false,
-		},
-		{
-			"j😍 lover",
-			"john.test",
-			[]map[string]types.AttributeValue{
-				{
-					"pk":   &types.AttributeValueMemberS{Value: "USER_INDEX#" + "lo"},
-					"sk":   &types.AttributeValueMemberS{Value: "lover#123"},
-					"name": &types.AttributeValueMemberS{Value: "j😍 lover"},
-				},
-			},
-			false,
-		},
-		{
-			"😍",
-			"john.test",
-			[]map[string]types.AttributeValue{},
-			false,
-		},
-		{
-			"chris ronaldo yes😀",
-			"john.test",
-			[]map[string]types.AttributeValue{
-				{
-					"pk":   &types.AttributeValueMemberS{Value: "USER_INDEX#" + "ch"},
-					"sk":   &types.AttributeValueMemberS{Value: "chris ronaldo yes#123"},
-					"name": &types.AttributeValueMemberS{Value: "chris ronaldo yes😀"},
-				},
-				{
-					"pk":   &types.AttributeValueMemberS{Value: "USER_INDEX#" + "ch"},
-					"sk":   &types.AttributeValueMemberS{Value: "chris#123"},
-					"name": &types.AttributeValueMemberS{Value: "chris ronaldo yes😀"},
-				},
-				{
-					"pk":   &types.AttributeValueMemberS{Value: "USER_INDEX#" + "ro"},
-					"sk":   &types.AttributeValueMemberS{Value: "ronaldo#123"},
-					"name": &types.AttributeValueMemberS{Value: "chris ronaldo yes😀"},
-				},
-				{
-					"pk":   &types.AttributeValueMemberS{Value: "USER_INDEX#" + "ye"},
-					"sk":   &types.AttributeValueMemberS{Value: "yes#123"},
-					"name": &types.AttributeValueMemberS{Value: "chris ronaldo yes😀"},
-				},
-			},
-			false,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.fullname, func(t *testing.T) {
-			us := UserSearch{
-				UserId:   "123",
-				Name:     tt.fullname,
-				Nickname: tt.nickname,
-				DpUrl:    "",
-			}
-			res, err := us.buildFullnameIndexItem()
-
-			if err != nil && !tt.wantErr {
-				t.Fatalf("An unexpected error has occurred: %v", err)
-			} else if err == nil && tt.wantErr {
-				t.Fatalf("An expected error has NOT occurred.")
-			}
-
-			if len(res) != len(tt.expected) {
-				t.Fatalf("Expected %d items, got %d", len(tt.expected), len(res))
-			}
-
-			for i, expectedItem := range tt.expected {
-				gotItem := res[i]
-
-				for k, expectedVal := range expectedItem {
-					gotVal, exists := gotItem[k]
-					if !exists {
-						t.Errorf("Item %d missing key %q", i, k)
-						continue
-					}
-
-					gotStr, ok := gotVal.(*types.AttributeValueMemberS)
-					if !ok {
-						t.Errorf("Item %d key %q: expected AttributeValueMemberS, got %T", i, k, gotVal)
-						continue
-					}
-
-					expStr := expectedVal.(*types.AttributeValueMemberS)
-					if gotStr.Value != expStr.Value {
-						t.Errorf("Item %d key %q: expected value %q, got %q", i, k, expStr.Value, gotStr.Value)
-					}
-				}
-			}
-		})
-	}
-}
-
 func TestGetUserSearchIndexesKeysNickName(t *testing.T) {
 	tests := []struct {
 		userid       string
@@ -251,10 +14,10 @@ func TestGetUserSearchIndexesKeysNickName(t *testing.T) {
 		expectedKeys []map[string]types.AttributeValue
 	}{
 		{
-			"123",
-			"john",
-			"john",
-			[]map[string]types.AttributeValue{
+			userid:   "123",
+			name:     "john",
+			nickname: "john",
+			expectedKeys: []map[string]types.AttributeValue{
 				{
 					"pk": &types.AttributeValueMemberS{Value: "USER_INDEX#jo"},
 					"sk": &types.AttributeValueMemberS{Value: "john#123"},
@@ -262,52 +25,73 @@ func TestGetUserSearchIndexesKeysNickName(t *testing.T) {
 			},
 		},
 		{
-			"123",
-			"j😍lover",
-			"john_love",
-			[]map[string]types.AttributeValue{
+			userid:   "123",
+			name:     "jane doe",
+			nickname: "jd_247",
+			expectedKeys: []map[string]types.AttributeValue{
 				{
-					"pk": &types.AttributeValueMemberS{Value: "USER_INDEX#jo"},
-					"sk": &types.AttributeValueMemberS{Value: "john_love#123"},
+					"pk": &types.AttributeValueMemberS{Value: "USER_INDEX#ja"},
+					"sk": &types.AttributeValueMemberS{Value: "jane#123"},
 				},
 				{
-					"pk": &types.AttributeValueMemberS{Value: "USER_INDEX#jo"},
-					"sk": &types.AttributeValueMemberS{Value: "john#123"},
+					"pk": &types.AttributeValueMemberS{Value: "USER_INDEX#do"},
+					"sk": &types.AttributeValueMemberS{Value: "doe#123"},
 				},
 				{
-					"pk": &types.AttributeValueMemberS{Value: "USER_INDEX#lo"},
-					"sk": &types.AttributeValueMemberS{Value: "love#123"},
+					"pk": &types.AttributeValueMemberS{Value: "USER_INDEX#jd"},
+					"sk": &types.AttributeValueMemberS{Value: "jd#123"},
 				},
 				{
-					"pk": &types.AttributeValueMemberS{Value: "USER_INDEX#jl"},
-					"sk": &types.AttributeValueMemberS{Value: "jlover#123"},
+					"pk": &types.AttributeValueMemberS{Value: "USER_INDEX#24"},
+					"sk": &types.AttributeValueMemberS{Value: "247#123"},
 				},
 			},
 		},
 		{
-			"123",
-			"chris ronaldo yes😀",
-			"cry",
-			[]map[string]types.AttributeValue{
+			userid:   "123",
+			name:     "john john",
+			nickname: "john.john",
+			expectedKeys: []map[string]types.AttributeValue{
 				{
-					"pk": &types.AttributeValueMemberS{Value: "USER_INDEX#cr"},
-					"sk": &types.AttributeValueMemberS{Value: "cry#123"},
+					"pk": &types.AttributeValueMemberS{Value: "USER_INDEX#jo"},
+					"sk": &types.AttributeValueMemberS{Value: "john#123"},
+				},
+			},
+		},
+		{
+			userid:   "123",
+			name:     "j❤️t",
+			nickname: "j_ohnjohn",
+			expectedKeys: []map[string]types.AttributeValue{
+				{
+					"pk": &types.AttributeValueMemberS{Value: "USER_INDEX#oh"},
+					"sk": &types.AttributeValueMemberS{Value: "ohnjohn#123"},
+				},
+			},
+		},
+		{
+			userid:   "123",
+			name:     "jt.vence",
+			nickname: "jo_hntohn",
+			expectedKeys: []map[string]types.AttributeValue{
+				// names
+				{
+					"pk": &types.AttributeValueMemberS{Value: "USER_INDEX#jt"},
+					"sk": &types.AttributeValueMemberS{Value: "jt#123"},
 				},
 				{
-					"pk": &types.AttributeValueMemberS{Value: "USER_INDEX#ch"},
-					"sk": &types.AttributeValueMemberS{Value: "chris ronaldo yes#123"},
+					"pk": &types.AttributeValueMemberS{Value: "USER_INDEX#ve"},
+					"sk": &types.AttributeValueMemberS{Value: "vence#123"},
+				},
+
+				//nicknames
+				{
+					"pk": &types.AttributeValueMemberS{Value: "USER_INDEX#jo"},
+					"sk": &types.AttributeValueMemberS{Value: "jo#123"},
 				},
 				{
-					"pk": &types.AttributeValueMemberS{Value: "USER_INDEX#ch"},
-					"sk": &types.AttributeValueMemberS{Value: "chris#123"},
-				},
-				{
-					"pk": &types.AttributeValueMemberS{Value: "USER_INDEX#ro"},
-					"sk": &types.AttributeValueMemberS{Value: "ronaldo#123"},
-				},
-				{
-					"pk": &types.AttributeValueMemberS{Value: "USER_INDEX#ye"},
-					"sk": &types.AttributeValueMemberS{Value: "yes#123"},
+					"pk": &types.AttributeValueMemberS{Value: "USER_INDEX#hn"},
+					"sk": &types.AttributeValueMemberS{Value: "hntohn#123"},
 				},
 			},
 		},
@@ -353,54 +137,79 @@ func TestGetUserSearchIndexesKeysNickName(t *testing.T) {
 	}
 }
 
-func TestDeconstructSearchIndexItem(t *testing.T) {
+func TestBuildUserSearchIndexes(t *testing.T) {
 	tests := []struct {
-		expectedName     string
-		expectedNickname string
-		searchDbItem     map[string]types.AttributeValue
-		wantErr          bool
+		userId   string
+		name     string
+		nickname string
+		expect   []map[string]types.AttributeValue
 	}{
 		{
-			"johnny",
-			"johnny.test",
-			map[string]types.AttributeValue{
-				"pk":       &types.AttributeValueMemberS{Value: "NICKNAME#jo"},
-				"sk":       &types.AttributeValueMemberS{Value: "NICKNAME#johnny.test"},
-				"name":     &types.AttributeValueMemberS{Value: "johnny"},
-				"nickname": &types.AttributeValueMemberS{Value: "johnny.test"},
+			userId:   "123",
+			name:     "johnny test",
+			nickname: "j.test",
+			expect: []map[string]types.AttributeValue{
+				{
+					"pk":       &types.AttributeValueMemberS{Value: "USER_INDEX#jo"},
+					"sk":       &types.AttributeValueMemberS{Value: "johnny#123"},
+					"userid":   &types.AttributeValueMemberS{Value: "123"},
+					"name":     &types.AttributeValueMemberS{Value: "johnny test"},
+					"nickname": &types.AttributeValueMemberS{Value: "j.test"},
+					"dp_url":   &types.AttributeValueMemberS{Value: ""},
+				},
+				{
+					"pk":       &types.AttributeValueMemberS{Value: "USER_INDEX#te"},
+					"sk":       &types.AttributeValueMemberS{Value: "test#123"},
+					"userid":   &types.AttributeValueMemberS{Value: "123"},
+					"name":     &types.AttributeValueMemberS{Value: "johnny test"},
+					"nickname": &types.AttributeValueMemberS{Value: "j.test"},
+					"dp_url":   &types.AttributeValueMemberS{Value: ""},
+				},
 			},
-			false,
-		},
-		{
-			"j🤣ohnny",
-			"johnny.test",
-			map[string]types.AttributeValue{
-				"pk":       &types.AttributeValueMemberS{Value: "NICKNAME#jo"},
-				"sk":       &types.AttributeValueMemberS{Value: "NICKNAME#johnny.test"},
-				"name":     &types.AttributeValueMemberS{Value: "j🤣ohnny"},
-				"nickname": &types.AttributeValueMemberS{Value: "johnny.test"},
-			},
-			false,
 		},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.expectedName, func(t *testing.T) {
-			res, err := DeconstructSearchIndexItem(&tt.searchDbItem)
+		t.Run(tt.name, func(t *testing.T) {
+			u := UserSearch{
+				UserId:   tt.userId,
+				Nickname: tt.nickname,
+				Name:     tt.name,
+				DpUrl:    "",
+			}
 
-			if err != nil && !tt.wantErr {
+			result, err := u.BuildSearchIndexes()
+			if err != nil {
 				t.Fatalf("An unexpected error has occurred: %v", err)
-			} else if err == nil && tt.wantErr {
-				t.Fatalf("An expected error has NOT occurred.")
 			}
 
-			if res.Name != tt.expectedName {
-				t.Fatalf("Expected name to be %v got %v instead", tt.expectedName, res.Name)
+			if len(result) != len(tt.expect) {
+				t.Fatalf("Expected %v items but got %v instead", len(tt.expect), len(result))
 			}
 
-			if res.Nickname != tt.expectedNickname {
-				t.Fatalf("Expected nickname to be %v got %v instead", tt.expectedNickname, res.Nickname)
+			for i, expectedItem := range tt.expect {
+				gotItem := result[i]
+
+				for k, expectedVal := range expectedItem {
+					gotVal, exists := gotItem[k]
+					if !exists {
+						t.Errorf("Item %d missing key %q", i, k)
+						continue
+					}
+
+					gotStr, ok := gotVal.(*types.AttributeValueMemberS)
+					if !ok {
+						t.Errorf("Item %d key %q: expected AttributeValueMemberS, got %T", i, k, gotVal)
+						continue
+					}
+
+					expStr := expectedVal.(*types.AttributeValueMemberS)
+					if gotStr.Value != expStr.Value {
+						t.Errorf("Item %d key %q: expected value %q, got %q", i, k, expStr.Value, gotStr.Value)
+					}
+				}
 			}
+
 		})
 	}
 }

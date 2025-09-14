@@ -22,10 +22,9 @@ func removeDiacritics(s string) string {
 }
 
 // remove emojis and other symbols
-func removeEmojis(s string) string {
-	// Allow only letters, numbers, and whitespace
-	re := regexp.MustCompile(`[^a-zA-Z0-9\s]+`)
-	s = re.ReplaceAllString(s, "")
+func removeEverythingExceptValidChars(s string) string {
+	re := regexp.MustCompile(`[^a-zA-Z0-9]+`)
+	s = re.ReplaceAllString(s, " ")
 
 	reSpaces := regexp.MustCompile(`\s+`)
 	s = reSpaces.ReplaceAllString(s, " ")
@@ -35,13 +34,14 @@ func removeEmojis(s string) string {
 
 func NormalizeString(s string) string {
 	s = removeDiacritics(s)
-	s = removeEmojis(s)
+	s = removeEverythingExceptValidChars(s)
 
 	return s
 }
 
 func SplitOnDelimiter(s string, delimiters ...string) []string {
-	tokens := []string{s}
+	//tokens := []string{s}
+	var tokens []string
 	for _, d := range delimiters {
 		if strings.Contains(s, d) {
 			tokens = append(tokens, strings.Split(s, d)...)
@@ -49,5 +49,8 @@ func SplitOnDelimiter(s string, delimiters ...string) []string {
 		}
 	}
 
+	if len(tokens) == 0 {
+		return []string{s}
+	}
 	return tokens
 }
