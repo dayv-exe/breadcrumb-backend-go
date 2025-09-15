@@ -24,7 +24,7 @@ type SearchDynamoHelper struct {
 func (deps *SearchDynamoHelper) SearchUser(searchStr string, limit int32) ([]models.UserSearch, error) {
 
 	var users []models.UserSearch
-	seen := make(map[string]int, 0)
+	seen := make(map[string]int)
 
 	tokens := utils.SplitOnDelimiter(strings.ToLower(utils.NormalizeString(searchStr)), " ", "_", ".") // splits the search string into tokens
 
@@ -57,7 +57,7 @@ func (deps *SearchDynamoHelper) SearchUser(searchStr string, limit int32) ([]mod
 
 	// loop through results and rank them
 	for index, user := range users {
-		key := user.Nickname
+		key := user.UserId
 		ogIndex, ok := seen[key]
 		if !ok {
 			// first time seen
