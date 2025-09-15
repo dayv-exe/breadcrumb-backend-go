@@ -36,11 +36,10 @@ func (u *UserSearch) BuildSearchIndexes() ([]map[string]types.AttributeValue, er
 		return nil, fmt.Errorf("Name or nickname is too short!")
 	}
 
-	u.Name = strings.ToLower(u.Name)
 	u.Nickname = strings.ToLower(u.Nickname)
 
 	var tokens []string
-	tokens = append(tokens, utils.SplitOnDelimiter(utils.NormalizeString(u.Name), " ", "_", ".")...)
+	tokens = append(tokens, utils.SplitOnDelimiter(strings.ToLower(utils.NormalizeString(u.Name)), " ", "_", ".")...)
 	tokens = append(tokens, utils.SplitOnDelimiter(utils.NormalizeString(u.Nickname), " ", "_", ".")...)
 
 	var indexes []map[string]types.AttributeValue

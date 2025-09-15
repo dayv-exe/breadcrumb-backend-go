@@ -26,20 +26,11 @@ func (deps *SearchDynamoHelper) SearchUser(searchStr string) ([]models.UserSearc
 	}
 
 	input := dynamodb.QueryInput{
-		TableName: aws.String(deps.TableName),
-		KeyConditions: map[string]types.Condition{
-			"pk": {
-				ComparisonOperator: types.ComparisonOperatorEq,
-				AttributeValueList: []types.AttributeValue{
-					&types.AttributeValueMemberS{Value: models.UserSearchIndexPkPrefix + searchStr[:models.UserSearchIndexPrefixLen]},
-				},
-			},
-			"sk": {
-				ComparisonOperator: types.ComparisonOperatorContains,
-				AttributeValueList: []types.AttributeValue{
-					&types.AttributeValueMemberS{Value: searchStr},
-				},
-			},
+		TableName:              aws.String(deps.TableName),
+		KeyConditionExpression: aws.String("pk = :pk AND begins_with(sk, :skPrefix)"),
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":pk":       &types.AttributeValueMemberS{Value: models.UserSearchIndexPkPrefix + searchStr[:models.UserSearchIndexPrefixLen]},
+			":skPrefix": &types.AttributeValueMemberS{Value: searchStr},
 		},
 	}
 
@@ -51,8 +42,8 @@ func (deps *SearchDynamoHelper) SearchUser(searchStr string) ([]models.UserSearc
 
 	var users []models.UserSearch
 
-	if err := attributevalue.UnmarshalListOfMaps(result.Items, &users); err != nil {
-		return nil, err
+	if marshalErr := attributevalue.UnmarshalListOfMaps(result.Items, &users); marshalErr != nil {
+		return nil, marshalErr
 	}
 
 	return users, nil

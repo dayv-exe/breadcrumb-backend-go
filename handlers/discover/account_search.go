@@ -24,7 +24,8 @@ func (deps *AccountSearchDependencies) HandleAccountSearch(ctx context.Context, 
 
 	searchStr := req.PathParameters["search_string"]
 	if len(searchStr) < models.UserSearchIndexPrefixLen {
-		return models.InvalidRequestErrorResponse(""), nil
+		// return empty array if string length is too short
+		return models.SuccessfulGetRequestResponse([]models.UserSearch{}), nil
 	}
 
 	searchHelper := helpers.SearchDynamoHelper{
