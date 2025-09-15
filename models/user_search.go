@@ -32,7 +32,7 @@ type userSearchDbItem struct {
 }
 
 func (u *UserSearch) BuildSearchIndexes() ([]map[string]types.AttributeValue, error) {
-	if len(u.Name) < UserSearchIndexPrefixLen || len(u.Nickname) < constants.MIN_USERNAME_CHARS {
+	if len(u.Nickname) < constants.MIN_USERNAME_CHARS {
 		return nil, fmt.Errorf("Name or nickname is too short!")
 	}
 

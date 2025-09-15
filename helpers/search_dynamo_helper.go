@@ -19,7 +19,7 @@ type SearchDynamoHelper struct {
 	Ctx       context.Context
 }
 
-func (deps *SearchDynamoHelper) SearchUser(searchStr string) ([]models.UserSearch, error) {
+func (deps *SearchDynamoHelper) SearchUser(searchStr string, limit int32) ([]models.UserSearch, error) {
 
 	if len(searchStr[:models.UserSearchIndexPrefixLen]) < models.UserSearchIndexPrefixLen {
 		return nil, fmt.Errorf("Search string is too short!")
@@ -32,6 +32,7 @@ func (deps *SearchDynamoHelper) SearchUser(searchStr string) ([]models.UserSearc
 			":pk":       &types.AttributeValueMemberS{Value: models.UserSearchIndexPkPrefix + searchStr[:models.UserSearchIndexPrefixLen]},
 			":skPrefix": &types.AttributeValueMemberS{Value: searchStr},
 		},
+		Limit: aws.Int32(limit),
 	}
 
 	result, err := deps.DbClient.Query(deps.Ctx, &input)

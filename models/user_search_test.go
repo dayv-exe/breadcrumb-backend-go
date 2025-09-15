@@ -167,6 +167,21 @@ func TestBuildUserSearchIndexes(t *testing.T) {
 				},
 			},
 		},
+		{
+			userId:   "123",
+			name:     "",
+			nickname: "j.test",
+			expect: []map[string]types.AttributeValue{
+				{
+					"pk":       &types.AttributeValueMemberS{Value: "USER_INDEX#te"},
+					"sk":       &types.AttributeValueMemberS{Value: "test#123"},
+					"userid":   &types.AttributeValueMemberS{Value: "123"},
+					"name":     &types.AttributeValueMemberS{Value: ""},
+					"nickname": &types.AttributeValueMemberS{Value: "j.test"},
+					"dp_url":   &types.AttributeValueMemberS{Value: ""},
+				},
+			},
+		},
 	}
 
 	for _, tt := range tests {
