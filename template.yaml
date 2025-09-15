@@ -306,6 +306,7 @@ Resources:
   AccountSearch:
     Type: AWS::Serverless::Function
     Properties:
+      MemorySize: 512
       CodeUri: bin/account_search/account_search.zip
       Handler: bootstrap
       Architectures: [arm64]

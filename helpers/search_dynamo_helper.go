@@ -2,10 +2,12 @@ package helpers
 
 import (
 	"breadcrumb-backend-go/models"
+	"breadcrumb-backend-go/utils"
 	"context"
 	"errors"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
@@ -21,30 +23,50 @@ type SearchDynamoHelper struct {
 
 func (deps *SearchDynamoHelper) SearchUser(searchStr string, limit int32) ([]models.UserSearch, error) {
 
-	if len(searchStr[:models.UserSearchIndexPrefixLen]) < models.UserSearchIndexPrefixLen {
-		return nil, fmt.Errorf("Search string is too short!")
-	}
-
-	input := dynamodb.QueryInput{
-		TableName:              aws.String(deps.TableName),
-		KeyConditionExpression: aws.String("pk = :pk AND begins_with(sk, :skPrefix)"),
-		ExpressionAttributeValues: map[string]types.AttributeValue{
-			":pk":       &types.AttributeValueMemberS{Value: models.UserSearchIndexPkPrefix + searchStr[:models.UserSearchIndexPrefixLen]},
-			":skPrefix": &types.AttributeValueMemberS{Value: searchStr},
-		},
-		Limit: aws.Int32(limit),
-	}
-
-	result, err := deps.DbClient.Query(deps.Ctx, &input)
-
-	if err != nil {
-		return nil, err
-	}
-
 	var users []models.UserSearch
+	seen := make(map[string]int, 0)
 
-	if marshalErr := attributevalue.UnmarshalListOfMaps(result.Items, &users); marshalErr != nil {
-		return nil, marshalErr
+	tokens := utils.SplitOnDelimiter(strings.ToLower(utils.NormalizeString(searchStr)), " ", "_", ".") // splits the search string into tokens
+
+	for _, token := range tokens {
+		if len(token) >= models.UserSearchIndexPrefixLen {
+			input := dynamodb.QueryInput{
+				TableName:              aws.String(deps.TableName),
+				KeyConditionExpression: aws.String("pk = :pk AND begins_with(sk, :skPrefix)"),
+				ExpressionAttributeValues: map[string]types.AttributeValue{
+					":pk":       &types.AttributeValueMemberS{Value: models.UserSearchIndexPkPrefix + token[:models.UserSearchIndexPrefixLen]},
+					":skPrefix": &types.AttributeValueMemberS{Value: token},
+				},
+				Limit: aws.Int32(limit),
+			}
+
+			found, qErr := deps.DbClient.Query(deps.Ctx, &input)
+			if qErr != nil {
+				log.Println("An error occurred inside loop for querying tokens gotten from search string")
+				return nil, qErr
+			}
+
+			var usersFound []models.UserSearch
+			if marshalErr := attributevalue.UnmarshalListOfMaps(found.Items, &usersFound); marshalErr != nil {
+				return nil, marshalErr
+			}
+
+			users = append(users, usersFound...)
+		}
+	}
+
+	// loop through results and rank them
+	for index, user := range users {
+		key := user.Nickname
+		ogIndex, ok := seen[key]
+		if !ok {
+			// first time seen
+			seen[key] = index
+		} else {
+			// seen before, then remove it adn add 1 to the rating where we first saw it
+			users[ogIndex].Rating += 1
+			users = append(users[:index], users[index+1:]...)
+		}
 	}
 
 	return users, nil

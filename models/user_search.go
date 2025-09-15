@@ -20,6 +20,7 @@ type UserSearch struct {
 	Nickname string `dynamodbav:"nickname" json:"nickname"`
 	Name     string `dynamodbav:"name" json:"name"`
 	DpUrl    string `dynamodbav:"dp_url" json:"dpUrl"`
+	Rating   int    `json:"rating"`
 }
 
 type userSearchDbItem struct {
