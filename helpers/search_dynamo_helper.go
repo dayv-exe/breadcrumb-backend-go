@@ -58,6 +58,7 @@ func (deps *SearchDynamoHelper) SearchUser(searchStr string, limit int32) ([]mod
 	// loop through matches and rank them and put them in results
 	var result []models.UserSearch
 	for index, user := range matches {
+		user.UserId = strings.TrimPrefix(user.UserId, models.UserPkPrefix) // removes the 'USER#'
 		key := user.UserId
 		ogIndex, ok := seen[key]
 		if !ok {

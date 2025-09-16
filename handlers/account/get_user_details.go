@@ -104,6 +104,7 @@ func (deps *GetUserDetailsDependencies) HandleGetUserDetails(ctx context.Context
 
 	// only return nickname, name, profile picture if one user requests another users information
 	return models.SuccessfulGetRequestResponse(models.User{
+		Userid:                   user.Userid,
 		Nickname:                 user.Nickname,
 		Name:                     user.Name,
 		DpUrl:                    user.DpUrl,

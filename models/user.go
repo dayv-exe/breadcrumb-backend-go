@@ -31,8 +31,8 @@ type User struct {
 }
 
 const (
-	userPkPrefix = "USER#"
-	userSkPrefix = "PROFILE"
+	UserPkPrefix = "USER#"
+	UserSkPrefix = "PROFILE"
 )
 
 func NewUser(userid string, nickname string, name string, isSuspended bool) *User {
@@ -54,19 +54,19 @@ func NewUser(userid string, nickname string, name string, isSuspended bool) *Use
 		SuspensionReason:         "",
 		DefaultProfilePicFgColor: defaultColors.Foreground,
 		DefaultProfilePicBgColor: defaultColors.Background,
-		DbDescription:            userSkPrefix,
+		DbDescription:            UserSkPrefix,
 	}
 }
 
 func UserKey(userid string) map[string]types.AttributeValue {
 	return map[string]types.AttributeValue{
-		"pk": &types.AttributeValueMemberS{Value: utils.AddPrefix(userPkPrefix, userid)},
-		"sk": &types.AttributeValueMemberS{Value: userSkPrefix},
+		"pk": &types.AttributeValueMemberS{Value: utils.AddPrefix(UserPkPrefix, userid)},
+		"sk": &types.AttributeValueMemberS{Value: UserSkPrefix},
 	}
 }
 
 func (u *User) DatabaseFormat() *map[string]types.AttributeValue {
-	u.Userid = utils.AddPrefix(userPkPrefix, u.Userid)
+	u.Userid = utils.AddPrefix(UserPkPrefix, u.Userid)
 
 	item, err := attributevalue.MarshalMap(u)
 
@@ -82,7 +82,7 @@ func ConvertToUser(item map[string]types.AttributeValue) (*User, error) {
 		return nil, err
 	}
 
-	u.Userid = strings.TrimPrefix(u.Userid, userPkPrefix)
+	u.Userid = strings.TrimPrefix(u.Userid, UserPkPrefix)
 
 	return &u, nil
 }
