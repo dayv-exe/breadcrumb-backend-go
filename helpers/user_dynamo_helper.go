@@ -80,7 +80,7 @@ func (deps *UserDynamoHelper) FindByNickname(nickname string) (*models.User, err
 		return nil, err
 	}
 
-	if output.Count < 1 {
+	if output.Count == 0 {
 		return nil, nil
 	}
 
@@ -99,7 +99,7 @@ func (deps *UserDynamoHelper) FindById(id string) (*models.User, error) {
 		return nil, err
 	}
 
-	if len(output.Item) < 1 {
+	if len(output.Item) == 0 {
 		return nil, nil
 	}
 

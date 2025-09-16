@@ -31,14 +31,29 @@ type completeUserDetails struct {
 	helpers.CognitoManagedInfo
 }
 
+func getUser(useId bool, identifier string, dbHelper helpers.UserDynamoHelper) (*models.User, error) {
+	if useId {
+		return dbHelper.FindById(identifier)
+	} else {
+		return dbHelper.FindByNickname(identifier)
+	}
+}
+
 func (deps *GetUserDetailsDependencies) HandleGetUserDetails(ctx context.Context, req *events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	// gets user details from db, returns only public information, if user requesting is not the user being requested.
 
-	nickname, exists := req.PathParameters["nickname"]
+	identifierName, idNameExists := req.PathParameters["identifier_name"]
+	identifier, idExists := req.PathParameters["identifier"]
 
-	if !exists {
+	if !idNameExists || !idExists {
 		return models.InvalidRequestErrorResponse(""), nil
 	}
+
+	if identifierName != "nickname" && identifierName != "id" {
+		return models.InvalidRequestErrorResponse("Invalid identifier name!"), nil
+	}
+
+	usingId := identifierName == "id"
 
 	// get all info on a user from dynamodb
 	dbHelper := helpers.UserDynamoHelper{
@@ -47,10 +62,13 @@ func (deps *GetUserDetailsDependencies) HandleGetUserDetails(ctx context.Context
 		Ctx:       ctx,
 	}
 
-	user, dbErr := dbHelper.FindByNickname(nickname)
+	user, dbErr := getUser(usingId, identifier, dbHelper)
 
 	// error
 	if dbErr != nil {
+		if usingId {
+			return models.ServerSideErrorResponse("", fmt.Errorf("Find by id error: %w", dbErr), "error while trying to find user by id"), nil
+		}
 		return models.ServerSideErrorResponse("", fmt.Errorf("Find by nickname error: %w", dbErr), "error while trying to find user by nickname"), nil
 	}
 

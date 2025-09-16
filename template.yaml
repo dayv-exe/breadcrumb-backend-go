@@ -211,7 +211,7 @@ Resources:
         ApiRequest:
           Type: HttpApi
           Properties:
-            Path: /user/{nickname}
+            Path: /user/{identifier_name}/{identifier}
             Method: GET
             ApiId: !Ref BreadApi
             Auth:
