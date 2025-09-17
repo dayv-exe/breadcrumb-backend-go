@@ -77,14 +77,45 @@ func handleRejectFriendship(status, senderId, recipientId string, friendshipHelp
 	return models.SuccessfulRequestResponse("Friendship ended before it began", false), nil
 }
 
+func handleGetAllFriends(thisUserId string, friendshipHelper helpers.FriendshipDynamoHelper) (events.APIGatewayProxyResponse, error) {
+	allFriendsRes, afErr := friendshipHelper.GetAllFriends(thisUserId, 100)
+	if afErr != nil {
+		return models.ServerSideErrorResponse("Something went wrong while trying to get all friends, try again.", afErr, "error in friendship action handler"), nil
+	}
+
+	var allFriends []models.PrimaryUserInfo
+
+	for _, friend := range *allFriendsRes {
+		allFriends = append(allFriends, *models.NewPrimaryUserInfo(&friend, constants.FRIENDSHIP_STATUS_FRIENDS))
+	}
+
+	return models.SuccessfulGetRequestResponse(allFriends), nil
+}
+
+func handleGetAllFriendRequests(thisUserId string, friendshipHelper helpers.FriendshipDynamoHelper) (events.APIGatewayProxyResponse, error) {
+	allFriendReqsRes, afErr := friendshipHelper.GetAllFriendRequests(thisUserId, 100)
+	if afErr != nil {
+		return models.ServerSideErrorResponse("Something went wrong while trying to get all friend requests, try again.", afErr, "error in friendship action handler"), nil
+	}
+
+	var allFriendReqs []models.PrimaryUserInfo
+
+	for _, friend := range *allFriendReqsRes {
+		allFriendReqs = append(allFriendReqs, *models.NewPrimaryUserInfo(&friend, constants.FRIENDSHIP_STATUS_REQUESTED))
+	}
+
+	return models.SuccessfulGetRequestResponse(allFriendReqs), nil
+}
+
 func (deps *FriendRequestDependencies) HandleFriendshipAction(ctx context.Context, req *events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	// /friendship/{action}/{userid}
 	action, actionExists := req.PathParameters["action"]
 	if !actionExists {
 		return models.InvalidRequestErrorResponse(""), nil
 	}
 
 	otherUserId, exists := req.PathParameters["userid"]
-	if !exists {
+	if !exists && (action != constants.FRIENDSHIP_ACTION_GET_FRIENDS && action != constants.FRIENDSHIP_ACTION_GET_REQUESTED) {
 		return models.InvalidRequestErrorResponse(""), nil
 	}
 
@@ -126,6 +157,13 @@ func (deps *FriendRequestDependencies) HandleFriendshipAction(ctx context.Contex
 	case constants.FRIENDSHIP_ACTION_REJECT:
 		return handleRejectFriendship(status, otherUserId, thisUserId, friendshipHelper)
 
+		// to list all friends
+	case constants.FRIENDSHIP_ACTION_GET_FRIENDS:
+		return handleGetAllFriends(thisUserId, friendshipHelper)
+
+		// to list all friend requests
+	case constants.FRIENDSHIP_ACTION_GET_REQUESTED:
+		return handleGetAllFriendRequests(thisUserId, friendshipHelper)
 	default:
 		return models.ServerSideErrorResponse("Something went wrong while determining friendship action, try again.", fmt.Errorf("Status returned does not match any expected outcome. status returned: %v", status), "Status returned does not match any expected outcome"), nil
 	}

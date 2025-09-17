@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	friendItemPk = "USER#"
-	friendItemSk = "FRIEND#"
+	FriendItemPk = "USER#"
+	FriendItemSk = "FRIEND#"
 )
 
 type friend struct {
@@ -30,14 +30,14 @@ func NewFriendship(user1id, user2id string) *friend {
 
 func FriendKey(user1Id string, user2Id string) map[string]types.AttributeValue {
 	return map[string]types.AttributeValue{
-		"pk": &types.AttributeValueMemberS{Value: utils.AddPrefix(friendItemPk, user1Id)},
-		"sk": &types.AttributeValueMemberS{Value: utils.AddPrefix(friendItemSk, user2Id)},
+		"pk": &types.AttributeValueMemberS{Value: utils.AddPrefix(FriendItemPk, user1Id)},
+		"sk": &types.AttributeValueMemberS{Value: utils.AddPrefix(FriendItemSk, user2Id)},
 	}
 }
 
 func (f *friend) DatabaseFormat() (*map[string]types.AttributeValue, error) {
-	f.User1Id = utils.AddPrefix(friendItemPk, f.User1Id)
-	f.User2Id = utils.AddPrefix(friendItemSk, f.User2Id)
+	f.User1Id = utils.AddPrefix(FriendItemPk, f.User1Id)
+	f.User2Id = utils.AddPrefix(FriendItemSk, f.User2Id)
 
 	item, err := attributevalue.MarshalMap(f)
 

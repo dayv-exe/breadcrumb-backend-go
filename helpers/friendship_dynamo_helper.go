@@ -10,6 +10,7 @@ import (
 	"log"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
@@ -224,4 +225,56 @@ func (deps *FriendshipDynamoHelper) GetFriendshipStatus(senderId string, recipie
 	}
 
 	return constants.FRIENDSHIP_STATUS_NOT_FRIENDS, nil
+}
+
+func (deps *FriendshipDynamoHelper) GetAllFriends(userId string, limit int32) (*[]models.User, error) {
+	input := &dynamodb.QueryInput{
+		TableName:              aws.String(deps.TableName),
+		KeyConditionExpression: aws.String("pk = :pk and begins_with(sk, :skPrefix"),
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":pk":       &types.AttributeValueMemberS{Value: utils.AddPrefix(models.FriendItemPk, userId)},
+			":skPrefix": &types.AttributeValueMemberS{Value: models.FriendItemSk},
+		},
+		Limit: aws.Int32(limit),
+	}
+
+	items, err := deps.DbClient.Query(deps.Ctx, input)
+	if err != nil {
+		log.Print("an error occurred while trying to query users friends")
+		return nil, err
+	}
+
+	var friends []models.User
+	if mErr := attributevalue.UnmarshalListOfMaps(items.Items, &friends); mErr != nil {
+		log.Print("an error occurred while trying to unmarshal list of users friends")
+		return nil, mErr
+	}
+
+	return &friends, nil
+}
+
+func (deps *FriendshipDynamoHelper) GetAllFriendRequests(userId string, limit int32) (*[]models.User, error) {
+	input := &dynamodb.QueryInput{
+		TableName:              aws.String(deps.TableName),
+		KeyConditionExpression: aws.String("pk = :pk and begins_with(sk, :skPrefix"),
+		ExpressionAttributeValues: map[string]types.AttributeValue{
+			":pk":       &types.AttributeValueMemberS{Value: utils.AddPrefix(models.FriendRequestPkPrefix, userId)},
+			":skPrefix": &types.AttributeValueMemberS{Value: models.FriendRequestSkPrefix},
+		},
+		Limit: aws.Int32(limit),
+	}
+
+	items, err := deps.DbClient.Query(deps.Ctx, input)
+	if err != nil {
+		log.Print("an error occurred while trying to query users friend requests")
+		return nil, err
+	}
+
+	var friends []models.User
+	if mErr := attributevalue.UnmarshalListOfMaps(items.Items, &friends); mErr != nil {
+		log.Print("an error occurred while trying to unmarshal list of users friend requests")
+		return nil, mErr
+	}
+
+	return &friends, nil
 }

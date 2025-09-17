@@ -115,23 +115,5 @@ func (deps *GetUserDetailsDependencies) HandleGetUserDetails(ctx context.Context
 		return models.ServerSideErrorResponse("Something went wrong while trying to get friendship status", fsErr, "error while trying to get friendship status"), nil
 	}
 
-	type resJson struct {
-		models.User
-		Friends string `json:"friends"`
-	}
-
-	return models.SuccessfulGetRequestResponse(resJson{
-		models.User{
-			Userid:                   user.Userid,
-			Nickname:                 user.Nickname,
-			Name:                     user.Name,
-			DpUrl:                    user.DpUrl,
-			Bio:                      user.Bio,
-			DefaultProfilePicFgColor: user.DefaultProfilePicFgColor,
-			DefaultProfilePicBgColor: user.DefaultProfilePicBgColor,
-			IsSuspended:              user.IsSuspended,
-			IsDeactivated:            user.IsDeactivated,
-		},
-		friendshipStatus,
-	}), nil
+	return models.SuccessfulGetRequestResponse(models.NewPrimaryUserInfo(user, friendshipStatus)), nil
 }

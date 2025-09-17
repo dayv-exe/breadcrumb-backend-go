@@ -16,8 +16,8 @@ type friendRequest struct {
 }
 
 const (
-	friendRequestPkPrefix = "USER#"
-	friendRequestSkPrefix = "FRIEND_REQUEST_FROM#"
+	FriendRequestPkPrefix = "USER#"
+	FriendRequestSkPrefix = "FRIEND_REQUEST_FROM#"
 )
 
 func NewFriendRequest(recipientUserId string, senderUserId string) *friendRequest {
@@ -32,14 +32,14 @@ func NewFriendRequest(recipientUserId string, senderUserId string) *friendReques
 
 func FriendRequestKey(recipientUserId string, senderUserId string) map[string]types.AttributeValue {
 	return map[string]types.AttributeValue{
-		"pk": &types.AttributeValueMemberS{Value: utils.AddPrefix(friendRequestPkPrefix, recipientUserId)},
-		"sk": &types.AttributeValueMemberS{Value: utils.AddPrefix(friendRequestSkPrefix, senderUserId)},
+		"pk": &types.AttributeValueMemberS{Value: utils.AddPrefix(FriendRequestPkPrefix, recipientUserId)},
+		"sk": &types.AttributeValueMemberS{Value: utils.AddPrefix(FriendRequestSkPrefix, senderUserId)},
 	}
 }
 
 func (fr friendRequest) DatabaseFormat() (*map[string]types.AttributeValue, error) {
-	fr.RecipientId = utils.AddPrefix(friendRequestPkPrefix, fr.RecipientId)
-	fr.SenderId = utils.AddPrefix(friendRequestSkPrefix, fr.SenderId)
+	fr.RecipientId = utils.AddPrefix(FriendRequestPkPrefix, fr.RecipientId)
+	fr.SenderId = utils.AddPrefix(FriendRequestSkPrefix, fr.SenderId)
 	item, err := attributevalue.MarshalMap(fr)
 
 	if err != nil {
@@ -56,8 +56,8 @@ func ConvertToFriendRequest(item *map[string]types.AttributeValue) (*friendReque
 		return nil, err
 	}
 
-	fr.RecipientId = strings.TrimPrefix(fr.RecipientId, friendRequestPkPrefix)
-	fr.SenderId = strings.TrimPrefix(fr.SenderId, friendRequestSkPrefix)
+	fr.RecipientId = strings.TrimPrefix(fr.RecipientId, FriendRequestPkPrefix)
+	fr.SenderId = strings.TrimPrefix(fr.SenderId, FriendRequestSkPrefix)
 
 	return &fr, nil
 }

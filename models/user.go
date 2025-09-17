@@ -30,10 +30,38 @@ type User struct {
 	DefaultProfilePicBgColor string `dynamodbav:"default_pic_bg" json:"defaultPicBg"`
 }
 
+type PrimaryUserInfo struct {
+	Userid                   string `json:"userId"`
+	Nickname                 string `json:"nickname"`
+	Name                     string `json:"name"`
+	DpUrl                    string `json:"dpUrl"`
+	Bio                      string `json:"bio"`
+	DefaultProfilePicFgColor string `json:"defaultPicFg"`
+	DefaultProfilePicBgColor string `json:"defaultPicBg"`
+	IsSuspended              bool   `json:"isSuspended"`
+	IsDeactivated            bool   `json:"isDeactivated"`
+	FriendshipStatus         string `json:"friends"`
+}
+
 const (
 	UserPkPrefix = "USER#"
 	UserSkPrefix = "PROFILE"
 )
+
+func NewPrimaryUserInfo(u *User, friendshipStatus string) *PrimaryUserInfo {
+	return &PrimaryUserInfo{
+		Userid:                   u.Userid,
+		Nickname:                 u.Nickname,
+		Name:                     u.Name,
+		DpUrl:                    u.DpUrl,
+		Bio:                      u.Bio,
+		DefaultProfilePicFgColor: u.DefaultProfilePicFgColor,
+		DefaultProfilePicBgColor: u.DefaultProfilePicBgColor,
+		IsSuspended:              u.IsSuspended,
+		IsDeactivated:            u.IsDeactivated,
+		FriendshipStatus:         friendshipStatus,
+	}
+}
 
 func NewUser(userid string, nickname string, name string, isSuspended bool) *User {
 	defaultColors := utils.GenerateRandomColorPair()
