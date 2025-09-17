@@ -117,7 +117,7 @@ func (deps *GetUserDetailsDependencies) HandleGetUserDetails(ctx context.Context
 
 	type resJson struct {
 		models.User
-		friends string `json:"friends"`
+		Friends string `json:"friends"`
 	}
 
 	return models.SuccessfulGetRequestResponse(resJson{
