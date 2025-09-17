@@ -147,6 +147,22 @@ func (deps *FriendshipDynamoHelper) AcceptFriendRequest(senderId, recipientId st
 	return nil
 }
 
+func (deps *FriendshipDynamoHelper) RejectFriendRequest(senderId, recipientId string) error {
+	input := &dynamodb.DeleteItemInput{
+		Key:       models.FriendRequestKey(recipientId, senderId),
+		TableName: aws.String(deps.TableName),
+	}
+
+	_, err := deps.DbClient.DeleteItem(deps.Ctx, input)
+
+	if err != nil {
+		log.Print("an error occurred while trying to delete friend request")
+		return err
+	}
+
+	return nil
+}
+
 func (deps *FriendshipDynamoHelper) usersAreFriends(senderId string, recipientId string) (bool, error) {
 	input := &dynamodb.GetItemInput{
 		Key:       models.FriendKey(senderId, recipientId),

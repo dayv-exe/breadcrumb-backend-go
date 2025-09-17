@@ -65,6 +65,18 @@ func handleAcceptFriendship(status, senderId, recipientId string, friendshipHelp
 	return models.SuccessfulRequestResponse("Friendship started", false), nil
 }
 
+func handleRejectFriendship(status, senderId, recipientId string, friendshipHelper helpers.FriendshipDynamoHelper) (events.APIGatewayProxyResponse, error) {
+	if status != constants.FRIENDSHIP_STATUS_RECEIVED {
+		return models.InvalidRequestErrorResponse("You cant reject a friend request from someone who never sent you one"), nil
+	}
+	reqErr := friendshipHelper.RejectFriendRequest(senderId, recipientId)
+	if reqErr != nil {
+		return models.ServerSideErrorResponse("Something went wrong while rejecting friendship, try again.", reqErr, "Error in friend req handler"), nil
+	}
+
+	return models.SuccessfulRequestResponse("Friendship ended before it began", false), nil
+}
+
 func (deps *FriendRequestDependencies) HandleFriendshipAction(ctx context.Context, req *events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	action, actionExists := req.PathParameters["action"]
 	if !actionExists {
@@ -109,6 +121,11 @@ func (deps *FriendRequestDependencies) HandleFriendshipAction(ctx context.Contex
 	// accept friend request
 	case constants.FRIENDSHIP_ACTION_ACCEPT:
 		return handleAcceptFriendship(status, senderId, recipientId, friendshipHelper)
+
+		// reject friend request
+	case constants.FRIENDSHIP_ACTION_REJECT:
+		return handleRejectFriendship(status, senderId, recipientId, friendshipHelper)
+
 	default:
 		return models.ServerSideErrorResponse("Something went wrong while determining friendship action, try again.", fmt.Errorf("Status returned does not match any expected outcome. status returned: %v", status), "Status returned does not match any expected outcome"), nil
 	}

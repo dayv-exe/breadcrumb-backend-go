@@ -37,7 +37,7 @@ func FriendKey(user1Id string, user2Id string) map[string]types.AttributeValue {
 
 func (f *friend) DatabaseFormat() (*map[string]types.AttributeValue, error) {
 	f.User1Id = utils.AddPrefix(friendItemPk, f.User1Id)
-	f.User2Id = utils.AddPrefix(friendItemPk, f.User2Id)
+	f.User2Id = utils.AddPrefix(friendItemSk, f.User2Id)
 
 	item, err := attributevalue.MarshalMap(f)
 
