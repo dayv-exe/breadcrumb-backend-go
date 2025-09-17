@@ -83,13 +83,13 @@ func (deps *FriendRequestDependencies) HandleFriendshipAction(ctx context.Contex
 		return models.InvalidRequestErrorResponse(""), nil
 	}
 
-	recipientId, exists := req.PathParameters["userid"]
+	otherUserId, exists := req.PathParameters["userid"]
 	if !exists {
 		return models.InvalidRequestErrorResponse(""), nil
 	}
 
-	senderId := utils.GetAuthUserId(req)
-	if senderId == "" {
+	thisUserId := utils.GetAuthUserId(req)
+	if thisUserId == "" {
 		return models.UnauthorizedErrorResponse(""), nil
 	}
 
@@ -100,7 +100,7 @@ func (deps *FriendRequestDependencies) HandleFriendshipAction(ctx context.Contex
 		Ctx:       ctx,
 	}
 
-	status, statusErr := friendshipHelper.GetFriendshipStatus(senderId, recipientId)
+	status, statusErr := friendshipHelper.GetFriendshipStatus(thisUserId, otherUserId)
 	if statusErr != nil {
 		return models.ServerSideErrorResponse("Something went wrong, try again.", statusErr, "error while trying to get friendship status"), nil
 	}
@@ -108,23 +108,23 @@ func (deps *FriendRequestDependencies) HandleFriendshipAction(ctx context.Contex
 	switch action {
 	// send friend request if not friends
 	case constants.FRIENDSHIP_ACTION_REQUEST:
-		return handleSendRequest(status, senderId, recipientId, friendshipHelper)
+		return handleSendRequest(status, thisUserId, otherUserId, friendshipHelper)
 
 		// cancel friend request if sent
 	case constants.FRIENDSHIP_ACTION_CANCEL_REQUEST:
-		return handleCancelRequest(status, senderId, recipientId, friendshipHelper)
+		return handleCancelRequest(status, thisUserId, otherUserId, friendshipHelper)
 
 		// end friendship if friends
 	case constants.FRIENDSHIP_ACTION_END_FRIENDSHIP:
-		return handleEndFriendship(status, senderId, recipientId, friendshipHelper)
+		return handleEndFriendship(status, thisUserId, otherUserId, friendshipHelper)
 
 	// accept friend request
 	case constants.FRIENDSHIP_ACTION_ACCEPT:
-		return handleAcceptFriendship(status, senderId, recipientId, friendshipHelper)
+		return handleAcceptFriendship(status, otherUserId, thisUserId, friendshipHelper)
 
 		// reject friend request
 	case constants.FRIENDSHIP_ACTION_REJECT:
-		return handleRejectFriendship(status, senderId, recipientId, friendshipHelper)
+		return handleRejectFriendship(status, otherUserId, thisUserId, friendshipHelper)
 
 	default:
 		return models.ServerSideErrorResponse("Something went wrong while determining friendship action, try again.", fmt.Errorf("Status returned does not match any expected outcome. status returned: %v", status), "Status returned does not match any expected outcome"), nil
