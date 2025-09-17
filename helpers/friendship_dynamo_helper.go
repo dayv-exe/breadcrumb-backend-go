@@ -124,10 +124,10 @@ func (deps *FriendshipDynamoHelper) userHasRequestedFriendship(senderId string, 
 		return false, err
 	}
 
-	log.Println(item)
-	log.Println(item.Item)
+	log.Printf("RRResponse item: %v", item)
+	log.Printf("RRResponse item.item: %v", item.Item)
 
-	return len(item.Item) == 1, nil
+	return len(item.Item) > 0, nil
 }
 
 func (deps *FriendshipDynamoHelper) GetFriendshipStatus(senderId string, recipientId string) (string, error) {
@@ -157,7 +157,7 @@ func (deps *FriendshipDynamoHelper) GetFriendshipStatus(senderId string, recipie
 
 	if friends {
 		return constants.FRIENDSHIP_STATUS_FRIENDS, nil
-	} else {
-		return constants.FRIENDSHIP_STATUS_NOT_FRIENDS, nil
 	}
+
+	return constants.FRIENDSHIP_STATUS_NOT_FRIENDS, nil
 }
