@@ -341,7 +341,7 @@ Resources:
         ApiRequest:
           Type: HttpApi
           Properties:
-            Path: /friendship/act/{userid}
+            Path: /friendship/{action}/{userid}
             Method: GET
             ApiId: !Ref BreadApi
             Auth:

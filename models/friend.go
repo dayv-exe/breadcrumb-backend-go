@@ -19,22 +19,13 @@ type friend struct {
 	Date    string `dynamodbav:"date"`
 }
 
-func NewFriendship(user1id, user2id string) *[]friend {
+func NewFriendship(user1id, user2id string) *friend {
 	// Returns 2 friendship items
-	var fs []friend
-	fs = append(fs, friend{
+	return &friend{
 		User1Id: user1id,
 		User2Id: user2id,
 		Date:    utils.GetTimeNow(),
-	})
-
-	fs = append(fs, friend{
-		User1Id: user2id,
-		User2Id: user1id,
-		Date:    utils.GetTimeNow(),
-	})
-
-	return &fs
+	}
 }
 
 func FriendKey(user1Id string, user2Id string) map[string]types.AttributeValue {

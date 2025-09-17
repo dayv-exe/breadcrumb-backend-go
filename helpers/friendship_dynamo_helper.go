@@ -3,6 +3,7 @@ package helpers
 import (
 	"breadcrumb-backend-go/constants"
 	"breadcrumb-backend-go/models"
+	"breadcrumb-backend-go/utils"
 	"context"
 	"errors"
 	"fmt"
@@ -89,6 +90,57 @@ func (deps *FriendshipDynamoHelper) EndFriendship(user1id, user2id string) error
 				)
 			}
 		}
+		return err
+	}
+
+	return nil
+}
+
+func (deps *FriendshipDynamoHelper) AcceptFriendRequest(senderId, recipientId string) error {
+	// 2 items for easier lookups
+	item1, err1 := models.NewFriendship(senderId, recipientId).DatabaseFormat()
+	if err1 != nil {
+		log.Print("an error occurred while marshalling new friendship")
+		return err1
+	}
+	item2, err2 := models.NewFriendship(recipientId, senderId).DatabaseFormat()
+	if err2 != nil {
+		log.Print("an error occurred while marshalling new friendship")
+		return err2
+	}
+
+	input := &dynamodb.TransactWriteItemsInput{
+		TransactItems: []types.TransactWriteItem{
+			{
+				// deletes friend request
+				Delete: &types.Delete{
+					Key:       models.FriendRequestKey(recipientId, senderId),
+					TableName: aws.String(deps.TableName),
+				},
+			},
+
+			// makes them friends
+			{
+				Put: &types.Put{
+					Item:      *item1,
+					TableName: aws.String(deps.TableName),
+				},
+			},
+			{
+				Put: &types.Put{
+					Item:      *item2,
+					TableName: aws.String(deps.TableName),
+				},
+			},
+		},
+	}
+
+	_, err := deps.DbClient.TransactWriteItems(deps.Ctx, input)
+
+	if err != nil {
+		log.Print("an error occurred while transact writing new friendship to db")
+		// Check for transaction cancellation reasons
+		utils.PrintTransactWriteCancellationReason(err)
 		return err
 	}
 
