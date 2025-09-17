@@ -124,6 +124,9 @@ func (deps *FriendshipDynamoHelper) userHasRequestedFriendship(senderId string, 
 		return false, err
 	}
 
+	log.Println(item)
+	log.Println(item.Item)
+
 	return len(item.Item) == 1, nil
 }
 
