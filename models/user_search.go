@@ -70,7 +70,6 @@ func (u *UserSearch) BuildSearchIndexes() ([]map[string]types.AttributeValue, er
 			}
 
 			item, err := attributevalue.MarshalMap(new)
-			fmt.Println(new)
 			if err != nil {
 				return nil, fmt.Errorf("An error occurred while marshaling user search db item: %w", err)
 			}

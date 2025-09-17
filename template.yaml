@@ -327,6 +327,29 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName: !Ref SearchTable
 
+  FriendshipAction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: bin/friendship_action/friendship_action.zip
+      Handler: bootstrap
+      Architectures: [arm64]
+      Description: when called, this function will send friend requests if users are not friends, cancel friends request if previously sent, end friendship if users are already friends
+      Environment:
+        Variables:
+          USERS_TABLE: !Ref UsersTable
+      Events:
+        ApiRequest:
+          Type: HttpApi
+          Properties:
+            Path: /friendship/act/{userid}
+            Method: GET
+            ApiId: !Ref BreadApi
+            Auth:
+              Authorizer: CognitoAuthorizer
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref UsersTable
+
   # user dynamodb table
   UsersTable:
     Type: AWS::DynamoDB::Table

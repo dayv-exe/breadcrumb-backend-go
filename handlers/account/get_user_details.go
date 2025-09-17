@@ -103,15 +103,35 @@ func (deps *GetUserDetailsDependencies) HandleGetUserDetails(ctx context.Context
 	}
 
 	// only return nickname, name, profile picture if one user requests another users information
-	return models.SuccessfulGetRequestResponse(models.User{
-		Userid:                   user.Userid,
-		Nickname:                 user.Nickname,
-		Name:                     user.Name,
-		DpUrl:                    user.DpUrl,
-		Bio:                      user.Bio,
-		DefaultProfilePicFgColor: user.DefaultProfilePicFgColor,
-		DefaultProfilePicBgColor: user.DefaultProfilePicBgColor,
-		IsSuspended:              user.IsSuspended,
-		IsDeactivated:            user.IsDeactivated,
+	friendshipHelper := helpers.FriendshipDynamoHelper{
+		DbClient:  deps.DdbClient,
+		TableName: deps.TableName,
+		Ctx:       ctx,
+	}
+
+	friendshipStatus, fsErr := friendshipHelper.GetFriendshipStatus(utils.GetAuthUserId(req), user.Userid)
+
+	if fsErr != nil {
+		return models.ServerSideErrorResponse("Something went wrong while trying to get friendship status", fsErr, "error while trying to get friendship status"), nil
+	}
+
+	type resJson struct {
+		models.User
+		friends string `json:"friends"`
+	}
+
+	return models.SuccessfulGetRequestResponse(resJson{
+		models.User{
+			Userid:                   user.Userid,
+			Nickname:                 user.Nickname,
+			Name:                     user.Name,
+			DpUrl:                    user.DpUrl,
+			Bio:                      user.Bio,
+			DefaultProfilePicFgColor: user.DefaultProfilePicFgColor,
+			DefaultProfilePicBgColor: user.DefaultProfilePicBgColor,
+			IsSuspended:              user.IsSuspended,
+			IsDeactivated:            user.IsDeactivated,
+		},
+		friendshipStatus,
 	}), nil
 }

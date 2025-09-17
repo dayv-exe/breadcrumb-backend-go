@@ -1,8 +1,8 @@
 FRIEND ITEM
 
-pk: USER#{sender uuid} sk: FRIEND#{reciver uuid} date: {time_sent} status: pending | active is_sender: true
+pk: USER#{sender uuid} sk: FRIEND#{reciver uuid} date: {time_sent}
 
-pk: USER#{reciver uuid} sk: FRIEND#{sender uuid} date: {time_sent} status: pending | active is_sender: false
+pk: USER#{reciver uuid} sk: FRIEND#{sender uuid} date: {time_sent}
 
 REQUEST ITEM
 

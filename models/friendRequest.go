@@ -2,6 +2,7 @@ package models
 
 import (
 	"breadcrumb-backend-go/utils"
+	"log"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
@@ -42,6 +43,7 @@ func (fr friendRequest) DatabaseFormat() (*map[string]types.AttributeValue, erro
 	item, err := attributevalue.MarshalMap(fr)
 
 	if err != nil {
+		log.Print("an error occurred while trying to marshal friend req item")
 		return nil, err
 	}
 
