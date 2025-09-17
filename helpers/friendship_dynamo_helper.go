@@ -123,11 +123,7 @@ func (deps *FriendshipDynamoHelper) userHasRequestedFriendship(senderId string, 
 		log.Println("an error occurred while trying to get friend request item from the database")
 		return false, err
 	}
-
-	log.Printf("RRResponse item: %v", item)
-	log.Printf("RRResponse item.item: %v", item.Item)
-
-	return len(item.Item) > 0, nil
+	return len(item.Item) == 1, nil
 }
 
 func (deps *FriendshipDynamoHelper) GetFriendshipStatus(senderId string, recipientId string) (string, error) {
