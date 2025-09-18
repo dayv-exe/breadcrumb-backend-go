@@ -230,7 +230,7 @@ func (deps *FriendshipDynamoHelper) GetFriendshipStatus(senderId string, recipie
 func (deps *FriendshipDynamoHelper) GetAllFriends(userId string, limit int32) (*[]models.User, error) {
 	input := &dynamodb.QueryInput{
 		TableName:              aws.String(deps.TableName),
-		KeyConditionExpression: aws.String("pk = :pk and begins_with(sk, :skPrefix"),
+		KeyConditionExpression: aws.String("pk = :pk AND begins_with(sk, :skPrefix"),
 		ExpressionAttributeValues: map[string]types.AttributeValue{
 			":pk":       &types.AttributeValueMemberS{Value: utils.AddPrefix(models.FriendItemPk, userId)},
 			":skPrefix": &types.AttributeValueMemberS{Value: models.FriendItemSk},
@@ -256,7 +256,7 @@ func (deps *FriendshipDynamoHelper) GetAllFriends(userId string, limit int32) (*
 func (deps *FriendshipDynamoHelper) GetAllFriendRequests(userId string, limit int32) (*[]models.User, error) {
 	input := &dynamodb.QueryInput{
 		TableName:              aws.String(deps.TableName),
-		KeyConditionExpression: aws.String("pk = :pk and begins_with(sk, :skPrefix"),
+		KeyConditionExpression: aws.String("pk = :pk AND begins_with(sk, :skPrefix)"),
 		ExpressionAttributeValues: map[string]types.AttributeValue{
 			":pk":       &types.AttributeValueMemberS{Value: utils.AddPrefix(models.FriendRequestPkPrefix, userId)},
 			":skPrefix": &types.AttributeValueMemberS{Value: models.FriendRequestSkPrefix},
