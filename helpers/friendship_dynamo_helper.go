@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
@@ -21,8 +22,8 @@ type FriendshipDynamoHelper struct {
 	Ctx       context.Context
 }
 
-func (deps *FriendshipDynamoHelper) SendFriendReq(senderId string, recipientId string) error {
-	item, marshalErr := models.NewFriendRequest(recipientId, senderId).DatabaseFormat()
+func (deps *FriendshipDynamoHelper) SendFriendReq(sender *models.User, recipientId string) error {
+	item, marshalErr := models.NewFriendRequest(recipientId, sender).DatabaseFormat()
 
 	if marshalErr != nil {
 		log.Println("An error occurred while trying to convert friendship item to dynamodb item")
@@ -250,6 +251,11 @@ func (deps *FriendshipDynamoHelper) GetAllFriends(userId string, limit int32) (*
 		return nil, mErr
 	}
 
+	for i, f := range friends {
+		// removes all the "USER#" from user id
+		friends[i].Userid = strings.TrimPrefix(f.Userid, models.FriendRequestPkPrefix)
+	}
+
 	return &friends, nil
 }
 
@@ -274,6 +280,11 @@ func (deps *FriendshipDynamoHelper) GetAllFriendRequests(userId string, limit in
 	if mErr := attributevalue.UnmarshalListOfMaps(items.Items, &friends); mErr != nil {
 		log.Print("an error occurred while trying to unmarshal list of users friend requests")
 		return nil, mErr
+	}
+
+	for i, f := range friends {
+		// removes all the "USER#" from user id
+		friends[i].Userid = strings.TrimPrefix(f.Userid, models.FriendRequestPkPrefix)
 	}
 
 	return &friends, nil

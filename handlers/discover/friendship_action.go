@@ -17,11 +17,11 @@ type FriendRequestDependencies struct {
 	TableName string
 }
 
-func handleSendRequest(status, senderId, recipientId string, friendshipHelper helpers.FriendshipDynamoHelper) (events.APIGatewayProxyResponse, error) {
+func handleSendRequest(status string, sender *models.User, recipientId string, friendshipHelper helpers.FriendshipDynamoHelper) (events.APIGatewayProxyResponse, error) {
 	if status != constants.FRIENDSHIP_STATUS_NOT_FRIENDS {
 		return models.InvalidRequestErrorResponse("You have to not be friends or have any pending friend requests with this person to do this."), nil
 	}
-	reqErr := friendshipHelper.SendFriendReq(senderId, recipientId)
+	reqErr := friendshipHelper.SendFriendReq(sender, recipientId)
 	if reqErr != nil {
 		return models.ServerSideErrorResponse("Something went wrong, try again.", reqErr, "Error in friend req handler"), nil
 	}
@@ -99,7 +99,6 @@ func handleGetAllFriendRequests(thisUserId string, friendshipHelper helpers.Frie
 	}
 
 	var allFriendReqs []models.PrimaryUserInfo
-
 	for _, friend := range *allFriendReqsRes {
 		allFriendReqs = append(allFriendReqs, *models.NewPrimaryUserInfo(&friend, constants.FRIENDSHIP_STATUS_REQUESTED))
 	}
@@ -139,7 +138,17 @@ func (deps *FriendRequestDependencies) HandleFriendshipAction(ctx context.Contex
 	switch action {
 	// send friend request if not friends
 	case constants.FRIENDSHIP_ACTION_REQUEST:
-		return handleSendRequest(status, thisUserId, otherUserId, friendshipHelper)
+		findUserHelper := helpers.UserDynamoHelper{
+			DbClient:  deps.DbClient,
+			TableName: deps.TableName,
+			Ctx:       ctx,
+		}
+
+		thisUser, tuErr := findUserHelper.FindById(thisUserId)
+		if tuErr != nil {
+			return models.ServerSideErrorResponse("Something went wrong while trying to send friend request", tuErr, "error while trying to fetch user details for friend request item"), nil
+		}
+		return handleSendRequest(status, thisUser, otherUserId, friendshipHelper)
 
 		// cancel friend request if sent
 	case constants.FRIENDSHIP_ACTION_CANCEL_REQUEST:

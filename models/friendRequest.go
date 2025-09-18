@@ -10,9 +10,14 @@ import (
 )
 
 type friendRequest struct {
-	RecipientId string `dynamodbav:"pk" json:"recipient"`
-	SenderId    string `dynamodbav:"sk" json:"sender"`
-	Date        string `dynamodbav:"date" json:"date"`
+	RecipientId     string `dynamodbav:"pk" json:"recipient"`
+	SenderId        string `dynamodbav:"sk" json:"sender"`
+	Date            string `dynamodbav:"date" json:"date"`
+	SendersName     string `dynamodbav:"name" json:"name"`
+	SendersNickname string `dynamodbav:"nickname" json:"nickname"`
+	SendersDpUrl    string `dynamodb:"dp_url" json:"dpUrl"`
+	SendersFgCol    string `dynamodbav:"default_pic_fg" json:"defaultPicFg"`
+	SendersBgCol    string `dynamodbav:"default_pic_bg" json:"defaultPicBg"`
 }
 
 const (
@@ -20,11 +25,16 @@ const (
 	FriendRequestSkPrefix = "FRIEND_REQUEST_FROM#"
 )
 
-func NewFriendRequest(recipientUserId string, senderUserId string) *friendRequest {
+func NewFriendRequest(recipientUserId string, sender *User) *friendRequest {
 	fr := friendRequest{
-		RecipientId: recipientUserId,
-		SenderId:    senderUserId,
-		Date:        utils.GetTimeNow(),
+		RecipientId:     recipientUserId,
+		SenderId:        sender.Userid,
+		Date:            utils.GetTimeNow(),
+		SendersName:     sender.Name,
+		SendersNickname: sender.Nickname,
+		SendersDpUrl:    sender.DpUrl,
+		SendersFgCol:    sender.DefaultProfilePicFgColor,
+		SendersBgCol:    sender.DefaultProfilePicBgColor,
 	}
 
 	return &fr
