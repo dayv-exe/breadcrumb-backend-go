@@ -9,9 +9,9 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
 
-type friendRequest struct {
-	RecipientId     string `dynamodbav:"pk" json:"recipient"`
-	SenderId        string `dynamodbav:"sk" json:"sender"`
+type FriendRequest struct {
+	RecipientId     string `dynamodbav:"pk"`
+	SenderId        string `dynamodbav:"sk" json:"userId"`
 	Date            string `dynamodbav:"date" json:"date"`
 	SendersName     string `dynamodbav:"name" json:"name"`
 	SendersNickname string `dynamodbav:"nickname" json:"nickname"`
@@ -25,8 +25,8 @@ const (
 	FriendRequestSkPrefix = "FRIEND_REQUEST_FROM#"
 )
 
-func NewFriendRequest(recipientUserId string, sender *User) *friendRequest {
-	fr := friendRequest{
+func NewFriendRequest(recipientUserId string, sender *User) *FriendRequest {
+	fr := FriendRequest{
 		RecipientId:     recipientUserId,
 		SenderId:        sender.Userid,
 		Date:            utils.GetTimeNow(),
@@ -47,7 +47,7 @@ func FriendRequestKey(recipientUserId string, senderUserId string) map[string]ty
 	}
 }
 
-func (fr friendRequest) DatabaseFormat() (*map[string]types.AttributeValue, error) {
+func (fr FriendRequest) DatabaseFormat() (*map[string]types.AttributeValue, error) {
 	fr.RecipientId = utils.AddPrefix(FriendRequestPkPrefix, fr.RecipientId)
 	fr.SenderId = utils.AddPrefix(FriendRequestSkPrefix, fr.SenderId)
 	item, err := attributevalue.MarshalMap(fr)
@@ -60,8 +60,8 @@ func (fr friendRequest) DatabaseFormat() (*map[string]types.AttributeValue, erro
 	return &item, nil
 }
 
-func ConvertToFriendRequest(item *map[string]types.AttributeValue) (*friendRequest, error) {
-	var fr friendRequest
+func ConvertToFriendRequest(item *map[string]types.AttributeValue) (*FriendRequest, error) {
+	var fr FriendRequest
 	if err := attributevalue.UnmarshalMap(*item, &fr); err != nil {
 		return nil, err
 	}

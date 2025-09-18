@@ -21,7 +21,7 @@ func TestFriendRequestDbFormat(t *testing.T) {
 		"default_pic_bg": &types.AttributeValueMemberS{Value: ""},
 	}
 
-	fr := friendRequest{
+	fr := FriendRequest{
 		RecipientId:     "rec",
 		SenderId:        "send",
 		Date:            d,
@@ -59,7 +59,7 @@ func TestFriendRequestDbFormat(t *testing.T) {
 
 func TestConvertToFriendRequest(t *testing.T) {
 	d := utils.GetTimeNow()
-	expected := friendRequest{
+	expected := FriendRequest{
 		RecipientId: "rec",
 		SenderId:    "send",
 		Date:        d,

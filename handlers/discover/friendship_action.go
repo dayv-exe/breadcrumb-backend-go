@@ -93,17 +93,28 @@ func handleGetAllFriends(thisUserId string, friendshipHelper helpers.FriendshipD
 }
 
 func handleGetAllFriendRequests(thisUserId string, friendshipHelper helpers.FriendshipDynamoHelper) (events.APIGatewayProxyResponse, error) {
-	allFriendReqsRes, afErr := friendshipHelper.GetAllFriendRequests(thisUserId, 100)
+	allReqsRes, afErr := friendshipHelper.GetAllFriendRequests(thisUserId, 100)
 	if afErr != nil {
 		return models.ServerSideErrorResponse("Something went wrong while trying to get all friend requests, try again.", afErr, "error in friendship action handler"), nil
 	}
 
-	var allFriendReqs []models.PrimaryUserInfo
-	for _, friend := range *allFriendReqsRes {
-		allFriendReqs = append(allFriendReqs, *models.NewPrimaryUserInfo(&friend, constants.FRIENDSHIP_STATUS_REQUESTED))
+	var allReqs []models.PrimaryUserInfo
+	for _, request := range *allReqsRes {
+		allReqs = append(allReqs, models.PrimaryUserInfo{
+			Userid:                   request.SenderId,
+			Nickname:                 request.SendersNickname,
+			Name:                     request.SendersName,
+			DpUrl:                    request.SendersDpUrl,
+			DefaultProfilePicFgColor: request.SendersFgCol,
+			DefaultProfilePicBgColor: request.SendersBgCol,
+			// in the future will check if account is suspended/deactivated and not return request of suspended account
+			IsSuspended:      false,
+			IsDeactivated:    false,
+			FriendshipStatus: constants.FRIENDSHIP_STATUS_RECEIVED,
+		})
 	}
 
-	return models.SuccessfulGetRequestResponse(allFriendReqs), nil
+	return models.SuccessfulGetRequestResponse(allReqs), nil
 }
 
 func (deps *FriendRequestDependencies) HandleFriendshipAction(ctx context.Context, req *events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {

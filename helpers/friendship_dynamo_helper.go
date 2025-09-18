@@ -8,7 +8,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
@@ -251,15 +250,10 @@ func (deps *FriendshipDynamoHelper) GetAllFriends(userId string, limit int32) (*
 		return nil, mErr
 	}
 
-	for i, f := range friends {
-		// removes all the "USER#" from user id
-		friends[i].Userid = strings.TrimPrefix(f.Userid, models.FriendRequestPkPrefix)
-	}
-
 	return &friends, nil
 }
 
-func (deps *FriendshipDynamoHelper) GetAllFriendRequests(userId string, limit int32) (*[]models.User, error) {
+func (deps *FriendshipDynamoHelper) GetAllFriendRequests(userId string, limit int32) (*[]models.FriendRequest, error) {
 	input := &dynamodb.QueryInput{
 		TableName:              aws.String(deps.TableName),
 		KeyConditionExpression: aws.String("pk = :pk AND begins_with(sk, :skPrefix)"),
@@ -276,16 +270,11 @@ func (deps *FriendshipDynamoHelper) GetAllFriendRequests(userId string, limit in
 		return nil, err
 	}
 
-	var friends []models.User
-	if mErr := attributevalue.UnmarshalListOfMaps(items.Items, &friends); mErr != nil {
+	var requests []models.FriendRequest
+	if mErr := attributevalue.UnmarshalListOfMaps(items.Items, &requests); mErr != nil {
 		log.Print("an error occurred while trying to unmarshal list of users friend requests")
 		return nil, mErr
 	}
 
-	for i, f := range friends {
-		// removes all the "USER#" from user id
-		friends[i].Userid = strings.TrimPrefix(f.Userid, models.FriendRequestPkPrefix)
-	}
-
-	return &friends, nil
+	return &requests, nil
 }
