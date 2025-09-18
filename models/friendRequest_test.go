@@ -11,15 +11,25 @@ import (
 func TestFriendRequestDbFormat(t *testing.T) {
 	d := utils.GetTimeNow()
 	expected := map[string]types.AttributeValue{
-		"pk":   &types.AttributeValueMemberS{Value: "USER#rec"},
-		"sk":   &types.AttributeValueMemberS{Value: "FRIEND_REQUEST_FROM#send"},
-		"date": &types.AttributeValueMemberS{Value: d},
+		"pk":             &types.AttributeValueMemberS{Value: "USER#rec"},
+		"sk":             &types.AttributeValueMemberS{Value: "FRIEND_REQUEST_FROM#send"},
+		"date":           &types.AttributeValueMemberS{Value: d},
+		"name":           &types.AttributeValueMemberS{Value: "test"},
+		"nickname":       &types.AttributeValueMemberS{Value: "test"},
+		"dp_url":         &types.AttributeValueMemberS{Value: ""},
+		"default_pic_fg": &types.AttributeValueMemberS{Value: ""},
+		"default_pic_bg": &types.AttributeValueMemberS{Value: ""},
 	}
 
 	fr := friendRequest{
-		RecipientId: "rec",
-		SenderId:    "send",
-		Date:        d,
+		RecipientId:     "rec",
+		SenderId:        "send",
+		Date:            d,
+		SendersName:     "test",
+		SendersNickname: "test",
+		SendersDpUrl:    "",
+		SendersFgCol:    "",
+		SendersBgCol:    "",
 	}
 	res, _ := fr.DatabaseFormat()
 	result := *res

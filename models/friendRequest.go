@@ -15,7 +15,7 @@ type friendRequest struct {
 	Date            string `dynamodbav:"date" json:"date"`
 	SendersName     string `dynamodbav:"name" json:"name"`
 	SendersNickname string `dynamodbav:"nickname" json:"nickname"`
-	SendersDpUrl    string `dynamodb:"dp_url" json:"dpUrl"`
+	SendersDpUrl    string `dynamodbav:"dp_url" json:"dpUrl"`
 	SendersFgCol    string `dynamodbav:"default_pic_fg" json:"defaultPicFg"`
 	SendersBgCol    string `dynamodbav:"default_pic_bg" json:"defaultPicBg"`
 }
