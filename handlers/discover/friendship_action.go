@@ -102,15 +102,12 @@ func handleGetAllFriendRequests(thisUserId string, friendshipHelper helpers.Frie
 	var allReqs []models.PrimaryUserInfo
 	for _, request := range *allReqsRes {
 		allReqs = append(allReqs, models.PrimaryUserInfo{
-			Userid:                   strings.TrimPrefix(request.SenderId, models.FriendRequestSkPrefix),
-			Nickname:                 request.SendersNickname,
-			Name:                     request.SendersName,
-			DpUrl:                    request.SendersDpUrl,
-			DefaultProfilePicFgColor: request.SendersFgCol,
-			DefaultProfilePicBgColor: request.SendersBgCol,
+			Userid:                  strings.TrimPrefix(request.SenderId, models.FriendRequestSkPrefix),
+			Nickname:                request.SendersNickname,
+			Name:                    request.SendersName,
+			DpUrl:                   request.SendersDpUrl,
+			DefaultProfilePicColors: request.SendersDefaultPicColors,
 			// in the future will check if account is suspended/deactivated and not return request of suspended account
-			IsSuspended:      false,
-			IsDeactivated:    false,
 			FriendshipStatus: constants.FRIENDSHIP_STATUS_RECEIVED,
 		})
 	}

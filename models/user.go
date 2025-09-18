@@ -11,36 +11,34 @@ import (
 )
 
 type User struct {
-	Userid                   string `dynamodbav:"pk" json:"userId"`
-	DbDescription            string `dynamodbav:"sk" json:"type"`
-	Nickname                 string `dynamodbav:"nickname" json:"nickname"`
-	Name                     string `dynamodbav:"name" json:"name"`
-	Bio                      string `dynamodbav:"bio" json:"bio"`
-	DpUrl                    string `dynamodbav:"dpUrl" json:"dpUrl"`
-	IsSuspended              bool   `dynamodbav:"is_suspended" json:"isSuspended"`
-	IsDeactivated            bool   `dynamodbav:"is_deactivated" json:"isDeactivated"`
-	DateJoined               string `dynamodbav:"date_joined" json:"dateJoined"`
-	BirthdateChangeCount     int    `dynamodbav:"birthdate_change_count" json:"birthdateChangeCount"`
-	LastNicknameChange       string `dynamodbav:"last_nickname_change" json:"lastNicknameChange"`
-	LastEmailChange          string `dynamodbav:"last_email_change" json:"lastEmailChange"`
-	LastLogin                string `dynamodbav:"last_login" json:"lastLogin"`
-	ForceChangeNickname      bool   `dynamodbav:"force_change_nickname" json:"forceChangeNickname"`
-	SuspensionReason         string `dynamodbav:"suspension_reason" json:"suspensionReason"`
-	DefaultProfilePicFgColor string `dynamodbav:"default_pic_fg" json:"defaultPicFg"`
-	DefaultProfilePicBgColor string `dynamodbav:"default_pic_bg" json:"defaultPicBg"`
+	Userid                  string `dynamodbav:"pk" json:"userId"`
+	DbDescription           string `dynamodbav:"sk" json:"type"`
+	Nickname                string `dynamodbav:"nickname" json:"nickname"`
+	Name                    string `dynamodbav:"name" json:"name"`
+	Bio                     string `dynamodbav:"bio" json:"bio"`
+	DpUrl                   string `dynamodbav:"dpUrl" json:"dpUrl"`
+	IsSuspended             bool   `dynamodbav:"is_suspended" json:"isSuspended"`
+	IsDeactivated           bool   `dynamodbav:"is_deactivated" json:"isDeactivated"`
+	DateJoined              string `dynamodbav:"date_joined" json:"dateJoined"`
+	BirthdateChangeCount    int    `dynamodbav:"birthdate_change_count" json:"birthdateChangeCount"`
+	LastNicknameChange      string `dynamodbav:"last_nickname_change" json:"lastNicknameChange"`
+	LastEmailChange         string `dynamodbav:"last_email_change" json:"lastEmailChange"`
+	LastLogin               string `dynamodbav:"last_login" json:"lastLogin"`
+	ForceChangeNickname     bool   `dynamodbav:"force_change_nickname" json:"forceChangeNickname"`
+	SuspensionReason        string `dynamodbav:"suspension_reason" json:"suspensionReason"`
+	DefaultProfilePicColors string `dynamodbav:"default_pic_colors" json:"defaultPicColors"`
 }
 
 type PrimaryUserInfo struct {
-	Userid                   string `json:"userId"`
-	Nickname                 string `json:"nickname"`
-	Name                     string `json:"name"`
-	DpUrl                    string `json:"dpUrl"`
-	Bio                      string `json:"bio"`
-	DefaultProfilePicFgColor string `json:"defaultPicFg"`
-	DefaultProfilePicBgColor string `json:"defaultPicBg"`
-	IsSuspended              bool   `json:"isSuspended"`
-	IsDeactivated            bool   `json:"isDeactivated"`
-	FriendshipStatus         string `json:"friends"`
+	Userid                  string `json:"userId"`
+	Nickname                string `json:"nickname"`
+	Name                    string `json:"name"`
+	DpUrl                   string `json:"dpUrl"`
+	Bio                     string `json:"bio"`
+	DefaultProfilePicColors string `json:"defaultPicColors"`
+	IsSuspended             bool   `json:"isSuspended"`
+	IsDeactivated           bool   `json:"isDeactivated"`
+	FriendshipStatus        string `json:"friends"`
 }
 
 const (
@@ -50,16 +48,15 @@ const (
 
 func NewPrimaryUserInfo(u *User, friendshipStatus string) *PrimaryUserInfo {
 	return &PrimaryUserInfo{
-		Userid:                   u.Userid,
-		Nickname:                 u.Nickname,
-		Name:                     u.Name,
-		DpUrl:                    u.DpUrl,
-		Bio:                      u.Bio,
-		DefaultProfilePicFgColor: u.DefaultProfilePicFgColor,
-		DefaultProfilePicBgColor: u.DefaultProfilePicBgColor,
-		IsSuspended:              u.IsSuspended,
-		IsDeactivated:            u.IsDeactivated,
-		FriendshipStatus:         friendshipStatus,
+		Userid:                  u.Userid,
+		Nickname:                u.Nickname,
+		Name:                    u.Name,
+		DpUrl:                   u.DpUrl,
+		Bio:                     u.Bio,
+		DefaultProfilePicColors: u.DefaultProfilePicColors,
+		IsSuspended:             u.IsSuspended,
+		IsDeactivated:           u.IsDeactivated,
+		FriendshipStatus:        friendshipStatus,
 	}
 }
 
@@ -67,22 +64,21 @@ func NewUser(userid string, nickname string, name string, isSuspended bool) *Use
 	defaultColors := utils.GenerateRandomColorPair()
 
 	return &User{
-		Userid:                   userid,
-		Nickname:                 strings.ToLower(nickname),
-		Name:                     name,
-		Bio:                      "",
-		IsSuspended:              isSuspended,
-		IsDeactivated:            false,
-		DateJoined:               utils.GetTimeNow(),
-		BirthdateChangeCount:     0,
-		LastNicknameChange:       "",
-		LastEmailChange:          "",
-		LastLogin:                utils.GetTimeNow(),
-		ForceChangeNickname:      false,
-		SuspensionReason:         "",
-		DefaultProfilePicFgColor: defaultColors.Foreground,
-		DefaultProfilePicBgColor: defaultColors.Background,
-		DbDescription:            UserSkPrefix,
+		Userid:                  userid,
+		Nickname:                strings.ToLower(nickname),
+		Name:                    name,
+		Bio:                     "",
+		IsSuspended:             isSuspended,
+		IsDeactivated:           false,
+		DateJoined:              utils.GetTimeNow(),
+		BirthdateChangeCount:    0,
+		LastNicknameChange:      "",
+		LastEmailChange:         "",
+		LastLogin:               utils.GetTimeNow(),
+		ForceChangeNickname:     false,
+		SuspensionReason:        "",
+		DefaultProfilePicColors: "#" + defaultColors.Foreground + "#" + defaultColors.Background,
+		DbDescription:           UserSkPrefix,
 	}
 }
 

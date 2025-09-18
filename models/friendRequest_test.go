@@ -22,14 +22,13 @@ func TestFriendRequestDbFormat(t *testing.T) {
 	}
 
 	fr := FriendRequest{
-		RecipientId:     "rec",
-		SenderId:        "send",
-		Date:            d,
-		SendersName:     "test",
-		SendersNickname: "test",
-		SendersDpUrl:    "",
-		SendersFgCol:    "",
-		SendersBgCol:    "",
+		RecipientId:             "rec",
+		SenderId:                "send",
+		Date:                    d,
+		SendersName:             "test",
+		SendersNickname:         "test",
+		SendersDpUrl:            "",
+		SendersDefaultPicColors: "",
 	}
 	res, _ := fr.DatabaseFormat()
 	result := *res
