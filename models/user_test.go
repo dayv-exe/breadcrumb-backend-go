@@ -24,8 +24,7 @@ var testUserDynamo = map[string]dbTypes.AttributeValue{
 	"last_login":             &dbTypes.AttributeValueMemberS{Value: utils.GetTimeNow()},
 	"force_change_nickname":  &dbTypes.AttributeValueMemberBOOL{Value: false},
 	"suspension_reason":      &dbTypes.AttributeValueMemberS{Value: ""},
-	"default_pic_fg":         &dbTypes.AttributeValueMemberS{Value: ""},
-	"default_pic_bg":         &dbTypes.AttributeValueMemberS{Value: ""},
+	"default_pic_colors":     &dbTypes.AttributeValueMemberS{Value: ""},
 }
 
 func TestUser_DatabaseFormat(t *testing.T) {
@@ -38,8 +37,7 @@ func TestUser_DatabaseFormat(t *testing.T) {
 
 	result := *user.DatabaseFormat()
 
-	result["default_pic_fg"] = &dbTypes.AttributeValueMemberS{Value: ""}
-	result["default_pic_bg"] = &dbTypes.AttributeValueMemberS{Value: ""}
+	result["default_pic_colors"] = &dbTypes.AttributeValueMemberS{Value: ""}
 
 	if len(testUserDynamo) != len(result) {
 		t.Fatalf("Expected %d keys, got %d", len(testUserDynamo), len(result))
