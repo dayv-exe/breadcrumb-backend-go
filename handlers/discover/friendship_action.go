@@ -7,6 +7,7 @@ import (
 	"breadcrumb-backend-go/utils"
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
@@ -101,7 +102,7 @@ func handleGetAllFriendRequests(thisUserId string, friendshipHelper helpers.Frie
 	var allReqs []models.PrimaryUserInfo
 	for _, request := range *allReqsRes {
 		allReqs = append(allReqs, models.PrimaryUserInfo{
-			Userid:                   request.SenderId,
+			Userid:                   strings.TrimPrefix(request.SenderId, models.FriendRequestSkPrefix),
 			Nickname:                 request.SendersNickname,
 			Name:                     request.SendersName,
 			DpUrl:                    request.SendersDpUrl,
