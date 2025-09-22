@@ -5,8 +5,6 @@ import (
 	"breadcrumb-backend-go/models"
 	"breadcrumb-backend-go/utils"
 	"context"
-	"errors"
-	"fmt"
 	"log"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -81,16 +79,7 @@ func (deps *FriendshipDynamoHelper) EndFriendship(user1id, user2id string) error
 	if err != nil {
 		log.Print("error while trying to transact write (delete) user friendships")
 		// Check for transaction cancellation reasons
-		var tce *types.TransactionCanceledException
-		if errors.As(err, &tce) {
-			for i, reason := range tce.CancellationReasons {
-				fmt.Printf("add user Cancellation %d: Code=%s, Message=%s\n",
-					i,
-					aws.ToString(reason.Code),
-					aws.ToString(reason.Message),
-				)
-			}
-		}
+		utils.PrintTransactWriteCancellationReason(err)
 		return err
 	}
 
@@ -196,6 +185,7 @@ func (deps *FriendshipDynamoHelper) userHasRequestedFriendship(senderId string, 
 }
 
 func (deps *FriendshipDynamoHelper) GetFriendshipStatus(senderId string, recipientId string) (string, error) {
+	// checks if this user has sent a friend request to other user
 	requested, reqErr := deps.userHasRequestedFriendship(senderId, recipientId)
 	if reqErr != nil {
 		return "", reqErr
@@ -205,6 +195,7 @@ func (deps *FriendshipDynamoHelper) GetFriendshipStatus(senderId string, recipie
 		return constants.FRIENDSHIP_STATUS_REQUESTED, nil
 	}
 
+	// checks if other user has sent a friend request to this user
 	received, recErr := deps.userHasRequestedFriendship(recipientId, senderId)
 	if recErr != nil {
 		log.Print("error while checking if user has RECEIVED a friend request")

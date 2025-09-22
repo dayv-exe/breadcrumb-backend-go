@@ -157,6 +157,11 @@ func (deps *FriendRequestDependencies) HandleFriendshipAction(ctx context.Contex
 		if tuErr != nil {
 			return models.ServerSideErrorResponse("Something went wrong while trying to send friend request", tuErr, "error while trying to fetch user details for friend request item"), nil
 		}
+
+		// if we cannot find this users account
+		if thisUser == nil {
+			return models.NotFoundResponse("Something went wrong while trying to send friend request"), nil
+		}
 		return handleSendRequest(status, thisUser, otherUserId, friendshipHelper)
 
 		// cancel friend request if sent

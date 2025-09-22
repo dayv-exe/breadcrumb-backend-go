@@ -330,6 +330,7 @@ Resources:
   FriendshipAction:
     Type: AWS::Serverless::Function
     Properties:
+      MemorySize: 512
       CodeUri: bin/friendship_action/friendship_action.zip
       Handler: bootstrap
       Architectures: [arm64]

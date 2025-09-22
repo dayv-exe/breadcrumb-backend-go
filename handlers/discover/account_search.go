@@ -1,6 +1,7 @@
 package discover
 
 import (
+	"breadcrumb-backend-go/constants"
 	"breadcrumb-backend-go/helpers"
 	"breadcrumb-backend-go/models"
 	"context"
@@ -29,6 +30,15 @@ func (deps *AccountSearchDependencies) HandleAccountSearch(ctx context.Context, 
 		// return empty array if string length is too short
 		return models.SuccessfulGetRequestResponse([]models.UserSearch{}), nil
 	}
+
+	// only takes the first 2 - 20 chars in the search string to process and then search the database for
+	maxChars := len((searchStr))
+
+	if len(searchStr) > constants.MAX_SEARCH_STRING_CHARS {
+		maxChars = constants.MAX_SEARCH_STRING_CHARS
+	}
+
+	searchStr = searchStr[:maxChars]
 
 	searchHelper := helpers.SearchDynamoHelper{
 		DbClient:  deps.Client,
