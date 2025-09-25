@@ -239,7 +239,6 @@ Resources:
       GenerateSecretString:
         SecretStringTemplate: '{"private_key":"","public_key":"","key_pair_id":""}'
         GenerateStringKey: "placeholder"
-        PasswordLength: 1
 
   # to add newly created user to dynamo db
   UserPostConfirmationFunction:
