@@ -20,6 +20,7 @@ var testUserDynamo = map[string]dbTypes.AttributeValue{
 	"date_joined":            &dbTypes.AttributeValueMemberS{Value: utils.GetTimeNow()},
 	"birthdate_change_count": &dbTypes.AttributeValueMemberN{Value: "0"},
 	"last_nickname_change":   &dbTypes.AttributeValueMemberS{Value: ""},
+	"last_name_change":       &dbTypes.AttributeValueMemberS{Value: ""},
 	"last_email_change":      &dbTypes.AttributeValueMemberS{Value: ""},
 	"last_login":             &dbTypes.AttributeValueMemberS{Value: utils.GetTimeNow()},
 	"force_change_nickname":  &dbTypes.AttributeValueMemberBOOL{Value: false},

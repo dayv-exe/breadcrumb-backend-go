@@ -24,7 +24,7 @@ type User struct {
 	LastNicknameChange      string `dynamodbav:"last_nickname_change" json:"lastNicknameChange"`
 	LastEmailChange         string `dynamodbav:"last_email_change" json:"lastEmailChange"`
 	LastLogin               string `dynamodbav:"last_login" json:"lastLogin"`
-	LastNameChange          string `dynamodb:"last_name_change" json:"lastNameChange"`
+	LastNameChange          string `dynamodbav:"last_name_change" json:"lastNameChange"`
 	ForceChangeNickname     bool   `dynamodbav:"force_change_nickname" json:"forceChangeNickname"`
 	SuspensionReason        string `dynamodbav:"suspension_reason" json:"suspensionReason"`
 	DefaultProfilePicColors string `dynamodbav:"default_pic_colors" json:"defaultPicColors"`
