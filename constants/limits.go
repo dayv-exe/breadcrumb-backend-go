@@ -1,6 +1,6 @@
 package constants
 
-var (
+const (
 	MIN_AGE                  = 13
 	MAX_AGE                  = 99
 	MIN_USERNAME_CHARS       = 3
@@ -12,4 +12,10 @@ var (
 	MAX_BIO_CHARS            = 50
 	MAX_CHUNKABLE_LEN        = 10
 	MAX_SEARCH_STRING_CHARS  = 20
+	PRESIGNED_URL_EXPIRY     = 15
 )
+
+var ALLOWED_FILE_TYPES = map[string]struct{}{
+	".jpg": {},
+	".mp4": {},
+}

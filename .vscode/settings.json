@@ -3,6 +3,7 @@
     "attributevalue",
     "CHUNKABLE",
     "Chunkify",
-    "dynamodbav"
+    "dynamodbav",
+    "Presign"
   ]
 }

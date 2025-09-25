@@ -10,6 +10,9 @@ Globals:
     Environment:
       Variables:
         USERS_TABLE: !Ref UsersTable
+        MEDIA_BUCKET: !Ref MediaBucket
+        CLOUDFRONT_DISTRIBUTION_ID: !Ref CloudFrontDistribution
+        CLOUDFRONT_DOMAIN: !GetAtt CloudFrontDistribution.DomainName
 
 Resources:
   # auth
@@ -101,6 +104,142 @@ Resources:
                 - !Ref CognitoUserPoolClient
               claims:
                 email_verified: "true"
+
+  # bucket for media
+  MediaBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${AWS::StackName}-media-bucket-${AWS::AccountId}"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      CorsConfiguration:
+        CorsRules:
+          - AllowedMethods:
+              - PUT
+              - POST
+              - GET
+              - HEAD
+
+            AllowedOrigins:
+              - "*"
+
+            AllowedHeaders:
+              - "*"
+            MaxAge: 3000 # for browser cache
+      LifecycleConfiguration:
+        Rules:
+          - Id: DeleteIncompleteMultiPartUploads
+            Status: Enabled
+            AbortIncompleteMultipartUpload:
+              DaysAfterInitiation: 1
+
+  CloudFrontOriginAccessControl:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: !Sub "${AWS::StackName}-oac"
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
+  
+  CloudFrontDistribution:
+    Type: AWS::CloudFront::Distribution
+    Properties:
+      DistributionConfig:
+        Origins:
+          - DomainName: !GetAtt MediaBucket.RegionalDomainName
+            Id: S3Origin
+            S3OriginConfig:
+              OriginAccessIdentity: ""
+            OriginAccessControlId: !Ref CloudFrontOriginAccessControl
+        Enabled: true
+        DefaultCacheBehavior:
+          TargetOriginId: S3Origin
+          ViewerProtocolPolicy: redirect-to-https
+          AllowedMethods:
+            - GET
+            - HEAD
+            - OPTIONS
+          CachedMethods:
+            - GET
+            - HEAD
+          Compress: true
+          ForwardedValues:
+            QueryString: false
+            Cookies:
+              Forward: none
+          TrustedSigners:
+            - self
+        PriceClass: PriceClass_100
+        ViewerCertificate:
+          CloudFrontDefaultCertificate: true
+
+  MediaBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref MediaBucket
+      PolicyDocument:
+        Statement:
+          - Sid: AllowCloudFrontServicePrincipal
+            Effect: Allow
+            Principal:
+              Service: cloudfront.amazonaws.com
+            Action: s3:GetObject
+            Resource: !Sub "${MediaBucket}/uploads/*"
+            Condition:
+              StringEquals:
+                "AWS:SourceArn": !Sub "arn:aws:cloudfront::${AWS::AccountId}:distribution/${CloudFrontDistribution}"
+  
+  S3ActionsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Timeout: 15
+      MemorySize: 512
+      CodeUri: bin/s3bucket_actions/s3bucket_actions.zip
+      Handler: bootstrap
+      Architectures: [arm64]
+      Description: to carry out actions like presign url, delete objects and more on s3 bucket
+      Environment:
+        Variables:
+          MEDIA_BUCKET: !Ref MediaBucket
+          SECRETS_MANAGER_ARN: !Ref CloudFrontKeysSecret
+          CLOUDFRONT_DISTRIBUTION_ID: !Ref CloudFrontDistribution
+          CLOUDFRONT_DOMAIN: !GetAtt CloudFrontDistribution.DomainName
+      Events:
+        ApiRequest:
+          Type: HttpApi
+          Properties:
+            Path: /storage/{action}
+            Method: POST
+            ApiId: !Ref BreadApi
+            Auth:
+              Authorizer: CognitoAuthorizer
+      Policies:
+        - Statement:
+            Effect: Allow
+            Action:
+              - s3:PutObject
+            Resource: !Sub "${MediaBucket.Arn}/uploads/*"
+
+      # ill remove this later we dont need to use cloud front secrets
+        - Statement:
+            Effect: Allow
+            Action:
+              - secretsmanager:GetSecretValue
+            Resource: !Ref CloudFrontKeysSecret
+
+  CloudFrontKeysSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub "${AWS::StackName}-cloudfront-keys"
+      Description: "CloudFront private/public key pair for signed URLs"
+      GenerateSecretString:
+        SecretStringTemplate: '{"private_key":"","public_key":"","key_pair_id":""}'
+        GenerateStringKey: "placeholder"
+        PasswordLength: 1
 
   # to add newly created user to dynamo db
   UserPostConfirmationFunction:

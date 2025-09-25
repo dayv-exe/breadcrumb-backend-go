@@ -1,6 +1,6 @@
 package constants
 
-var (
+const (
 	FRIENDSHIP_STATUS_FRIENDS     = "true"
 	FRIENDSHIP_STATUS_REQUESTED   = "requested"
 	FRIENDSHIP_STATUS_NOT_FRIENDS = "false"

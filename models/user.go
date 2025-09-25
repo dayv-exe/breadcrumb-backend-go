@@ -77,7 +77,7 @@ func NewUser(userid string, nickname string, name string, isSuspended bool) *Use
 		LastLogin:               utils.GetTimeNow(),
 		ForceChangeNickname:     false,
 		SuspensionReason:        "",
-		DefaultProfilePicColors: "#" + defaultColors.Foreground + "#" + defaultColors.Background,
+		DefaultProfilePicColors: defaultColors.Foreground + utils.AddPrefix("", defaultColors.Background),
 		DbDescription:           UserSkPrefix,
 	}
 }
