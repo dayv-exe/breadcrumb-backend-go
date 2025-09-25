@@ -4,8 +4,6 @@ import (
 	"breadcrumb-backend-go/models"
 	"breadcrumb-backend-go/utils"
 	"context"
-	"errors"
-	"fmt"
 	"log"
 	"strings"
 
@@ -16,9 +14,9 @@ import (
 )
 
 type SearchDynamoHelper struct {
-	DbClient  *dynamodb.Client
-	TableName string
-	Ctx       context.Context
+	DbClient        *dynamodb.Client
+	SearchTableName string
+	Ctx             context.Context
 }
 
 func (deps *SearchDynamoHelper) SearchUser(searchStr string, limit int32) ([]models.UserSearch, error) {
@@ -31,7 +29,7 @@ func (deps *SearchDynamoHelper) SearchUser(searchStr string, limit int32) ([]mod
 	for _, token := range tokens {
 		if len(token) >= models.UserSearchIndexPrefixLen {
 			input := dynamodb.QueryInput{
-				TableName:              aws.String(deps.TableName),
+				TableName:              aws.String(deps.SearchTableName),
 				KeyConditionExpression: aws.String("pk = :pk AND begins_with(sk, :skPrefix)"),
 				ExpressionAttributeValues: map[string]types.AttributeValue{
 					":pk":       &types.AttributeValueMemberS{Value: models.UserSearchIndexPkPrefix + token[:models.UserSearchIndexPrefixLen]},
@@ -74,7 +72,7 @@ func (deps *SearchDynamoHelper) SearchUser(searchStr string, limit int32) ([]mod
 	return result, nil
 }
 
-func (deps *SearchDynamoHelper) AddUserSearchIndex(user *models.User) error {
+func (deps *SearchDynamoHelper) GetUserSearchIndexItems(user *models.User) ([]types.TransactWriteItem, error) {
 	// Adds items to search table to allow for queries where search string is similar to nickname or full name
 	builder := models.UserSearch{
 		UserId:   user.Userid,
@@ -86,46 +84,25 @@ func (deps *SearchDynamoHelper) AddUserSearchIndex(user *models.User) error {
 	indexes, err := builder.BuildSearchIndexes()
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
+	// no db write
 	// creates slice of items
 	var items []types.TransactWriteItem
 	for _, index := range indexes {
 		items = append(items, types.TransactWriteItem{
 			Put: &types.Put{
-				TableName: aws.String(deps.TableName),
+				TableName: aws.String(deps.SearchTableName),
 				Item:      index,
 			},
 		})
 	}
-
-	input := &dynamodb.TransactWriteItemsInput{
-		TransactItems: items,
-	}
-
-	_, dbErr := deps.DbClient.TransactWriteItems(deps.Ctx, input)
-
-	if dbErr != nil {
-		// Check for transaction cancellation reasons
-		var tce *types.TransactionCanceledException
-		if errors.As(dbErr, &tce) {
-			for i, reason := range tce.CancellationReasons {
-				fmt.Printf("add user search index Cancellation %d: Code=%s, Message=%s\n",
-					i,
-					aws.ToString(reason.Code),
-					aws.ToString(reason.Message),
-				)
-			}
-		}
-		return dbErr
-	}
-
-	return nil
+	return items, nil
 }
 
-func (deps *SearchDynamoHelper) DeleteUserIndexes(user *models.User) error {
-	// rebuild indexes, then query them and delete
+func (deps *SearchDynamoHelper) GetDeleteUserIndexesItems(user *models.User) ([]types.TransactWriteItem, error) {
+	// rebuild indexes, then query them and get their primary keys
 	builder := models.UserSearch{
 		UserId:   user.Userid,
 		Nickname: user.Nickname,
@@ -135,41 +112,20 @@ func (deps *SearchDynamoHelper) DeleteUserIndexes(user *models.User) error {
 
 	indexes, builderErr := builder.BuildSearchIndexes()
 	if builderErr != nil {
-		return builderErr
+		return nil, builderErr
 	}
 
+	// no db write
 	keys := models.GetUserSearchIndexesKeys(indexes)
 	var items []types.TransactWriteItem
 	for _, key := range keys {
 		items = append(items, types.TransactWriteItem{
 			Delete: &types.Delete{
-				TableName: aws.String(deps.TableName),
+				TableName: aws.String(deps.SearchTableName),
 				Key:       key,
 			},
 		})
 	}
 
-	input := &dynamodb.TransactWriteItemsInput{
-		TransactItems: items,
-	}
-
-	log.Println(keys)
-
-	_, err := deps.DbClient.TransactWriteItems(deps.Ctx, input)
-	if err != nil {
-		// Check for transaction cancellation reasons
-		var tce *types.TransactionCanceledException
-		if errors.As(err, &tce) {
-			for i, reason := range tce.CancellationReasons {
-				fmt.Printf("delete user index Cancellation %d: Code=%s, Message=%s\n",
-					i,
-					aws.ToString(reason.Code),
-					aws.ToString(reason.Message),
-				)
-			}
-		}
-		return err
-	}
-
-	return nil
+	return items, nil
 }

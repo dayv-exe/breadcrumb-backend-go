@@ -17,7 +17,7 @@ var (
 	ddbClient     *dynamodb.Client
 	cognitoClient *cognitoidentityprovider.Client
 	userPoolId    string
-	tableName     string
+	userTable     string
 )
 
 func init() {
@@ -27,8 +27,8 @@ func init() {
 	}
 
 	ddbClient = dynamodb.NewFromConfig(cfg)
-	tableName = os.Getenv("USERS_TABLE")
-	if tableName == "" {
+	userTable = os.Getenv("USERS_TABLE")
+	if userTable == "" {
 		panic("USERS_TABLE environment variable not set")
 	}
 
@@ -43,7 +43,7 @@ func main() {
 	gud := apis.GetUserDetailsDependencies{
 		UserPoolId:    userPoolId,
 		CognitoClient: cognitoClient,
-		TableName:     tableName,
+		UserTable:     userTable,
 		DdbClient:     ddbClient,
 	}
 

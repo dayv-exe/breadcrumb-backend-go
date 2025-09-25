@@ -13,6 +13,7 @@ const (
 	MAX_CHUNKABLE_LEN        = 10
 	MAX_SEARCH_STRING_CHARS  = 20
 	PRESIGNED_URL_EXPIRY     = 15
+	NAME_CHANGE_FREEZE_TIME  = 30 //days
 )
 
 var ALLOWED_FILE_TYPES = map[string]struct{}{

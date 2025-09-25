@@ -12,8 +12,9 @@ import (
 )
 
 var (
-	dbClient  *dynamodb.Client
-	tableName string
+	dbClient    *dynamodb.Client
+	userTable   string
+	searchTable string
 )
 
 func init() {
@@ -23,16 +24,21 @@ func init() {
 	}
 
 	dbClient = dynamodb.NewFromConfig(cfg)
-	tableName = os.Getenv("USERS_TABLE")
-	if tableName == "" {
+	userTable = os.Getenv("USERS_TABLE")
+	if userTable == "" {
 		panic("USERS_TABLE environment variable not set")
+	}
+	searchTable = os.Getenv("SEARCH_TABLE")
+	if searchTable == "" {
+		panic("SEARCH_TABLE environment variable not set")
 	}
 }
 
 func main() {
 	deps := account.EditUserDetailsDependency{
-		DdbClient: dbClient,
-		TableName: tableName,
+		DdbClient:   dbClient,
+		UserTable:   userTable,
+		SearchTable: searchTable,
 	}
 
 	lambda.Start(deps.HandleEditUserDetails)

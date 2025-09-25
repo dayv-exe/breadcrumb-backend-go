@@ -378,7 +378,7 @@ Resources:
         ApiRequest:
           Type: HttpApi
           Properties:
-            Path: /edit/profile
+            Path: /edit/profile/{action}
             Method: POST
             ApiId: !Ref BreadApi
             Auth:

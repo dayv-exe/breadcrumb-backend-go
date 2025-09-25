@@ -12,8 +12,9 @@ import (
 )
 
 type DeleteUserDependencies struct {
-	DbClient  *dynamodb.Client
-	TableName string
+	DbClient        *dynamodb.Client
+	UserTableName   string
+	SearchTableName string
 
 	CognitoClient *cognitoidentityprovider.Client
 	UserPoolId    string
@@ -28,9 +29,10 @@ func (deps *DeleteUserDependencies) HandleDeleteUser(ctx context.Context, req *e
 
 	// get user details from db
 	dbHelper := helpers.UserDynamoHelper{
-		DbClient:  deps.DbClient,
-		TableName: deps.TableName,
-		Ctx:       ctx,
+		DbClient:        deps.DbClient,
+		UserTableName:   deps.UserTableName,
+		SearchTableName: deps.SearchTableName,
+		Ctx:             ctx,
 	}
 	user, uErr := dbHelper.FindById(userId)
 
@@ -43,7 +45,7 @@ func (deps *DeleteUserDependencies) HandleDeleteUser(ctx context.Context, req *e
 	}
 
 	// delete user from dynamodb
-	delErr := dbHelper.DeleteFromDynamo(userId, user.Nickname)
+	delErr := dbHelper.DeleteFromDynamo(user)
 
 	if delErr != nil {
 		return models.ServerSideErrorResponse("Something went wrong while trying to delete your account, try again", delErr, "error from delete from dynamo db"), nil

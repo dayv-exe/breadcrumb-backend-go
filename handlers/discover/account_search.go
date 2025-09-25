@@ -41,9 +41,9 @@ func (deps *AccountSearchDependencies) HandleAccountSearch(ctx context.Context, 
 	searchStr = searchStr[:maxChars]
 
 	searchHelper := helpers.SearchDynamoHelper{
-		DbClient:  deps.Client,
-		TableName: deps.TableName,
-		Ctx:       ctx,
+		DbClient:        deps.Client,
+		SearchTableName: deps.TableName,
+		Ctx:             ctx,
 	}
 
 	results, err := searchHelper.SearchUser(strings.ToLower(searchStr), int32(limit))

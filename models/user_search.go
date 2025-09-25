@@ -16,11 +16,12 @@ const (
 )
 
 type UserSearch struct {
-	UserId   string `dynamodbav:"userid" json:"userid"`
-	Nickname string `dynamodbav:"nickname" json:"nickname"`
-	Name     string `dynamodbav:"name" json:"name"`
-	DpUrl    string `dynamodbav:"dp_url" json:"dpUrl"`
-	Rating   int    `json:"rating"`
+	UserId                  string `dynamodbav:"userid" json:"userid"`
+	Nickname                string `dynamodbav:"nickname" json:"nickname"`
+	Name                    string `dynamodbav:"name" json:"name"`
+	DpUrl                   string `dynamodbav:"dp_url" json:"dpUrl"`
+	DefaultProfilePicColors string `dynamodbav:"default_pic_colors" json:"defaultPicColors"`
+	Rating                  int    `json:"rating"`
 }
 
 type userSearchDbItem struct {
@@ -33,6 +34,12 @@ type userSearchDbItem struct {
 }
 
 func (u *UserSearch) BuildSearchIndexes() ([]map[string]types.AttributeValue, error) {
+	// returns items to be put in the database that contains search index
+	// for example
+	// john.test this function will return
+	// pk: jo, sk: john
+	// pk: te, sk: test
+
 	if len(u.Nickname) < constants.MIN_USERNAME_CHARS {
 		return nil, fmt.Errorf("Name or nickname is too short!")
 	}
@@ -82,6 +89,7 @@ func (u *UserSearch) BuildSearchIndexes() ([]map[string]types.AttributeValue, er
 }
 
 func GetUserSearchIndexesKeys(dbIndexItems []map[string]types.AttributeValue) []map[string]types.AttributeValue {
+	// this function returns a slice containing the pk and sk of database items parsed into it
 	var keys []map[string]types.AttributeValue
 	seen := make(map[string]struct{})
 

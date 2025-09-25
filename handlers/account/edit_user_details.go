@@ -12,57 +12,83 @@ import (
 )
 
 type EditUserDetailsDependency struct {
-	DdbClient *dynamodb.Client
-	TableName string
+	DdbClient   *dynamodb.Client
+	UserTable   string
+	SearchTable string
 }
 
 type editUserDetailsReq struct {
-	Target  string          `json:"target"`
 	Payload json.RawMessage `json:"payload"`
 }
 
-type editNamePayload struct {
-	Nickname string `json:"nickname"`
-	Name     string `json:"fullname"`
-}
-
 func (deps *EditUserDetailsDependency) HandleEditUserDetails(ctx context.Context, req *events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
+	// get action and payload
+	action := req.PathParameters["action"]
 	var reqBody editUserDetailsReq
-	if umErr := json.Unmarshal([]byte(req.Body), &reqBody); umErr != nil {
+	if err := json.Unmarshal([]byte(req.Body), &reqBody); err != nil {
+		// error while unmarshalling
 		return models.InvalidRequestErrorResponse(""), nil
 	}
+	userid := utils.GetAuthUserId(req)
 
-	userId := utils.GetAuthUserId(req)
+	// action based switch
+	switch action {
+	case "nickname":
+		return deps.handleChangeName(userid, reqBody, ctx, true)
 
-	if userId == "" {
-		return models.UnauthorizedErrorResponse(""), nil
-	}
+	case "name":
+		return deps.handleChangeName(userid, reqBody, ctx, false)
 
-	dbHelper := helpers.UserDynamoHelper{
-		DbClient:  deps.DdbClient,
-		TableName: deps.TableName,
-		Ctx:       ctx,
-	}
-
-	// allows update of nickname, full name, bio
-
-	switch reqBody.Target {
-	case "names":
-		// update nickname and fullname (its called username in the front end)
-		var namePayload editNamePayload
-		if umErr := json.Unmarshal([]byte(reqBody.Payload), &namePayload); umErr != nil {
-			return models.InvalidRequestErrorResponse(""), nil
+	case "bio":
+		userHelper := helpers.UserDynamoHelper{
+			DbClient:      deps.DdbClient,
+			UserTableName: deps.UserTable,
+			Ctx:           ctx,
+		}
+		bioErr := userHelper.UpdateBio(userid, string(reqBody.Payload))
+		if bioErr != nil {
+			return models.ServerSideErrorResponse("", bioErr, "error while trying to update bio"), nil
 		}
 
-		nnErr := dbHelper.UpdateNicknameAndFullname(userId, namePayload.Nickname, namePayload.Name)
-		if nnErr != nil {
-			return models.ServerSideErrorResponse("Something went wrong while trying to update nickname!", nnErr, "trying to update nickname"), nil
-		}
+		return models.SuccessfulRequestResponse("", false), nil
 
 	default:
-		// invalid target
 		return models.InvalidRequestErrorResponse(""), nil
 	}
+}
 
-	return models.SuccessfulRequestResponse("Resource updated successfully!", false), nil
+func (deps *EditUserDetailsDependency) handleChangeName(userid string, reqBody editUserDetailsReq, ctx context.Context, updateNickname bool) (events.APIGatewayProxyResponse, error) {
+	userHelper := helpers.UserDynamoHelper{
+		DbClient:      deps.DdbClient,
+		UserTableName: deps.UserTable,
+		Ctx:           ctx,
+	}
+
+	user, uErr := userHelper.FindById(userid)
+	if uErr != nil {
+		return models.ServerSideErrorResponse("Failed to get user", uErr, "failed to get user and extract last name changed date"), nil
+	}
+
+	// to toggle between checking for last nickname change or last name change depending on weather we want to change name or nickname
+	lastChangeDate := user.LastNameChange
+	if updateNickname {
+		lastChangeDate = user.LastNicknameChange
+	}
+
+	allowed, ncErr := utils.NameChangeAllowed(lastChangeDate)
+	if ncErr != nil {
+		return models.ServerSideErrorResponse("Failed to get last changed date", uErr, "failed to get last name or nickname changed date"), nil
+	}
+
+	if !allowed {
+		return models.InvalidRequestErrorResponse("You can only change your name or nickname once in 30 days."), nil
+	}
+
+	err := userHelper.UpdateName(user, string(reqBody.Payload), updateNickname)
+
+	if err != nil {
+		return models.ServerSideErrorResponse("", err, "error while trying to update name or nickname"), nil
+	}
+
+	return models.SuccessfulRequestResponse("", false), nil
 }

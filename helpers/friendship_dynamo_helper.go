@@ -14,9 +14,9 @@ import (
 )
 
 type FriendshipDynamoHelper struct {
-	DbClient  *dynamodb.Client
-	TableName string
-	Ctx       context.Context
+	DbClient      *dynamodb.Client
+	UserTableName string
+	Ctx           context.Context
 }
 
 func (deps *FriendshipDynamoHelper) SendFriendReq(sender *models.User, recipientId string) error {
@@ -29,7 +29,7 @@ func (deps *FriendshipDynamoHelper) SendFriendReq(sender *models.User, recipient
 
 	input := &dynamodb.PutItemInput{
 		Item:      *item,
-		TableName: aws.String(deps.TableName),
+		TableName: aws.String(deps.UserTableName),
 	}
 
 	_, putErr := deps.DbClient.PutItem(deps.Ctx, input)
@@ -45,7 +45,7 @@ func (deps *FriendshipDynamoHelper) SendFriendReq(sender *models.User, recipient
 func (deps *FriendshipDynamoHelper) CancelFriendRequest(senderId, recipientId string) error {
 	input := &dynamodb.DeleteItemInput{
 		Key:       models.FriendRequestKey(recipientId, senderId),
-		TableName: aws.String(deps.TableName),
+		TableName: aws.String(deps.UserTableName),
 	}
 
 	_, err := deps.DbClient.DeleteItem(deps.Ctx, input)
@@ -63,13 +63,13 @@ func (deps *FriendshipDynamoHelper) EndFriendship(user1id, user2id string) error
 			{
 				Delete: &types.Delete{
 					Key:       models.FriendKey(user1id, user2id),
-					TableName: aws.String(deps.TableName),
+					TableName: aws.String(deps.UserTableName),
 				},
 			},
 			{
 				Delete: &types.Delete{
 					Key:       models.FriendKey(user2id, user1id),
-					TableName: aws.String(deps.TableName),
+					TableName: aws.String(deps.UserTableName),
 				},
 			},
 		},
@@ -105,7 +105,7 @@ func (deps *FriendshipDynamoHelper) AcceptFriendRequest(senderId, recipientId st
 				// deletes friend request
 				Delete: &types.Delete{
 					Key:       models.FriendRequestKey(recipientId, senderId),
-					TableName: aws.String(deps.TableName),
+					TableName: aws.String(deps.UserTableName),
 				},
 			},
 
@@ -113,13 +113,13 @@ func (deps *FriendshipDynamoHelper) AcceptFriendRequest(senderId, recipientId st
 			{
 				Put: &types.Put{
 					Item:      *item1,
-					TableName: aws.String(deps.TableName),
+					TableName: aws.String(deps.UserTableName),
 				},
 			},
 			{
 				Put: &types.Put{
 					Item:      *item2,
-					TableName: aws.String(deps.TableName),
+					TableName: aws.String(deps.UserTableName),
 				},
 			},
 		},
@@ -140,7 +140,7 @@ func (deps *FriendshipDynamoHelper) AcceptFriendRequest(senderId, recipientId st
 func (deps *FriendshipDynamoHelper) RejectFriendRequest(senderId, recipientId string) error {
 	input := &dynamodb.DeleteItemInput{
 		Key:       models.FriendRequestKey(recipientId, senderId),
-		TableName: aws.String(deps.TableName),
+		TableName: aws.String(deps.UserTableName),
 	}
 
 	_, err := deps.DbClient.DeleteItem(deps.Ctx, input)
@@ -156,7 +156,7 @@ func (deps *FriendshipDynamoHelper) RejectFriendRequest(senderId, recipientId st
 func (deps *FriendshipDynamoHelper) usersAreFriends(senderId string, recipientId string) (bool, error) {
 	input := &dynamodb.GetItemInput{
 		Key:       models.FriendKey(senderId, recipientId),
-		TableName: aws.String(deps.TableName),
+		TableName: aws.String(deps.UserTableName),
 	}
 
 	item, err := deps.DbClient.GetItem(deps.Ctx, input)
@@ -172,7 +172,7 @@ func (deps *FriendshipDynamoHelper) usersAreFriends(senderId string, recipientId
 func (deps *FriendshipDynamoHelper) userHasRequestedFriendship(senderId string, recipientId string) (bool, error) {
 	input := &dynamodb.GetItemInput{
 		Key:       models.FriendRequestKey(recipientId, senderId),
-		TableName: aws.String(deps.TableName),
+		TableName: aws.String(deps.UserTableName),
 	}
 
 	item, err := deps.DbClient.GetItem(deps.Ctx, input)
@@ -220,7 +220,7 @@ func (deps *FriendshipDynamoHelper) GetFriendshipStatus(senderId string, recipie
 
 func (deps *FriendshipDynamoHelper) GetAllFriends(userId string, limit int32) (*[]models.User, error) {
 	input := &dynamodb.QueryInput{
-		TableName:              aws.String(deps.TableName),
+		TableName:              aws.String(deps.UserTableName),
 		KeyConditionExpression: aws.String("pk = :pk AND begins_with(sk, :skPrefix"),
 		ExpressionAttributeValues: map[string]types.AttributeValue{
 			":pk":       &types.AttributeValueMemberS{Value: utils.AddPrefix(models.FriendItemPk, userId)},
@@ -246,7 +246,7 @@ func (deps *FriendshipDynamoHelper) GetAllFriends(userId string, limit int32) (*
 
 func (deps *FriendshipDynamoHelper) GetAllFriendRequests(userId string, limit int32) (*[]models.FriendRequest, error) {
 	input := &dynamodb.QueryInput{
-		TableName:              aws.String(deps.TableName),
+		TableName:              aws.String(deps.UserTableName),
 		KeyConditionExpression: aws.String("pk = :pk AND begins_with(sk, :skPrefix)"),
 		ExpressionAttributeValues: map[string]types.AttributeValue{
 			":pk":       &types.AttributeValueMemberS{Value: utils.AddPrefix(models.FriendRequestPkPrefix, userId)},

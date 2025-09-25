@@ -14,7 +14,8 @@ import (
 
 var (
 	dbClient      *dynamodb.Client
-	tableName     string
+	userTable     string
+	searchTable   string
 	userPoolId    string
 	cognitoClient *cognitoidentityprovider.Client
 )
@@ -35,18 +36,24 @@ func init() {
 
 	// load dynamodb stuff
 	dbClient = dynamodb.NewFromConfig(cfg)
-	tableName = os.Getenv("USERS_TABLE")
-	if tableName == "" {
+	userTable = os.Getenv("USERS_TABLE")
+	if userTable == "" {
 		panic("USERS_TABLE environment variable not set")
+	}
+
+	searchTable = os.Getenv("SEARCH_TABLE")
+	if searchTable == "" {
+		panic("SEARCH_TABLE environment variable not set")
 	}
 }
 
 func main() {
 	starter := account.DeleteUserDependencies{
-		DbClient:      dbClient,
-		TableName:     tableName,
-		CognitoClient: cognitoClient,
-		UserPoolId:    userPoolId,
+		DbClient:        dbClient,
+		UserTableName:   userTable,
+		SearchTableName: searchTable,
+		CognitoClient:   cognitoClient,
+		UserPoolId:      userPoolId,
 	}
 
 	lambda.Start(starter.HandleDeleteUser)

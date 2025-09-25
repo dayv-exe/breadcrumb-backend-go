@@ -1,7 +1,9 @@
 package utils
 
 import (
+	"breadcrumb-backend-go/constants"
 	"testing"
+	"time"
 )
 
 func TestIsNicknameValid(t *testing.T) {
@@ -35,6 +37,51 @@ func TestIsNicknameValid(t *testing.T) {
 			got := NicknameValid(tt.nickname)
 			if got != tt.valid {
 				t.Errorf("isNicknameValid(%q) = %v; want %v", tt.nickname, got, tt.valid)
+			}
+		})
+	}
+}
+
+func TestNameChangeAllowed(t *testing.T) {
+	tests := []struct {
+		name              string
+		lastChangeDate    string
+		expectAllowChange bool
+	}{
+		{
+			// dd/mm/yyyy
+			name:              "last changed a week ago",
+			lastChangeDate:    time.Now().AddDate(0, 0, -7).Format(constants.DATE_LAYOUT),
+			expectAllowChange: false,
+		},
+		{
+			// dd/mm/yyyy
+			name:              "last changed 2 years ago",
+			lastChangeDate:    time.Now().AddDate(-2, 0, 0).Format(constants.DATE_LAYOUT),
+			expectAllowChange: true,
+		},
+		{
+			// dd/mm/yyyy
+			name:              "last changed 2 days ago",
+			lastChangeDate:    time.Now().AddDate(0, 0, -2).Format(constants.DATE_LAYOUT),
+			expectAllowChange: false,
+		},
+		{
+			// dd/mm/yyyy
+			name:              "last changed 30 days ago",
+			lastChangeDate:    time.Now().AddDate(0, 0, -30).Format(constants.DATE_LAYOUT),
+			expectAllowChange: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := NameChangeAllowed(tt.lastChangeDate)
+			if err != nil {
+				t.Errorf("An unexpected error occurred %v", err)
+			}
+			if result != tt.expectAllowChange {
+				t.Errorf("Expected %v but got %v instead!", tt.expectAllowChange, result)
 			}
 		})
 	}

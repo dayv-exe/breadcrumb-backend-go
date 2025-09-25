@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	tableName string
+	userTable string
 	dbClient  *dynamodb.Client
 )
 
@@ -24,16 +24,16 @@ func init() {
 
 	// load dynamodb stuff
 	dbClient = dynamodb.NewFromConfig(cfg)
-	tableName = os.Getenv("USERS_TABLE")
-	if tableName == "" {
+	userTable = os.Getenv("USERS_TABLE")
+	if userTable == "" {
 		panic("USERS_TABLE environment variable not set")
 	}
 }
 
 func main() {
 	starter := discover.FriendRequestDependencies{
-		DbClient:  dbClient,
-		TableName: tableName,
+		DbClient:      dbClient,
+		UserTableName: userTable,
 	}
 
 	lambda.Start(starter.HandleFriendshipAction)

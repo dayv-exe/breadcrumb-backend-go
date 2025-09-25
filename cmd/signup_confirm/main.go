@@ -42,7 +42,7 @@ func main() {
 
 	hpc := auth.PostConfirmationDependencies{
 		DdbClient:       db,
-		TableName:       usersTable,
+		UserTableName:   usersTable,
 		SearchTableName: searchTable,
 		CognitoClient:   cognitoClient,
 	}

@@ -26,6 +26,17 @@ func TestGetUserSearchIndexesKeysNickName(t *testing.T) {
 		},
 		{
 			userid:   "123",
+			name:     "",
+			nickname: "qwerty",
+			expectedKeys: []map[string]types.AttributeValue{
+				{
+					"pk": &types.AttributeValueMemberS{Value: "USER_INDEX#qw"},
+					"sk": &types.AttributeValueMemberS{Value: "qwerty#123"},
+				},
+			},
+		},
+		{
+			userid:   "123",
 			name:     "jane doe",
 			nickname: "jd_247",
 			expectedKeys: []map[string]types.AttributeValue{

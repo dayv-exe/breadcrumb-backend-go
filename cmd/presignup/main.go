@@ -12,7 +12,7 @@ import (
 )
 
 var ddbClient *dynamodb.Client
-var tableName string
+var usersTable string
 
 func init() {
 	cfg, err := config.LoadDefaultConfig(context.TODO())
@@ -21,16 +21,16 @@ func init() {
 	}
 
 	ddbClient = dynamodb.NewFromConfig(cfg)
-	tableName = os.Getenv("USERS_TABLE")
-	if tableName == "" {
+	usersTable = os.Getenv("USERS_TABLE")
+	if usersTable == "" {
 		panic("USERS_TABLE environment variable not set")
 	}
 }
 
 func main() {
 	fd := auth.PreSignupDependencies{
-		DdbClient: ddbClient,
-		TableName: tableName,
+		DdbClient:     ddbClient,
+		UserTableName: usersTable,
 	}
 
 	lambda.Start(fd.PreSignupHandler)
