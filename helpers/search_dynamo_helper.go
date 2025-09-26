@@ -87,7 +87,6 @@ func (deps *SearchDynamoHelper) GetUserSearchIndexItems(user *models.User) ([]ty
 		return nil, err
 	}
 
-	// no db write
 	// creates slice of items
 	var items []types.TransactWriteItem
 	for _, index := range indexes {

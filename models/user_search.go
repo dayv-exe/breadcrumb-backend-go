@@ -4,7 +4,6 @@ import (
 	"breadcrumb-backend-go/constants"
 	"breadcrumb-backend-go/utils"
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
@@ -52,9 +51,6 @@ func (u *UserSearch) BuildSearchIndexes() ([]map[string]types.AttributeValue, er
 	tokens = append(tokens, utils.SplitOnDelimiter(strings.ToLower(utils.NormalizeString(u.Name)), " ", "_", ".")...)
 	tokens = append(tokens, utils.SplitOnDelimiter(utils.NormalizeString(u.Nickname), " ", "_", ".")...)
 
-	log.Println("tokens")
-	log.Println(tokens)
-
 	var indexes []map[string]types.AttributeValue
 	seen := make(map[string]struct{})
 
@@ -65,13 +61,7 @@ func (u *UserSearch) BuildSearchIndexes() ([]map[string]types.AttributeValue, er
 		}
 
 		pk := UserSearchIndexPkPrefix + token[:UserSearchIndexPrefixLen]
-		sk := token + "#" + u.UserId
-
-		log.Println("pk")
-		log.Print(pk)
-
-		log.Println("sk")
-		log.Print(sk)
+		sk := token + "#" + strings.Trim(u.UserId, UserPkPrefix)
 
 		if _, ok := seen[pk+"|"+sk]; !ok {
 			// seen now if not seen before
@@ -94,8 +84,6 @@ func (u *UserSearch) BuildSearchIndexes() ([]map[string]types.AttributeValue, er
 			}
 
 			indexes = append(indexes, item)
-			log.Println("indexes")
-			log.Print(indexes)
 		}
 	}
 
@@ -114,8 +102,6 @@ func GetUserSearchIndexesKeys(dbIndexItems []map[string]types.AttributeValue) []
 		if pkOk && skOk {
 			// if is valid database index item
 			compKey := pk.Value + sk.Value
-			log.Println("compisite")
-			log.Println(compKey)
 
 			if _, ok := seen[compKey]; !ok {
 				// not seen before
@@ -128,7 +114,6 @@ func GetUserSearchIndexesKeys(dbIndexItems []map[string]types.AttributeValue) []
 					"sk": sk,
 				})
 
-				log.Println(keys)
 			}
 		}
 	}
