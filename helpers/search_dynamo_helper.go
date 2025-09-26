@@ -115,11 +115,10 @@ func (deps *SearchDynamoHelper) GetDeleteUserIndexesItems(user *models.User) ([]
 		return nil, builderErr
 	}
 
-	log.Println(indexes)
-
 	keys := models.GetUserSearchIndexesKeys(indexes)
 	var items []types.TransactWriteItem
 	for _, key := range keys {
+		log.Println(key)
 		items = append(items, types.TransactWriteItem{
 			Delete: &types.Delete{
 				TableName: aws.String(deps.SearchTableName),
@@ -127,8 +126,6 @@ func (deps *SearchDynamoHelper) GetDeleteUserIndexesItems(user *models.User) ([]
 			},
 		})
 	}
-
-	log.Println(items)
 
 	return items, nil
 }
