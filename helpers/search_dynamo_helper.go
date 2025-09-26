@@ -115,7 +115,8 @@ func (deps *SearchDynamoHelper) GetDeleteUserIndexesItems(user *models.User) ([]
 		return nil, builderErr
 	}
 
-	// no db write
+	log.Println(indexes)
+
 	keys := models.GetUserSearchIndexesKeys(indexes)
 	var items []types.TransactWriteItem
 	for _, key := range keys {
@@ -126,6 +127,8 @@ func (deps *SearchDynamoHelper) GetDeleteUserIndexesItems(user *models.User) ([]
 			},
 		})
 	}
+
+	log.Println(items)
 
 	return items, nil
 }
