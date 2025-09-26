@@ -1,5 +1,7 @@
 package account
 
+// TO EDIT USER DETAILS, PARSE THE ATTRIBUTE TO EDIT IN {ACTION}
+
 import (
 	"breadcrumb-backend-go/helpers"
 	"breadcrumb-backend-go/models"
@@ -34,12 +36,15 @@ func (deps *EditUserDetailsDependency) HandleEditUserDetails(ctx context.Context
 	// action based switch
 	switch action {
 	case "nickname":
+		// change nickname
 		return deps.handleChangeName(userid, reqBody, ctx, true)
 
 	case "name":
+		// change name
 		return deps.handleChangeName(userid, reqBody, ctx, false)
 
 	case "bio":
+		// change bio
 		userHelper := helpers.UserDynamoHelper{
 			DbClient:      deps.DdbClient,
 			UserTableName: deps.UserTable,
@@ -58,12 +63,14 @@ func (deps *EditUserDetailsDependency) HandleEditUserDetails(ctx context.Context
 }
 
 func (deps *EditUserDetailsDependency) handleChangeName(userid string, reqBody editUserDetailsReq, ctx context.Context, updateNickname bool) (events.APIGatewayProxyResponse, error) {
+	// handles updating both name and nickname
 	userHelper := helpers.UserDynamoHelper{
 		DbClient:      deps.DdbClient,
 		UserTableName: deps.UserTable,
 		Ctx:           ctx,
 	}
 
+	// gets the user from db
 	user, uErr := userHelper.FindById(userid)
 	if uErr != nil {
 		return models.ServerSideErrorResponse("Failed to get user", uErr, "failed to get user and extract last name changed date"), nil

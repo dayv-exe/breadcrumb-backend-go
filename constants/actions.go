@@ -1,6 +1,7 @@
 package constants
 
 const (
+	// actions for friendship function
 	FRIENDSHIP_ACTION_REQUEST        = "request"
 	FRIENDSHIP_ACTION_CANCEL_REQUEST = "cancel-request"
 	FRIENDSHIP_ACTION_REJECT         = "reject"

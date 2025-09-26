@@ -1,5 +1,7 @@
 package account
 
+// DELETES USER FROM DYNAMO DB THEN COGNITO
+
 import (
 	"breadcrumb-backend-go/helpers"
 	"breadcrumb-backend-go/models"

@@ -25,12 +25,13 @@ type UserSearch struct {
 }
 
 type userSearchDbItem struct {
-	Pk       string `dynamodbav:"pk"`
-	Sk       string `dynamodbav:"sk"`
-	UserId   string `dynamodbav:"userid" json:"userid"`
-	Name     string `dynamodbav:"name"`
-	Nickname string `dynamodbav:"nickname"`
-	DpUrl    string `dynamodbav:"dp_url" json:"dpUrl"`
+	Pk                      string `dynamodbav:"pk"`
+	Sk                      string `dynamodbav:"sk"`
+	UserId                  string `dynamodbav:"userid" json:"userid"`
+	Name                    string `dynamodbav:"name"`
+	Nickname                string `dynamodbav:"nickname"`
+	DpUrl                   string `dynamodbav:"dp_url" json:"dpUrl"`
+	DefaultProfilePicColors string `dynamodbav:"default_pic_colors" json:"defaultPicColors"`
 }
 
 func (u *UserSearch) BuildSearchIndexes() ([]map[string]types.AttributeValue, error) {
@@ -68,12 +69,13 @@ func (u *UserSearch) BuildSearchIndexes() ([]map[string]types.AttributeValue, er
 
 			// new index item
 			new := userSearchDbItem{
-				Pk:       pk,
-				Sk:       sk,
-				UserId:   u.UserId,
-				Name:     u.Name,
-				Nickname: u.Nickname,
-				DpUrl:    u.DpUrl,
+				Pk:                      pk,
+				Sk:                      sk,
+				UserId:                  u.UserId,
+				Name:                    u.Name,
+				Nickname:                u.Nickname,
+				DpUrl:                   u.DpUrl,
+				DefaultProfilePicColors: u.DefaultProfilePicColors,
 			}
 
 			item, err := attributevalue.MarshalMap(new)

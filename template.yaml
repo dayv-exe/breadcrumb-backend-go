@@ -10,6 +10,7 @@ Globals:
     Environment:
       Variables:
         USERS_TABLE: !Ref UsersTable
+        SEARCH_TABLE: !Ref SearchTable
         MEDIA_BUCKET: !Ref MediaBucket
         CLOUDFRONT_DISTRIBUTION_ID: !Ref CloudFrontDistribution
         CLOUDFRONT_DOMAIN: !GetAtt CloudFrontDistribution.DomainName
@@ -259,10 +260,6 @@ Resources:
               - cognito-idp:AdminGetUser
               - cognito-idp:AdminDeleteUser
             Resource: "*"
-      Environment:
-        Variables:
-          USERS_TABLE: !Ref UsersTable
-          SEARCH_TABLE: !Ref SearchTable
       Events:
         CognitoTrigger:
           Type: Cognito
@@ -280,9 +277,6 @@ Resources:
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref UsersTable
-      Environment:
-        Variables:
-          USERS_TABLE: !Ref UsersTable
       Events:
         CognitoTrigger:
           Type: Cognito
@@ -344,7 +338,6 @@ Resources:
       Environment:
         Variables:
           USER_POOL_ID: !Ref CognitoUserPool
-          USERS_TABLE: !Ref UsersTable
       Events:
         ApiRequest:
           Type: HttpApi
@@ -371,9 +364,6 @@ Resources:
       Handler: bootstrap
       Architectures: [arm64]
       Description: allows user to edit some of their account information
-      Environment:
-        Variables:
-          USERS_TABLE: !Ref UsersTable
       Events:
         ApiRequest:
           Type: HttpApi
@@ -386,6 +376,8 @@ Resources:
       Policies:
         - DynamoDBReadPolicy:
             TableName: !Ref UsersTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref SearchTable
 
   DeleteUser:
     Type: AWS::Serverless::Function
@@ -397,7 +389,6 @@ Resources:
       Environment:
         Variables:
           USER_POOL_ID: !Ref CognitoUserPool
-          USERS_TABLE: !Ref UsersTable
       Events:
         ApiRequest:
           Type: HttpApi
@@ -410,6 +401,8 @@ Resources:
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref UsersTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref SearchTable
         - Statement:
             Effect: Allow
             Action:
@@ -449,9 +442,6 @@ Resources:
       Handler: bootstrap
       Architectures: [arm64]
       Description: queries search table to find user with nickname or full name similar to search string
-      Environment:
-        Variables:
-          SEARCH_TABLE: !Ref SearchTable
       Events:
         ApiRequest:
           Type: HttpApi
@@ -473,9 +463,6 @@ Resources:
       Handler: bootstrap
       Architectures: [arm64]
       Description: when called, this function will send friend requests if users are not friends, cancel friends request if previously sent, end friendship if users are already friends
-      Environment:
-        Variables:
-          USERS_TABLE: !Ref UsersTable
       Events:
         ApiRequest:
           Type: HttpApi

@@ -1,5 +1,7 @@
 package account
 
+// RETURNS PRIMARY USER DETAILS, OR IF USER REQUESTS OWN DETAILS, RETURN ALL THEIR DETAILS IN COGNITO AND DYNAMODB
+
 import (
 	"breadcrumb-backend-go/helpers"
 	"breadcrumb-backend-go/models"
@@ -32,6 +34,7 @@ type completeUserDetails struct {
 }
 
 func getUser(useId bool, identifier string, dbHelper helpers.UserDynamoHelper) (*models.User, error) {
+	// to allow getting user by user id or nickname
 	if useId {
 		return dbHelper.FindById(identifier)
 	} else {
@@ -62,7 +65,6 @@ func (deps *GetUserDetailsDependencies) HandleGetUserDetails(ctx context.Context
 		SearchTableName: "",
 		Ctx:             ctx,
 	}
-
 	user, dbErr := getUser(usingId, identifier, dbHelper)
 
 	// error
