@@ -16,8 +16,7 @@ const (
 type friend struct {
 	User1Id string `dynamodbav:"pk"`
 	User2Id string `dynamodbav:"sk"`
-	PrimaryUserInfo
-	Date string `dynamodbav:"date"`
+	Date    string `dynamodbav:"date"`
 }
 
 func NewFriendship(user1id, user2id string) *friend {
