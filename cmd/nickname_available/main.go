@@ -2,17 +2,20 @@ package main
 
 import (
 	"breadcrumb-backend-go/handlers/auth"
+	"breadcrumb-backend-go/utils"
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 )
 
-var ddbClient *dynamodb.Client
-var usersTable string
+var (
+	ddbClient  *dynamodb.Client
+	tableNames *utils.TableNames
+	starter    auth.HandleNicknameAvailableDependencies
+)
 
 func init() {
 	cfg, err := config.LoadDefaultConfig(context.TODO())
@@ -21,16 +24,14 @@ func init() {
 	}
 
 	ddbClient = dynamodb.NewFromConfig(cfg)
-	usersTable = os.Getenv("USERS_TABLE")
-	if usersTable == "" {
-		panic("USERS_TABLE environment variable not set")
+	tableNames = utils.GetAllTableNames()
+
+	starter = auth.HandleNicknameAvailableDependencies{
+		DdbClient:  ddbClient,
+		TableNames: tableNames,
 	}
 }
 
 func main() {
-	fd := auth.HandleNicknameAvailableDependencies{
-		DdbClient:     ddbClient,
-		UserTableName: usersTable,
-	}
-	lambda.Start(fd.HandleNicknameAvailable)
+	lambda.Start(starter.HandleNicknameAvailable)
 }

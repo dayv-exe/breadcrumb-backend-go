@@ -3,6 +3,7 @@ package auth
 import (
 	"breadcrumb-backend-go/helpers"
 	"breadcrumb-backend-go/models"
+	"breadcrumb-backend-go/utils"
 	"context"
 	"fmt"
 	"log"
@@ -13,10 +14,9 @@ import (
 )
 
 type PostConfirmationDependencies struct {
-	DdbClient       *dynamodb.Client
-	UserTableName   string
-	SearchTableName string
-	CognitoClient   *cognitoidentityprovider.Client
+	DdbClient     *dynamodb.Client
+	CognitoClient *cognitoidentityprovider.Client
+	TableNames    *utils.TableNames
 }
 
 func (deps PostConfirmationDependencies) HandlePostConfirmation(ctx context.Context, event events.CognitoEventUserPoolsPostConfirmation) (interface{}, error) {
@@ -33,10 +33,9 @@ func (deps PostConfirmationDependencies) HandlePostConfirmation(ctx context.Cont
 
 	// to add user to users table
 	dbHelper := helpers.UserDynamoHelper{
-		DbClient:        deps.DdbClient,
-		UserTableName:   deps.UserTableName,
-		SearchTableName: deps.SearchTableName,
-		Ctx:             ctx,
+		DbClient:   deps.DdbClient,
+		TableNames: deps.TableNames,
+		Ctx:        ctx,
 	}
 
 	// create new user

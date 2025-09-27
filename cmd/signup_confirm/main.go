@@ -2,9 +2,9 @@ package main
 
 import (
 	"breadcrumb-backend-go/handlers/auth"
+	"breadcrumb-backend-go/utils"
 	"context"
 	"log"
-	"os"
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -14,9 +14,9 @@ import (
 
 var (
 	db            *dynamodb.Client
-	usersTable    string
-	searchTable   string
 	cognitoClient *cognitoidentityprovider.Client
+	tableNames    *utils.TableNames
+	starter       auth.PostConfirmationDependencies
 )
 
 func init() {
@@ -27,25 +27,14 @@ func init() {
 	db = dynamodb.NewFromConfig(cfg)
 	cognitoClient = cognitoidentityprovider.NewFromConfig(cfg)
 
-	usersTable = os.Getenv("USERS_TABLE")
-	if usersTable == "" {
-		panic("USERS_TABLE environment variable not set")
-	}
-
-	searchTable = os.Getenv("SEARCH_TABLE")
-	if searchTable == "" {
-		panic("SEARCH_TABLE environment variable not set")
+	tableNames = utils.GetAllTableNames()
+	starter = auth.PostConfirmationDependencies{
+		DdbClient:     db,
+		TableNames:    tableNames,
+		CognitoClient: cognitoClient,
 	}
 }
 
 func main() {
-
-	hpc := auth.PostConfirmationDependencies{
-		DdbClient:       db,
-		UserTableName:   usersTable,
-		SearchTableName: searchTable,
-		CognitoClient:   cognitoClient,
-	}
-
-	lambda.Start(hpc.HandlePostConfirmation)
+	lambda.Start(starter.HandlePostConfirmation)
 }

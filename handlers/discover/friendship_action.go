@@ -14,8 +14,8 @@ import (
 )
 
 type FriendRequestDependencies struct {
-	DbClient      *dynamodb.Client
-	UserTableName string
+	DbClient   *dynamodb.Client
+	TableNames *utils.TableNames
 }
 
 func handleSendRequest(status string, sender *models.User, recipientId string, friendshipHelper helpers.FriendshipDynamoHelper) (events.APIGatewayProxyResponse, error) {
@@ -134,9 +134,9 @@ func (deps *FriendRequestDependencies) HandleFriendshipAction(ctx context.Contex
 
 	// check if they are friends
 	friendshipHelper := helpers.FriendshipDynamoHelper{
-		DbClient:      deps.DbClient,
-		UserTableName: deps.UserTableName,
-		Ctx:           ctx,
+		DbClient:   deps.DbClient,
+		TableNames: deps.TableNames,
+		Ctx:        ctx,
 	}
 
 	status, statusErr := friendshipHelper.GetFriendshipStatus(thisUserId, otherUserId)
@@ -148,9 +148,9 @@ func (deps *FriendRequestDependencies) HandleFriendshipAction(ctx context.Contex
 	// send friend request if not friends
 	case constants.FRIENDSHIP_ACTION_REQUEST:
 		findUserHelper := helpers.UserDynamoHelper{
-			DbClient:      deps.DbClient,
-			UserTableName: deps.UserTableName,
-			Ctx:           ctx,
+			DbClient:   deps.DbClient,
+			TableNames: deps.TableNames,
+			Ctx:        ctx,
 		}
 
 		thisUser, tuErr := findUserHelper.FindById(thisUserId)

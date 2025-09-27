@@ -4,6 +4,7 @@ import (
 	"breadcrumb-backend-go/constants"
 	"breadcrumb-backend-go/helpers"
 	"breadcrumb-backend-go/models"
+	"breadcrumb-backend-go/utils"
 	"context"
 	"strings"
 
@@ -12,8 +13,8 @@ import (
 )
 
 type AccountSearchDependencies struct {
-	Client    *dynamodb.Client
-	TableName string
+	Client     *dynamodb.Client
+	TableNames *utils.TableNames
 }
 
 type SearchResult struct {
@@ -41,9 +42,9 @@ func (deps *AccountSearchDependencies) HandleAccountSearch(ctx context.Context, 
 	searchStr = searchStr[:maxChars]
 
 	searchHelper := helpers.SearchDynamoHelper{
-		DbClient:        deps.Client,
-		SearchTableName: deps.TableName,
-		Ctx:             ctx,
+		DbClient:   deps.Client,
+		TableNames: deps.TableNames,
+		Ctx:        ctx,
 	}
 
 	results, err := searchHelper.SearchUser(strings.ToLower(searchStr), int32(limit))

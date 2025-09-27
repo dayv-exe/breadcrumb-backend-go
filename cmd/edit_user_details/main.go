@@ -2,9 +2,9 @@ package main
 
 import (
 	"breadcrumb-backend-go/handlers/account"
+	"breadcrumb-backend-go/utils"
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -12,9 +12,9 @@ import (
 )
 
 var (
-	dbClient    *dynamodb.Client
-	userTable   string
-	searchTable string
+	dbClient   *dynamodb.Client
+	tableNames *utils.TableNames
+	starter    account.EditUserDetailsDependency
 )
 
 func init() {
@@ -24,22 +24,14 @@ func init() {
 	}
 
 	dbClient = dynamodb.NewFromConfig(cfg)
-	userTable = os.Getenv("USERS_TABLE")
-	if userTable == "" {
-		panic("USERS_TABLE environment variable not set")
-	}
-	searchTable = os.Getenv("SEARCH_TABLE")
-	if searchTable == "" {
-		panic("SEARCH_TABLE environment variable not set")
+	tableNames = utils.GetAllTableNames()
+
+	starter = account.EditUserDetailsDependency{
+		DdbClient:  dbClient,
+		TableNames: tableNames,
 	}
 }
 
 func main() {
-	deps := account.EditUserDetailsDependency{
-		DdbClient:   dbClient,
-		UserTable:   userTable,
-		SearchTable: searchTable,
-	}
-
-	lambda.Start(deps.HandleEditUserDetails)
+	lambda.Start(starter.HandleEditUserDetails)
 }

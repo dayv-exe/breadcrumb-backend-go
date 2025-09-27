@@ -13,8 +13,8 @@ import (
 )
 
 type HandleNicknameAvailableDependencies struct {
-	DdbClient     *dynamodb.Client
-	UserTableName string
+	DdbClient  *dynamodb.Client
+	TableNames *utils.TableNames
 }
 
 func (deps *HandleNicknameAvailableDependencies) HandleNicknameAvailable(ctx context.Context, req events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
@@ -28,9 +28,9 @@ func (deps *HandleNicknameAvailableDependencies) HandleNicknameAvailable(ctx con
 	}
 
 	dbHelper := helpers.UserDynamoHelper{
-		UserTableName: deps.UserTableName,
-		DbClient:      deps.DdbClient,
-		Ctx:           ctx,
+		DbClient:   deps.DdbClient,
+		Ctx:        ctx,
+		TableNames: deps.TableNames,
 	}
 
 	isAvailable, dbErr := dbHelper.NicknameAvailable(nickname)

@@ -23,8 +23,8 @@ type GetUserDetailsDependencies struct {
 	UserPoolId    string
 
 	// dynamodb stuff
-	DdbClient *dynamodb.Client
-	UserTable string
+	DdbClient  *dynamodb.Client
+	TableNames *utils.TableNames
 }
 
 type completeUserDetails struct {
@@ -60,10 +60,9 @@ func (deps *GetUserDetailsDependencies) HandleGetUserDetails(ctx context.Context
 
 	// get all info on a user from dynamodb
 	dbHelper := helpers.UserDynamoHelper{
-		DbClient:        deps.DdbClient,
-		UserTableName:   deps.UserTable,
-		SearchTableName: "",
-		Ctx:             ctx,
+		DbClient:   deps.DdbClient,
+		TableNames: deps.TableNames,
+		Ctx:        ctx,
 	}
 	user, dbErr := getUser(usingId, identifier, dbHelper)
 
@@ -107,9 +106,9 @@ func (deps *GetUserDetailsDependencies) HandleGetUserDetails(ctx context.Context
 
 	// only return nickname, name, profile picture if one user requests another users information
 	friendshipHelper := helpers.FriendshipDynamoHelper{
-		DbClient:      deps.DdbClient,
-		UserTableName: deps.UserTable,
-		Ctx:           ctx,
+		DbClient:   deps.DdbClient,
+		TableNames: deps.TableNames,
+		Ctx:        ctx,
 	}
 
 	friendshipStatus, fsErr := friendshipHelper.GetFriendshipStatus(utils.GetAuthUserId(req), user.Userid)

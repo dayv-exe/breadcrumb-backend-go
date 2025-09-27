@@ -14,12 +14,10 @@ import (
 )
 
 type DeleteUserDependencies struct {
-	DbClient        *dynamodb.Client
-	UserTableName   string
-	SearchTableName string
-
+	DbClient      *dynamodb.Client
 	CognitoClient *cognitoidentityprovider.Client
 	UserPoolId    string
+	TableNames    *utils.TableNames
 }
 
 func (deps *DeleteUserDependencies) HandleDeleteUser(ctx context.Context, req *events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
@@ -31,10 +29,9 @@ func (deps *DeleteUserDependencies) HandleDeleteUser(ctx context.Context, req *e
 
 	// get user details from db
 	dbHelper := helpers.UserDynamoHelper{
-		DbClient:        deps.DbClient,
-		UserTableName:   deps.UserTableName,
-		SearchTableName: deps.SearchTableName,
-		Ctx:             ctx,
+		DbClient:   deps.DbClient,
+		TableNames: deps.TableNames,
+		Ctx:        ctx,
 	}
 	user, uErr := dbHelper.FindById(userId)
 

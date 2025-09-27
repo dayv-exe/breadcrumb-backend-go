@@ -2,9 +2,9 @@ package main
 
 import (
 	"breadcrumb-backend-go/handlers/discover"
+	"breadcrumb-backend-go/utils"
 	"context"
 	"log"
-	"os"
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -12,8 +12,9 @@ import (
 )
 
 var (
-	tableName string
-	dbClient  *dynamodb.Client
+	dbClient   *dynamodb.Client
+	tableNames *utils.TableNames
+	starter    discover.AccountSearchDependencies
 )
 
 func init() {
@@ -24,17 +25,14 @@ func init() {
 
 	// load dynamodb stuff
 	dbClient = dynamodb.NewFromConfig(cfg)
-	tableName = os.Getenv("SEARCH_TABLE")
-	if tableName == "" {
-		panic("SEARCH_TABLE environment variable not set")
+	tableNames = utils.GetAllTableNames()
+
+	starter = discover.AccountSearchDependencies{
+		Client:     dbClient,
+		TableNames: tableNames,
 	}
 }
 
 func main() {
-	starter := discover.AccountSearchDependencies{
-		Client:    dbClient,
-		TableName: tableName,
-	}
-
 	lambda.Start(starter.HandleAccountSearch)
 }

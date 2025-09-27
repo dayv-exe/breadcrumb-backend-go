@@ -11,6 +11,7 @@ Globals:
       Variables:
         USERS_TABLE: !Ref UsersTable
         SEARCH_TABLE: !Ref SearchTable
+        RELATIONSHIPS_TABLE: !Ref RelationshipsTable
         MEDIA_BUCKET: !Ref MediaBucket
         CLOUDFRONT_DISTRIBUTION_ID: !Ref CloudFrontDistribution
         CLOUDFRONT_DOMAIN: !GetAtt CloudFrontDistribution.DomainName
@@ -348,8 +349,10 @@ Resources:
             Auth:
               Authorizer: CognitoAuthorizer
       Policies:
-        - DynamoDBReadPolicy:
+        - DynamoDBCrudPolicy:
             TableName: !Ref UsersTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref RelationshipsTable
         - Statement:
             Effect: Allow
             Action:
@@ -374,8 +377,10 @@ Resources:
             Auth:
               Authorizer: CognitoAuthorizer
       Policies:
-        - DynamoDBReadPolicy:
+        - DynamoDBCrudPolicy:
             TableName: !Ref UsersTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref RelationshipsTable
         - DynamoDBCrudPolicy:
             TableName: !Ref SearchTable
 
@@ -401,6 +406,8 @@ Resources:
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref UsersTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref RelationshipsTable
         - DynamoDBCrudPolicy:
             TableName: !Ref SearchTable
         - Statement:
@@ -475,6 +482,8 @@ Resources:
       Policies:
         - DynamoDBCrudPolicy:
             TableName: !Ref UsersTable
+        - DynamoDBCrudPolicy:
+            TableName: !Ref RelationshipsTable
 
   # user dynamodb table
   UsersTable:
@@ -515,6 +524,30 @@ Resources:
           KeyType: HASH
         - AttributeName: sk
           KeyType: RANGE
+
+  RelationshipsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: pk
+          AttributeType: S
+        - AttributeName: sk
+          AttributeType: S
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+        - AttributeName: sk
+          KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: InverseIndex
+          KeySchema:
+            - AttributeName: sk
+              KeyType: HASH
+            - AttributeName: pk
+              KeyType: RANGE
+          Projection:
+            ProjectionType: ALL
 
 Outputs:
   BreadApiUrl:

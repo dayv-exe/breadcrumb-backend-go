@@ -14,6 +14,7 @@ import (
 var (
 	client     *cognitoidentityprovider.Client
 	userPoolId string
+	starter    auth.AbortSignupDependencies
 )
 
 func init() {
@@ -28,13 +29,13 @@ func init() {
 	if userPoolId == "" {
 		log.Fatal("USER_POOL_ID environment variable is required")
 	}
-}
 
-func main() {
-	asd := auth.AbortSignupDependencies{
+	starter = auth.AbortSignupDependencies{
 		Client:     client,
 		UserPoolId: userPoolId,
 	}
+}
 
-	lambda.Start(asd.AbortSignupHandler)
+func main() {
+	lambda.Start(starter.AbortSignupHandler)
 }

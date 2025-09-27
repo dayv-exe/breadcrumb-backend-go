@@ -14,6 +14,7 @@ import (
 var (
 	s3Client   *s3.Client
 	bucketName string
+	starter    media.S3BucketActionsDependencies
 )
 
 func init() {
@@ -27,13 +28,13 @@ func init() {
 	if bucketName == "" {
 		panic("MEDIA_BUCKET environment variable not set")
 	}
-}
 
-func main() {
-	handler := media.S3BucketActionsDependencies{
+	starter = media.S3BucketActionsDependencies{
 		S3Client:   s3Client,
 		BucketName: bucketName,
 	}
+}
 
-	lambda.Start(handler.HandleStorageActions)
+func main() {
+	lambda.Start(starter.HandleStorageActions)
 }

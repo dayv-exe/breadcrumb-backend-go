@@ -2,9 +2,9 @@ package main
 
 import (
 	"breadcrumb-backend-go/handlers/discover"
+	"breadcrumb-backend-go/utils"
 	"context"
 	"log"
-	"os"
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -12,8 +12,9 @@ import (
 )
 
 var (
-	userTable string
-	dbClient  *dynamodb.Client
+	dbClient   *dynamodb.Client
+	tableNames *utils.TableNames
+	starter    discover.FriendRequestDependencies
 )
 
 func init() {
@@ -24,17 +25,14 @@ func init() {
 
 	// load dynamodb stuff
 	dbClient = dynamodb.NewFromConfig(cfg)
-	userTable = os.Getenv("USERS_TABLE")
-	if userTable == "" {
-		panic("USERS_TABLE environment variable not set")
+	tableNames = utils.GetAllTableNames()
+
+	starter = discover.FriendRequestDependencies{
+		DbClient:   dbClient,
+		TableNames: tableNames,
 	}
 }
 
 func main() {
-	starter := discover.FriendRequestDependencies{
-		DbClient:      dbClient,
-		UserTableName: userTable,
-	}
-
 	lambda.Start(starter.HandleFriendshipAction)
 }

@@ -14,6 +14,7 @@ import (
 var (
 	client     *cognitoidentityprovider.Client
 	userPoolId string
+	starter    auth.RemoveStaleAccountsDependencies
 )
 
 func init() {
@@ -28,13 +29,13 @@ func init() {
 	if userPoolId == "" {
 		log.Fatal("USER_POOL_ID environment variable is required")
 	}
-}
 
-func main() {
-	rsaDeps := auth.RemoveStaleAccountsDependencies{
+	starter = auth.RemoveStaleAccountsDependencies{
 		Client:     client,
 		UserPoolId: userPoolId,
 	}
+}
 
-	lambda.Start(rsaDeps.HandleRemoveStaleAccounts)
+func main() {
+	lambda.Start(starter.HandleRemoveStaleAccounts)
 }

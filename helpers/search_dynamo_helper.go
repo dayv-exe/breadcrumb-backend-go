@@ -14,9 +14,9 @@ import (
 )
 
 type SearchDynamoHelper struct {
-	DbClient        *dynamodb.Client
-	SearchTableName string
-	Ctx             context.Context
+	DbClient   *dynamodb.Client
+	Ctx        context.Context
+	TableNames *utils.TableNames
 }
 
 func (deps *SearchDynamoHelper) SearchUser(searchStr string, limit int32) ([]models.UserSearch, error) {
@@ -29,7 +29,7 @@ func (deps *SearchDynamoHelper) SearchUser(searchStr string, limit int32) ([]mod
 	for _, token := range tokens {
 		if len(token) >= models.UserSearchIndexPrefixLen {
 			input := dynamodb.QueryInput{
-				TableName:              aws.String(deps.SearchTableName),
+				TableName:              aws.String(deps.TableNames.Search),
 				KeyConditionExpression: aws.String("pk = :pk AND begins_with(sk, :skPrefix)"),
 				ExpressionAttributeValues: map[string]types.AttributeValue{
 					":pk":       &types.AttributeValueMemberS{Value: models.UserSearchIndexPkPrefix + token[:models.UserSearchIndexPrefixLen]},
@@ -92,7 +92,7 @@ func (deps *SearchDynamoHelper) GetUserSearchIndexItems(user *models.User) ([]ty
 	for _, index := range indexes {
 		items = append(items, types.TransactWriteItem{
 			Put: &types.Put{
-				TableName: aws.String(deps.SearchTableName),
+				TableName: aws.String(deps.TableNames.Search),
 				Item:      index,
 			},
 		})
@@ -119,7 +119,7 @@ func (deps *SearchDynamoHelper) GetDeleteUserIndexesItems(user *models.User) ([]
 	for _, key := range keys {
 		items = append(items, types.TransactWriteItem{
 			Delete: &types.Delete{
-				TableName: aws.String(deps.SearchTableName),
+				TableName: aws.String(deps.TableNames.Search),
 				Key:       key,
 			},
 		})

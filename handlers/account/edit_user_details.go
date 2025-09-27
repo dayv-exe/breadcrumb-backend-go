@@ -14,9 +14,8 @@ import (
 )
 
 type EditUserDetailsDependency struct {
-	DdbClient   *dynamodb.Client
-	UserTable   string
-	SearchTable string
+	DdbClient  *dynamodb.Client
+	TableNames *utils.TableNames
 }
 
 type editUserDetailsReq struct {
@@ -46,9 +45,9 @@ func (deps *EditUserDetailsDependency) HandleEditUserDetails(ctx context.Context
 	case "bio":
 		// change bio
 		userHelper := helpers.UserDynamoHelper{
-			DbClient:      deps.DdbClient,
-			UserTableName: deps.UserTable,
-			Ctx:           ctx,
+			DbClient:   deps.DdbClient,
+			TableNames: deps.TableNames,
+			Ctx:        ctx,
 		}
 		bioErr := userHelper.UpdateBio(userid, string(reqBody.Payload))
 		if bioErr != nil {
@@ -65,9 +64,9 @@ func (deps *EditUserDetailsDependency) HandleEditUserDetails(ctx context.Context
 func (deps *EditUserDetailsDependency) handleChangeName(userid string, reqBody editUserDetailsReq, ctx context.Context, updateNickname bool) (events.APIGatewayProxyResponse, error) {
 	// handles updating both name and nickname
 	userHelper := helpers.UserDynamoHelper{
-		DbClient:      deps.DdbClient,
-		UserTableName: deps.UserTable,
-		Ctx:           ctx,
+		DbClient:   deps.DdbClient,
+		TableNames: deps.TableNames,
+		Ctx:        ctx,
 	}
 
 	// gets the user from db

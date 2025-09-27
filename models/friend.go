@@ -16,7 +16,8 @@ const (
 type friend struct {
 	User1Id string `dynamodbav:"pk"`
 	User2Id string `dynamodbav:"sk"`
-	Date    string `dynamodbav:"date"`
+	PrimaryUserInfo
+	Date string `dynamodbav:"date"`
 }
 
 func NewFriendship(user1id, user2id string) *friend {
@@ -47,4 +48,14 @@ func (f friend) DatabaseFormat() (*map[string]types.AttributeValue, error) {
 	}
 
 	return &item, nil
+}
+
+func FriendFormat(items *[]map[string]types.AttributeValue) (*[]User, error) {
+	var f []User
+	if mErr := attributevalue.UnmarshalListOfMaps(*items, &f); mErr != nil {
+		log.Print("an error occurred while trying to unmarshal list of users friends")
+		return nil, mErr
+	}
+
+	return &f, nil
 }

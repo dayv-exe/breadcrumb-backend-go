@@ -14,10 +14,9 @@ import (
 )
 
 type UserDynamoHelper struct {
-	DbClient        *dynamodb.Client
-	UserTableName   string
-	SearchTableName string
-	Ctx             context.Context
+	DbClient   *dynamodb.Client
+	TableNames *utils.TableNames
+	Ctx        context.Context
 }
 
 func (deps *UserDynamoHelper) AddUser(u *models.User) error {
@@ -29,7 +28,7 @@ func (deps *UserDynamoHelper) AddUser(u *models.User) error {
 		{
 			// adds nickname item to reserve name
 			Put: &types.Put{
-				TableName: aws.String(deps.UserTableName),
+				TableName: aws.String(deps.TableNames.Users),
 				Item:      *newNickname.DatabaseFormat(),
 				// if this fails most likely because nickname is already in use
 				ConditionExpression: aws.String("attribute_not_exists(pk)"),
@@ -38,14 +37,16 @@ func (deps *UserDynamoHelper) AddUser(u *models.User) error {
 		{
 			// add user to db
 			Put: &types.Put{
-				TableName: aws.String(deps.UserTableName),
+				TableName: aws.String(deps.TableNames.Users),
 				Item:      *u.DatabaseFormat(),
 			},
 		},
 	}
 
 	searchHelper := SearchDynamoHelper{
-		SearchTableName: deps.SearchTableName,
+		DbClient:   deps.DbClient,
+		Ctx:        deps.Ctx,
+		TableNames: deps.TableNames,
 	}
 
 	// to create all the search indexes for the new user
@@ -73,7 +74,7 @@ func (deps *UserDynamoHelper) AddUser(u *models.User) error {
 
 func (deps *UserDynamoHelper) FindByNickname(nickname string) (*models.User, error) {
 	input := &dynamodb.QueryInput{
-		TableName:              aws.String(deps.UserTableName),
+		TableName:              aws.String(deps.TableNames.Users),
 		IndexName:              aws.String("NicknameIndex"),
 		KeyConditionExpression: aws.String("nickname = :nick"),
 		ExpressionAttributeValues: map[string]types.AttributeValue{
@@ -98,7 +99,7 @@ func (deps *UserDynamoHelper) FindByNickname(nickname string) (*models.User, err
 func (deps *UserDynamoHelper) FindById(id string) (*models.User, error) {
 	input := dynamodb.GetItemInput{
 		Key:       models.UserKey(id),
-		TableName: &deps.UserTableName,
+		TableName: &deps.TableNames.Users,
 	}
 
 	output, err := deps.DbClient.GetItem(deps.Ctx, &input)
@@ -123,20 +124,22 @@ func (deps *UserDynamoHelper) DeleteFromDynamo(u *models.User) error {
 			// delete account metadata
 			Delete: &types.Delete{
 				Key:       models.UserKey(u.Userid),
-				TableName: aws.String(deps.UserTableName),
+				TableName: aws.String(deps.TableNames.Users),
 			},
 		},
 		{
 			// delete nickname reservation
 			Delete: &types.Delete{
 				Key:       models.NicknameKey(u.Nickname),
-				TableName: aws.String(deps.UserTableName),
+				TableName: aws.String(deps.TableNames.Users),
 			},
 		},
 	}
 
 	searchHelper := SearchDynamoHelper{
-		SearchTableName: deps.SearchTableName,
+		DbClient:   deps.DbClient,
+		Ctx:        deps.Ctx,
+		TableNames: deps.TableNames,
 	}
 	// transactions to remove all users search indexes from search table
 	searchIndexTransactions, siErr := searchHelper.GetDeleteUserIndexesItems(u)
@@ -190,7 +193,9 @@ func (deps *UserDynamoHelper) UpdateName(user *models.User, newName string, upda
 	var transactItems []types.TransactWriteItem
 
 	searchHelper := SearchDynamoHelper{
-		SearchTableName: deps.SearchTableName,
+		DbClient:   deps.DbClient,
+		Ctx:        deps.Ctx,
+		TableNames: deps.TableNames,
 	}
 
 	// get the search indexes of the old name, and puts them all in delete transactions
@@ -223,7 +228,7 @@ func (deps *UserDynamoHelper) UpdateName(user *models.User, newName string, upda
 	userItems := types.TransactWriteItem{
 		Update: &types.Update{
 			Key:              models.UserKey(user.Userid),
-			TableName:        aws.String(deps.UserTableName),
+			TableName:        aws.String(deps.TableNames.Users),
 			UpdateExpression: aws.String(fmt.Sprintf("SET %s = :n", attributeToUpdate)),
 			ExpressionAttributeValues: map[string]types.AttributeValue{
 				":n": &types.AttributeValueMemberS{Value: newName},
@@ -251,7 +256,7 @@ func (deps *UserDynamoHelper) UpdateName(user *models.User, newName string, upda
 func (deps *UserDynamoHelper) updateAttribute(attributeName string, key map[string]types.AttributeValue, newAttribute types.AttributeValue) error {
 	input := &dynamodb.UpdateItemInput{
 		Key:                 key,
-		TableName:           &deps.UserTableName,
+		TableName:           &deps.TableNames.Users,
 		ConditionExpression: aws.String(fmt.Sprintf("SET %s = :s", attributeName)),
 		ExpressionAttributeValues: map[string]types.AttributeValue{
 			":s": newAttribute,
@@ -286,7 +291,7 @@ func (deps *UserDynamoHelper) UpdateDpUrl(userId string, url string) error {
 func (deps *UserDynamoHelper) NicknameAvailable(nickname string) (bool, error) {
 	input := dynamodb.GetItemInput{
 		Key:       models.NicknameKey(nickname),
-		TableName: aws.String(deps.UserTableName),
+		TableName: aws.String(deps.TableNames.Users),
 	}
 
 	return nicknameAvailableQueryRunner(func() (*dynamodb.GetItemOutput, error) {
