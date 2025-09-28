@@ -13,10 +13,11 @@ import (
 )
 
 var (
-	db            *dynamodb.Client
-	cognitoClient *cognitoidentityprovider.Client
-	tableName     string
-	starter       auth.PostConfirmationDependencies
+	db              *dynamodb.Client
+	cognitoClient   *cognitoidentityprovider.Client
+	tableName       string
+	searchTableName string
+	starter         auth.PostConfirmationDependencies
 )
 
 func init() {
@@ -30,6 +31,11 @@ func init() {
 	tableName = os.Getenv("USERS_TABLE")
 	if tableName == "" {
 		panic("USERS_TABLE not set")
+	}
+
+	searchTableName = os.Getenv("SEARCH_TABLE")
+	if searchTableName == "" {
+		panic("SEARCH_TABLE environment not set")
 	}
 
 	starter = auth.PostConfirmationDependencies{

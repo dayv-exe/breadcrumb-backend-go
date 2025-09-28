@@ -16,7 +16,7 @@ type PostConfirmationDependencies struct {
 	DdbClient       *dynamodb.Client
 	CognitoClient   *cognitoidentityprovider.Client
 	TableName       string
-	searchTableName string
+	SearchTableName string
 }
 
 func (deps PostConfirmationDependencies) HandlePostConfirmation(ctx context.Context, event events.CognitoEventUserPoolsPostConfirmation) (interface{}, error) {
@@ -41,7 +41,7 @@ func (deps PostConfirmationDependencies) HandlePostConfirmation(ctx context.Cont
 	// create new user
 	newUser := models.NewUser(userID, nickName, name, false)
 
-	err := dbHelper.AddUser(newUser, deps.searchTableName) // adds new user to users table
+	err := dbHelper.AddUser(newUser, deps.SearchTableName) // adds new user to users table
 
 	if err != nil {
 		// if something goes wrong during the signup process deelete user cognito info
