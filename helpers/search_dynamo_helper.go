@@ -75,7 +75,13 @@ func (deps *SearchDynamoHelper) SearchUser(searchStr string, limit int32) ([]mod
 func (deps *SearchDynamoHelper) GetUserSearchIndexItems(user *models.User) ([]types.TransactWriteItem, error) {
 	// Adds items to search table to allow for queries where search string is similar to nickname or full name
 	builder := models.UserSearch{
-		UserDisplayInfo: user.UserDisplayInfo,
+		UserDisplayInfo: models.UserDisplayInfo{
+			Userid:                  user.Userid,
+			Nickname:                user.Nickname,
+			Name:                    user.Name,
+			DpUrl:                   user.DpUrl,
+			DefaultProfilePicColors: user.DefaultProfilePicColors,
+		},
 	}
 
 	indexes, err := builder.BuildSearchIndexes()
@@ -94,13 +100,20 @@ func (deps *SearchDynamoHelper) GetUserSearchIndexItems(user *models.User) ([]ty
 			},
 		})
 	}
+
 	return items, nil
 }
 
 func (deps *SearchDynamoHelper) GetDeleteUserIndexesItems(user *models.User) ([]types.TransactWriteItem, error) {
 	// rebuild indexes, then query them and get their primary keys
 	builder := models.UserSearch{
-		UserDisplayInfo: user.UserDisplayInfo,
+		UserDisplayInfo: models.UserDisplayInfo{
+			Userid:                  user.Userid,
+			Nickname:                user.Nickname,
+			Name:                    user.Name,
+			DpUrl:                   user.DpUrl,
+			DefaultProfilePicColors: user.DefaultProfilePicColors,
+		},
 	}
 
 	indexes, builderErr := builder.BuildSearchIndexes()
