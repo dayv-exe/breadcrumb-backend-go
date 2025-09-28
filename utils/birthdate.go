@@ -8,7 +8,7 @@ import (
 func BirthdateIsValid(date string) (bool, error) {
 	// returns true if date is valid
 	// format is dd/mm/yyyy
-	birthdate, err := time.Parse(constants.DATE_LAYOUT, date)
+	birthdate, err := time.Parse(constants.BIRTHDATE_ONLY_DATE_LAYOUT, date)
 
 	if err != nil {
 		return false, err

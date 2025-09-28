@@ -2,9 +2,9 @@ package main
 
 import (
 	"breadcrumb-backend-go/handlers/auth"
-	"breadcrumb-backend-go/utils"
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -12,9 +12,9 @@ import (
 )
 
 var (
-	ddbClient  *dynamodb.Client
-	tableNames *utils.TableNames
-	starter    auth.PreSignupDependencies
+	ddbClient *dynamodb.Client
+	tableName string
+	starter   auth.PreSignupDependencies
 )
 
 func init() {
@@ -25,10 +25,13 @@ func init() {
 
 	ddbClient = dynamodb.NewFromConfig(cfg)
 
-	tableNames = utils.GetAllTableNames()
+	tableName = os.Getenv("USERS_TABLE")
+	if tableName == "" {
+		panic("USERS_TABLE environment not set")
+	}
 	starter = auth.PreSignupDependencies{
-		DdbClient:  ddbClient,
-		TableNames: tableNames,
+		DdbClient: ddbClient,
+		TableName: tableName,
 	}
 }
 

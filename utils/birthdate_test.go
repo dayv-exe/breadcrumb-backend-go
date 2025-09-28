@@ -16,13 +16,13 @@ func TestBirthdateValid(t *testing.T) {
 	}{
 		{
 			name:      "(min age - 1 month) which should be 12 years and 11 months old",
-			birthdate: time.Now().AddDate(-constants.MIN_AGE, 1, 0).Format(constants.DATE_LAYOUT),
+			birthdate: time.Now().AddDate(-constants.MIN_AGE, 1, 0).Format(constants.BIRTHDATE_ONLY_DATE_LAYOUT),
 			wantValid: false,
 			wantError: false,
 		},
 		{
 			name:      "today years old",
-			birthdate: time.Now().Format(constants.DATE_LAYOUT),
+			birthdate: time.Now().Format(constants.BIRTHDATE_ONLY_DATE_LAYOUT),
 			wantValid: false,
 			wantError: false,
 		},
@@ -34,13 +34,13 @@ func TestBirthdateValid(t *testing.T) {
 		},
 		{
 			name:      "(min age) 13 years old",
-			birthdate: time.Now().AddDate(-constants.MIN_AGE, 0, 0).Format(constants.DATE_LAYOUT),
+			birthdate: time.Now().AddDate(-constants.MIN_AGE, 0, 0).Format(constants.BIRTHDATE_ONLY_DATE_LAYOUT),
 			wantValid: true,
 			wantError: false,
 		},
 		{
 			name:      "too damn old",
-			birthdate: time.Now().AddDate(-constants.MAX_AGE-1, 0, 0).Format(constants.DATE_LAYOUT),
+			birthdate: time.Now().AddDate(-constants.MAX_AGE-1, 0, 0).Format(constants.BIRTHDATE_ONLY_DATE_LAYOUT),
 			wantValid: false,
 			wantError: false,
 		},

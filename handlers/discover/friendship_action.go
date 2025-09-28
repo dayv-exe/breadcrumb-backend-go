@@ -7,15 +7,14 @@ import (
 	"breadcrumb-backend-go/utils"
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 )
 
 type FriendRequestDependencies struct {
-	DbClient   *dynamodb.Client
-	TableNames *utils.TableNames
+	DbClient  *dynamodb.Client
+	TableName string
 }
 
 func handleSendRequest(status string, sender *models.User, recipientId string, friendshipHelper helpers.FriendshipDynamoHelper) (events.APIGatewayProxyResponse, error) {
@@ -54,11 +53,11 @@ func handleEndFriendship(status, senderId, recipientId string, friendshipHelper 
 	return models.SuccessfulRequestResponse("Friendship ended", false), nil
 }
 
-func handleAcceptFriendship(status, senderId, recipientId string, friendshipHelper helpers.FriendshipDynamoHelper) (events.APIGatewayProxyResponse, error) {
+func handleAcceptFriendship(status string, otherUser, thisUser *models.User, friendshipHelper helpers.FriendshipDynamoHelper) (events.APIGatewayProxyResponse, error) {
 	if status != constants.FRIENDSHIP_STATUS_RECEIVED {
 		return models.InvalidRequestErrorResponse("You cant accept a friend request from someone who never sent you one"), nil
 	}
-	reqErr := friendshipHelper.AcceptFriendRequest(senderId, recipientId)
+	reqErr := friendshipHelper.AcceptFriendRequest(otherUser, thisUser)
 	if reqErr != nil {
 		return models.ServerSideErrorResponse("Something went wrong while accepting friendship, try again.", reqErr, "Error in friend req handler"), nil
 	}
@@ -79,37 +78,18 @@ func handleRejectFriendship(status, senderId, recipientId string, friendshipHelp
 }
 
 func handleGetAllFriends(thisUserId string, friendshipHelper helpers.FriendshipDynamoHelper) (events.APIGatewayProxyResponse, error) {
-	allFriendsRes, afErr := friendshipHelper.GetAllFriends(thisUserId, 100)
+	allFriends, afErr := friendshipHelper.GetAllFriends(thisUserId)
 	if afErr != nil {
 		return models.ServerSideErrorResponse("Something went wrong while trying to get all friends, try again.", afErr, "error in friendship action handler"), nil
-	}
-
-	var allFriends []models.PrimaryUserInfo
-
-	for _, friend := range *allFriendsRes {
-		allFriends = append(allFriends, *models.NewPrimaryUserInfo(&friend, constants.FRIENDSHIP_STATUS_FRIENDS))
 	}
 
 	return models.SuccessfulGetRequestResponse(allFriends), nil
 }
 
 func handleGetAllFriendRequests(thisUserId string, friendshipHelper helpers.FriendshipDynamoHelper) (events.APIGatewayProxyResponse, error) {
-	allReqsRes, afErr := friendshipHelper.GetAllFriendRequests(thisUserId, 100)
+	allReqs, afErr := friendshipHelper.GetAllFriendRequests(thisUserId)
 	if afErr != nil {
 		return models.ServerSideErrorResponse("Something went wrong while trying to get all friend requests, try again.", afErr, "error in friendship action handler"), nil
-	}
-
-	var allReqs []models.PrimaryUserInfo
-	for _, request := range *allReqsRes {
-		allReqs = append(allReqs, models.PrimaryUserInfo{
-			Userid:                  strings.TrimPrefix(request.SenderId, models.FriendRequestSkPrefix),
-			Nickname:                request.SendersNickname,
-			Name:                    request.SendersName,
-			DpUrl:                   request.SendersDpUrl,
-			DefaultProfilePicColors: request.SendersDefaultPicColors,
-			// in the future will check if account is suspended/deactivated and not return request of suspended account
-			FriendshipStatus: constants.FRIENDSHIP_STATUS_RECEIVED,
-		})
 	}
 
 	return models.SuccessfulGetRequestResponse(allReqs), nil
@@ -134,9 +114,9 @@ func (deps *FriendRequestDependencies) HandleFriendshipAction(ctx context.Contex
 
 	// check if they are friends
 	friendshipHelper := helpers.FriendshipDynamoHelper{
-		DbClient:   deps.DbClient,
-		TableNames: deps.TableNames,
-		Ctx:        ctx,
+		DbClient:  deps.DbClient,
+		TableName: deps.TableName,
+		Ctx:       ctx,
 	}
 
 	status, statusErr := friendshipHelper.GetFriendshipStatus(thisUserId, otherUserId)
@@ -144,24 +124,25 @@ func (deps *FriendRequestDependencies) HandleFriendshipAction(ctx context.Contex
 		return models.ServerSideErrorResponse("Something went wrong, try again.", statusErr, "error while trying to get friendship status"), nil
 	}
 
+	findUserHelper := helpers.UserDynamoHelper{
+		DbClient:  deps.DbClient,
+		TableName: deps.TableName,
+		Ctx:       ctx,
+	}
+
+	thisUser, tuErr := findUserHelper.FindById(thisUserId)
+	if tuErr != nil {
+		return models.ServerSideErrorResponse("Something went wrong.", tuErr, "error while trying to fetch this user details"), nil
+	}
+
+	otherUser, ouErr := findUserHelper.FindById(otherUserId)
+	if ouErr != nil {
+		return models.ServerSideErrorResponse("Something went wrong", tuErr, "error while trying to fetch other user details"), nil
+	}
+
 	switch action {
 	// send friend request if not friends
 	case constants.FRIENDSHIP_ACTION_REQUEST:
-		findUserHelper := helpers.UserDynamoHelper{
-			DbClient:   deps.DbClient,
-			TableNames: deps.TableNames,
-			Ctx:        ctx,
-		}
-
-		thisUser, tuErr := findUserHelper.FindById(thisUserId)
-		if tuErr != nil {
-			return models.ServerSideErrorResponse("Something went wrong while trying to send friend request", tuErr, "error while trying to fetch user details for friend request item"), nil
-		}
-
-		// if we cannot find this users account
-		if thisUser == nil {
-			return models.NotFoundResponse("Something went wrong while trying to send friend request"), nil
-		}
 		return handleSendRequest(status, thisUser, otherUserId, friendshipHelper)
 
 		// cancel friend request if sent
@@ -174,7 +155,7 @@ func (deps *FriendRequestDependencies) HandleFriendshipAction(ctx context.Contex
 
 	// accept friend request
 	case constants.FRIENDSHIP_ACTION_ACCEPT:
-		return handleAcceptFriendship(status, otherUserId, thisUserId, friendshipHelper)
+		return handleAcceptFriendship(status, otherUser, thisUser, friendshipHelper)
 
 		// reject friend request
 	case constants.FRIENDSHIP_ACTION_REJECT:

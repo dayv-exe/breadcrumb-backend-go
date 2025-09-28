@@ -12,8 +12,8 @@ import (
 )
 
 type PreSignupDependencies struct {
-	DdbClient  *dynamodb.Client
-	TableNames *utils.TableNames
+	DdbClient *dynamodb.Client
+	TableName string
 }
 
 func (deps *PreSignupDependencies) PreSignupHandler(ctx context.Context, event events.CognitoEventUserPoolsPreSignup) (events.CognitoEventUserPoolsPreSignup, error) {
@@ -29,9 +29,9 @@ func (deps *PreSignupDependencies) PreSignupHandler(ctx context.Context, event e
 	}
 
 	dbHelper := helpers.UserDynamoHelper{
-		DbClient:   deps.DdbClient,
-		TableNames: deps.TableNames,
-		Ctx:        ctx,
+		DbClient:  deps.DdbClient,
+		TableName: deps.TableName,
+		Ctx:       ctx,
 	}
 
 	// one final check if username is still free

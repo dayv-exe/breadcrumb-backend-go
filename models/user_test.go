@@ -17,7 +17,7 @@ var testUserDynamo = map[string]dbTypes.AttributeValue{
 	"dpUrl":                  &dbTypes.AttributeValueMemberS{Value: ""},
 	"is_suspended":           &dbTypes.AttributeValueMemberBOOL{Value: false},
 	"is_deactivated":         &dbTypes.AttributeValueMemberBOOL{Value: false},
-	"date_joined":            &dbTypes.AttributeValueMemberS{Value: utils.GetTimeNow()},
+	"date":                   &dbTypes.AttributeValueMemberS{Value: utils.GetTimeNow()},
 	"birthdate_change_count": &dbTypes.AttributeValueMemberN{Value: "0"},
 	"last_nickname_change":   &dbTypes.AttributeValueMemberS{Value: ""},
 	"last_name_change":       &dbTypes.AttributeValueMemberS{Value: ""},
@@ -26,6 +26,7 @@ var testUserDynamo = map[string]dbTypes.AttributeValue{
 	"force_change_nickname":  &dbTypes.AttributeValueMemberBOOL{Value: false},
 	"suspension_reason":      &dbTypes.AttributeValueMemberS{Value: ""},
 	"default_pic_colors":     &dbTypes.AttributeValueMemberS{Value: ""},
+	"friends":                &dbTypes.AttributeValueMemberS{Value: ""},
 }
 
 func TestUser_DatabaseFormat(t *testing.T) {
@@ -65,13 +66,17 @@ func TestUser_DatabaseFormat(t *testing.T) {
 
 func TestConvertToUser(t *testing.T) {
 	expect := User{
-		Userid:        "123",
-		Nickname:      "test",
-		Name:          "test",
-		Bio:           "",
-		DpUrl:         "",
-		IsSuspended:   false,
-		IsDeactivated: false,
+		UserDisplayInfo: UserDisplayInfo{
+			Userid:   "123",
+			Nickname: "test",
+			Name:     "test",
+			DpUrl:    "",
+		},
+		UserAccountInfo: UserAccountInfo{
+			Bio:           "",
+			IsSuspended:   false,
+			IsDeactivated: false,
+		},
 	}
 
 	result, err := ConvertToUser(map[string]dbTypes.AttributeValue{

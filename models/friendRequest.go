@@ -9,14 +9,11 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
 
-type FriendRequest struct {
-	RecipientId             string `dynamodbav:"pk"`
-	SenderId                string `dynamodbav:"sk" json:"userId"`
-	Date                    string `dynamodbav:"date" json:"date"`
-	SendersName             string `dynamodbav:"name" json:"name"`
-	SendersNickname         string `dynamodbav:"nickname" json:"nickname"`
-	SendersDpUrl            string `dynamodbav:"dp_url" json:"dpUrl"`
-	SendersDefaultPicColors string `dynamodbav:"default_pic_colors" json:"defaultPicColors"`
+type friendRequest struct {
+	RecipientId string `dynamodbav:"pk"`
+	SenderId    string `dynamodbav:"sk" json:"userId"`
+	UserDisplayInfoNoId
+	Date string `dynamodbav:"date" json:"date"`
 }
 
 const (
@@ -24,15 +21,17 @@ const (
 	FriendRequestSkPrefix = "FRIEND_REQUEST_FROM#"
 )
 
-func NewFriendRequest(recipientUserId string, sender *User) *FriendRequest {
-	fr := FriendRequest{
-		RecipientId:             recipientUserId,
-		SenderId:                sender.Userid,
-		Date:                    utils.GetTimeNow(),
-		SendersName:             sender.Name,
-		SendersNickname:         sender.Nickname,
-		SendersDpUrl:            sender.DpUrl,
-		SendersDefaultPicColors: sender.DefaultProfilePicColors,
+func NewFriendRequest(recipientUserId string, sender *User) *friendRequest {
+	fr := friendRequest{
+		RecipientId: recipientUserId,
+		SenderId:    sender.Userid,
+		Date:        utils.GetTimeNow(),
+		UserDisplayInfoNoId: UserDisplayInfoNoId{
+			Nickname:                sender.Nickname,
+			Name:                    sender.Name,
+			DpUrl:                   sender.DpUrl,
+			DefaultProfilePicColors: sender.DefaultProfilePicColors,
+		},
 	}
 
 	return &fr
@@ -45,7 +44,7 @@ func FriendRequestKey(recipientUserId string, senderUserId string) map[string]ty
 	}
 }
 
-func (fr FriendRequest) DatabaseFormat() (*map[string]types.AttributeValue, error) {
+func (fr friendRequest) DatabaseFormat() (*map[string]types.AttributeValue, error) {
 	fr.RecipientId = utils.AddPrefix(FriendRequestPkPrefix, fr.RecipientId)
 	fr.SenderId = utils.AddPrefix(FriendRequestSkPrefix, fr.SenderId)
 	item, err := attributevalue.MarshalMap(fr)
@@ -58,14 +57,30 @@ func (fr FriendRequest) DatabaseFormat() (*map[string]types.AttributeValue, erro
 	return &item, nil
 }
 
-func ConvertToFriendRequest(item *map[string]types.AttributeValue) (*FriendRequest, error) {
-	var fr FriendRequest
-	if err := attributevalue.UnmarshalMap(*item, &fr); err != nil {
+func FriendRequestItemsToUserDisplayStructs(item *[]map[string]types.AttributeValue) (*[]UserDisplayInfo, error) {
+	// TODO: write a unit test for this function
+	// takes friends request items from the database and converts them to user display info
+	// user id, nickname, name and display picture
+
+	var fr []friendRequest
+	if err := attributevalue.UnmarshalListOfMaps(*item, &fr); err != nil {
 		return nil, err
 	}
 
-	fr.RecipientId = strings.TrimPrefix(fr.RecipientId, FriendRequestPkPrefix)
-	fr.SenderId = strings.TrimPrefix(fr.SenderId, FriendRequestSkPrefix)
+	var users []UserDisplayInfo
 
-	return &fr, nil
+	for index, request := range fr {
+		fr[index].RecipientId = strings.TrimPrefix(request.RecipientId, FriendRequestPkPrefix)
+		fr[index].SenderId = strings.TrimPrefix(request.SenderId, FriendRequestSkPrefix)
+
+		users = append(users, UserDisplayInfo{
+			Userid:                  fr[index].SenderId,
+			Nickname:                fr[index].Nickname,
+			Name:                    fr[index].Name,
+			DpUrl:                   fr[index].DpUrl,
+			DefaultProfilePicColors: fr[index].DefaultProfilePicColors,
+		})
+	}
+
+	return &users, nil
 }

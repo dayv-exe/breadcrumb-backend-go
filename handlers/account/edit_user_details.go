@@ -14,8 +14,9 @@ import (
 )
 
 type EditUserDetailsDependency struct {
-	DdbClient  *dynamodb.Client
-	TableNames *utils.TableNames
+	DdbClient       *dynamodb.Client
+	TableName       string
+	SearchTableName string
 }
 
 type editUserDetailsReq struct {
@@ -45,9 +46,9 @@ func (deps *EditUserDetailsDependency) HandleEditUserDetails(ctx context.Context
 	case "bio":
 		// change bio
 		userHelper := helpers.UserDynamoHelper{
-			DbClient:   deps.DdbClient,
-			TableNames: deps.TableNames,
-			Ctx:        ctx,
+			DbClient:  deps.DdbClient,
+			TableName: deps.TableName,
+			Ctx:       ctx,
 		}
 		bioErr := userHelper.UpdateBio(userid, string(reqBody.Payload))
 		if bioErr != nil {
@@ -64,9 +65,9 @@ func (deps *EditUserDetailsDependency) HandleEditUserDetails(ctx context.Context
 func (deps *EditUserDetailsDependency) handleChangeName(userid string, reqBody editUserDetailsReq, ctx context.Context, updateNickname bool) (events.APIGatewayProxyResponse, error) {
 	// handles updating both name and nickname
 	userHelper := helpers.UserDynamoHelper{
-		DbClient:   deps.DdbClient,
-		TableNames: deps.TableNames,
-		Ctx:        ctx,
+		DbClient:  deps.DdbClient,
+		TableName: deps.TableName,
+		Ctx:       ctx,
 	}
 
 	// gets the user from db
@@ -90,7 +91,7 @@ func (deps *EditUserDetailsDependency) handleChangeName(userid string, reqBody e
 		return models.InvalidRequestErrorResponse("You can only change your name or nickname once in 30 days."), nil
 	}
 
-	err := userHelper.UpdateName(user, string(reqBody.Payload), updateNickname)
+	err := userHelper.UpdateName(user, string(reqBody.Payload), updateNickname, deps.SearchTableName)
 
 	if err != nil {
 		return models.ServerSideErrorResponse("", err, "error while trying to update name or nickname"), nil

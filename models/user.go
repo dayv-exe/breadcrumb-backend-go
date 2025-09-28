@@ -11,35 +11,43 @@ import (
 )
 
 type User struct {
+	UserDisplayInfo
+	UserAccountInfo
+	UserPersonalInfo
+	DbDescription string `dynamodbav:"sk" json:"type"`
+}
+
+type UserDisplayInfo struct {
 	Userid                  string `dynamodbav:"pk" json:"userId"`
-	DbDescription           string `dynamodbav:"sk" json:"type"`
 	Nickname                string `dynamodbav:"nickname" json:"nickname"`
 	Name                    string `dynamodbav:"name" json:"name"`
-	Bio                     string `dynamodbav:"bio" json:"bio"`
 	DpUrl                   string `dynamodbav:"dpUrl" json:"dpUrl"`
-	IsSuspended             bool   `dynamodbav:"is_suspended" json:"isSuspended"`
-	IsDeactivated           bool   `dynamodbav:"is_deactivated" json:"isDeactivated"`
-	DateJoined              string `dynamodbav:"date_joined" json:"dateJoined"`
-	BirthdateChangeCount    int    `dynamodbav:"birthdate_change_count" json:"birthdateChangeCount"`
-	LastNicknameChange      string `dynamodbav:"last_nickname_change" json:"lastNicknameChange"`
-	LastEmailChange         string `dynamodbav:"last_email_change" json:"lastEmailChange"`
-	LastLogin               string `dynamodbav:"last_login" json:"lastLogin"`
-	LastNameChange          string `dynamodbav:"last_name_change" json:"lastNameChange"`
-	ForceChangeNickname     bool   `dynamodbav:"force_change_nickname" json:"forceChangeNickname"`
-	SuspensionReason        string `dynamodbav:"suspension_reason" json:"suspensionReason"`
 	DefaultProfilePicColors string `dynamodbav:"default_pic_colors" json:"defaultPicColors"`
 }
 
-type PrimaryUserInfo struct {
-	Userid                  string `json:"userId"`
-	Nickname                string `json:"nickname"`
-	Name                    string `json:"name"`
-	DpUrl                   string `json:"dpUrl"`
-	Bio                     string `json:"bio"`
-	DefaultProfilePicColors string `json:"defaultPicColors"`
-	IsSuspended             bool   `json:"isSuspended"`
-	IsDeactivated           bool   `json:"isDeactivated"`
-	FriendshipStatus        string `json:"friends"`
+type UserDisplayInfoNoId struct {
+	Nickname                string `dynamodbav:"nickname" json:"nickname"`
+	Name                    string `dynamodbav:"name" json:"name"`
+	DpUrl                   string `dynamodbav:"dpUrl" json:"dpUrl"`
+	DefaultProfilePicColors string `dynamodbav:"default_pic_colors" json:"defaultPicColors"`
+}
+
+type UserAccountInfo struct {
+	Bio              string `dynamodbav:"bio" json:"bio"`
+	FriendshipStatus string `dynamodbav:"friends" json:"friends"`
+	IsSuspended      bool   `dynamodbav:"is_suspended" json:"isSuspended"`
+	IsDeactivated    bool   `dynamodbav:"is_deactivated" json:"isDeactivated"`
+	DateJoined       string `dynamodbav:"date" json:"date"`
+}
+
+type UserPersonalInfo struct {
+	BirthdateChangeCount int    `dynamodbav:"birthdate_change_count" json:"birthdateChangeCount"`
+	LastNicknameChange   string `dynamodbav:"last_nickname_change" json:"lastNicknameChange"`
+	LastEmailChange      string `dynamodbav:"last_email_change" json:"lastEmailChange"`
+	LastLogin            string `dynamodbav:"last_login" json:"lastLogin"`
+	LastNameChange       string `dynamodbav:"last_name_change" json:"lastNameChange"`
+	ForceChangeNickname  bool   `dynamodbav:"force_change_nickname" json:"forceChangeNickname"`
+	SuspensionReason     string `dynamodbav:"suspension_reason" json:"suspensionReason"`
 }
 
 const (
@@ -47,40 +55,42 @@ const (
 	UserSkPrefix = "PROFILE"
 )
 
-func NewPrimaryUserInfo(u *User, friendshipStatus string) *PrimaryUserInfo {
-	return &PrimaryUserInfo{
-		Userid:                  u.Userid,
-		Nickname:                u.Nickname,
-		Name:                    u.Name,
-		DpUrl:                   u.DpUrl,
-		Bio:                     u.Bio,
-		DefaultProfilePicColors: u.DefaultProfilePicColors,
-		IsSuspended:             u.IsSuspended,
-		IsDeactivated:           u.IsDeactivated,
-		FriendshipStatus:        friendshipStatus,
-	}
-}
-
 func NewUser(userid string, nickname string, name string, isSuspended bool) *User {
 	defaultColors := utils.GenerateRandomColorPair()
 
 	return &User{
-		Userid:                  userid,
-		Nickname:                strings.ToLower(nickname),
-		Name:                    name,
-		Bio:                     "",
-		IsSuspended:             isSuspended,
-		IsDeactivated:           false,
-		DateJoined:              utils.GetTimeNow(),
-		BirthdateChangeCount:    0,
-		LastNicknameChange:      "",
-		LastEmailChange:         "",
-		LastNameChange:          "",
-		LastLogin:               utils.GetTimeNow(),
-		ForceChangeNickname:     false,
-		SuspensionReason:        "",
-		DefaultProfilePicColors: defaultColors.Foreground + utils.AddPrefix("", defaultColors.Background),
-		DbDescription:           UserSkPrefix,
+		UserDisplayInfo: UserDisplayInfo{
+			Userid:                  userid,
+			Nickname:                nickname,
+			Name:                    name,
+			DpUrl:                   "",
+			DefaultProfilePicColors: defaultColors.Foreground + utils.AddPrefix("#", defaultColors.Background),
+		},
+		UserAccountInfo: UserAccountInfo{
+			Bio:           "",
+			IsSuspended:   isSuspended,
+			IsDeactivated: false,
+			DateJoined:    utils.GetTimeNow(),
+		},
+		UserPersonalInfo: UserPersonalInfo{
+			BirthdateChangeCount: 0,
+			LastNicknameChange:   "",
+			LastEmailChange:      "",
+			LastLogin:            utils.GetTimeNow(),
+			LastNameChange:       "",
+			ForceChangeNickname:  false,
+			SuspensionReason:     "",
+		},
+		DbDescription: UserSkPrefix,
+	}
+}
+
+func GetUserDisplayInfoNoId(u *User) *UserDisplayInfoNoId {
+	return &UserDisplayInfoNoId{
+		Nickname:                u.Nickname,
+		Name:                    u.Name,
+		DpUrl:                   u.DpUrl,
+		DefaultProfilePicColors: u.DefaultProfilePicColors,
 	}
 }
 

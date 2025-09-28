@@ -16,22 +16,15 @@ const (
 )
 
 type UserSearch struct {
-	UserId                  string `dynamodbav:"userid" json:"userid"`
-	Nickname                string `dynamodbav:"nickname" json:"nickname"`
-	Name                    string `dynamodbav:"name" json:"name"`
-	DpUrl                   string `dynamodbav:"dp_url" json:"dpUrl"`
-	DefaultProfilePicColors string `dynamodbav:"default_pic_colors" json:"defaultPicColors"`
-	Rating                  int    `json:"rating"`
+	UserDisplayInfo
+	Rating int `json:"rating"`
 }
 
 type userSearchDbItem struct {
-	Pk                      string `dynamodbav:"pk"`
-	Sk                      string `dynamodbav:"sk"`
-	UserId                  string `dynamodbav:"userid" json:"userid"`
-	Name                    string `dynamodbav:"name"`
-	Nickname                string `dynamodbav:"nickname"`
-	DpUrl                   string `dynamodbav:"dp_url" json:"dpUrl"`
-	DefaultProfilePicColors string `dynamodbav:"default_pic_colors" json:"defaultPicColors"`
+	Pk     string `dynamodbav:"pk"`
+	Sk     string `dynamodbav:"sk"`
+	Userid string `dynamodbav:"userid" json:"userid"`
+	UserDisplayInfoNoId
 }
 
 func (u *UserSearch) BuildSearchIndexes() ([]map[string]types.AttributeValue, error) {
@@ -61,7 +54,7 @@ func (u *UserSearch) BuildSearchIndexes() ([]map[string]types.AttributeValue, er
 		}
 
 		pk := UserSearchIndexPkPrefix + token[:UserSearchIndexPrefixLen]
-		sk := token + "#" + strings.Trim(u.UserId, UserPkPrefix)
+		sk := token + "#" + strings.Trim(u.Userid, UserPkPrefix)
 
 		if _, ok := seen[pk+"|"+sk]; !ok {
 			// seen now if not seen before
@@ -69,13 +62,15 @@ func (u *UserSearch) BuildSearchIndexes() ([]map[string]types.AttributeValue, er
 
 			// new index item
 			new := userSearchDbItem{
-				Pk:                      pk,
-				Sk:                      sk,
-				UserId:                  u.UserId,
-				Name:                    u.Name,
-				Nickname:                u.Nickname,
-				DpUrl:                   u.DpUrl,
-				DefaultProfilePicColors: u.DefaultProfilePicColors,
+				Pk:     pk,
+				Sk:     sk,
+				Userid: u.Userid,
+				UserDisplayInfoNoId: UserDisplayInfoNoId{
+					Nickname:                u.Nickname,
+					Name:                    u.Name,
+					DpUrl:                   u.DpUrl,
+					DefaultProfilePicColors: u.DefaultProfilePicColors,
+				},
 			}
 
 			item, err := attributevalue.MarshalMap(new)

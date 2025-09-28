@@ -2,7 +2,6 @@ package main
 
 import (
 	"breadcrumb-backend-go/handlers/account"
-	"breadcrumb-backend-go/utils"
 	"context"
 	"log"
 	"os"
@@ -14,11 +13,12 @@ import (
 )
 
 var (
-	dbClient      *dynamodb.Client
-	tableNames    *utils.TableNames
-	userPoolId    string
-	cognitoClient *cognitoidentityprovider.Client
-	starter       account.DeleteUserDependencies
+	dbClient        *dynamodb.Client
+	tableName       string
+	searchTableName string
+	userPoolId      string
+	cognitoClient   *cognitoidentityprovider.Client
+	starter         account.DeleteUserDependencies
 )
 
 func init() {
@@ -37,13 +37,22 @@ func init() {
 
 	// load dynamodb stuff
 	dbClient = dynamodb.NewFromConfig(cfg)
-	tableNames = utils.GetAllTableNames()
+	tableName = os.Getenv("USERS_TABLE")
+	if tableName == "" {
+		panic("USERS_TABLE environment variable not set")
+	}
+
+	searchTableName = os.Getenv("SEARCH_TABLE")
+	if searchTableName == "" {
+		panic("SEARCH_TABLE environment not set")
+	}
 
 	starter = account.DeleteUserDependencies{
-		DbClient:      dbClient,
-		TableNames:    tableNames,
-		CognitoClient: cognitoClient,
-		UserPoolId:    userPoolId,
+		DbClient:        dbClient,
+		TableName:       tableName,
+		SearchTableName: searchTableName,
+		CognitoClient:   cognitoClient,
+		UserPoolId:      userPoolId,
 	}
 }
 

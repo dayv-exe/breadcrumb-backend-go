@@ -23,8 +23,8 @@ type GetUserDetailsDependencies struct {
 	UserPoolId    string
 
 	// dynamodb stuff
-	DdbClient  *dynamodb.Client
-	TableNames *utils.TableNames
+	DdbClient *dynamodb.Client
+	TableName string
 }
 
 type completeUserDetails struct {
@@ -60,9 +60,9 @@ func (deps *GetUserDetailsDependencies) HandleGetUserDetails(ctx context.Context
 
 	// get all info on a user from dynamodb
 	dbHelper := helpers.UserDynamoHelper{
-		DbClient:   deps.DdbClient,
-		TableNames: deps.TableNames,
-		Ctx:        ctx,
+		DbClient:  deps.DdbClient,
+		TableName: deps.TableName,
+		Ctx:       ctx,
 	}
 	user, dbErr := getUser(usingId, identifier, dbHelper)
 
@@ -106,9 +106,9 @@ func (deps *GetUserDetailsDependencies) HandleGetUserDetails(ctx context.Context
 
 	// only return nickname, name, profile picture if one user requests another users information
 	friendshipHelper := helpers.FriendshipDynamoHelper{
-		DbClient:   deps.DdbClient,
-		TableNames: deps.TableNames,
-		Ctx:        ctx,
+		DbClient:  deps.DdbClient,
+		TableName: deps.TableName,
+		Ctx:       ctx,
 	}
 
 	friendshipStatus, fsErr := friendshipHelper.GetFriendshipStatus(utils.GetAuthUserId(req), user.Userid)
@@ -117,5 +117,16 @@ func (deps *GetUserDetailsDependencies) HandleGetUserDetails(ctx context.Context
 		return models.ServerSideErrorResponse("Something went wrong while trying to get friendship status", fsErr, "error while trying to get friendship status"), nil
 	}
 
-	return models.SuccessfulGetRequestResponse(models.NewPrimaryUserInfo(user, friendshipStatus)), nil
+	type response struct {
+		models.UserDisplayInfo
+		models.UserAccountInfo
+	}
+
+	user.UserAccountInfo.FriendshipStatus = friendshipStatus
+	res := response{
+		user.UserDisplayInfo,
+		user.UserAccountInfo,
+	}
+
+	return models.SuccessfulGetRequestResponse(res), nil
 }

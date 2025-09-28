@@ -8,15 +8,14 @@ import (
 	"log"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
 
 type FriendshipDynamoHelper struct {
-	DbClient   *dynamodb.Client
-	TableNames *utils.TableNames
-	Ctx        context.Context
+	DbClient  *dynamodb.Client
+	TableName string
+	Ctx       context.Context
 }
 
 func (deps *FriendshipDynamoHelper) SendFriendReq(sender *models.User, recipientId string) error {
@@ -29,7 +28,7 @@ func (deps *FriendshipDynamoHelper) SendFriendReq(sender *models.User, recipient
 
 	input := &dynamodb.PutItemInput{
 		Item:      *item,
-		TableName: aws.String(deps.TableNames.Users),
+		TableName: aws.String(deps.TableName),
 	}
 
 	_, putErr := deps.DbClient.PutItem(deps.Ctx, input)
@@ -45,7 +44,7 @@ func (deps *FriendshipDynamoHelper) SendFriendReq(sender *models.User, recipient
 func (deps *FriendshipDynamoHelper) CancelFriendRequest(senderId, recipientId string) error {
 	input := &dynamodb.DeleteItemInput{
 		Key:       models.FriendRequestKey(recipientId, senderId),
-		TableName: aws.String(deps.TableNames.Users),
+		TableName: aws.String(deps.TableName),
 	}
 
 	_, err := deps.DbClient.DeleteItem(deps.Ctx, input)
@@ -63,13 +62,13 @@ func (deps *FriendshipDynamoHelper) EndFriendship(user1id, user2id string) error
 			{
 				Delete: &types.Delete{
 					Key:       models.FriendKey(user1id, user2id),
-					TableName: aws.String(deps.TableNames.Users),
+					TableName: aws.String(deps.TableName),
 				},
 			},
 			{
 				Delete: &types.Delete{
 					Key:       models.FriendKey(user2id, user1id),
-					TableName: aws.String(deps.TableNames.Users),
+					TableName: aws.String(deps.TableName),
 				},
 			},
 		},
@@ -86,14 +85,14 @@ func (deps *FriendshipDynamoHelper) EndFriendship(user1id, user2id string) error
 	return nil
 }
 
-func (deps *FriendshipDynamoHelper) AcceptFriendRequest(senderId, recipientId string) error {
+func (deps *FriendshipDynamoHelper) AcceptFriendRequest(thisUser, otherUser *models.User) error {
 	// 2 items for easier lookups
-	item1, err1 := models.NewFriendship(senderId, recipientId).DatabaseFormat()
+	item1, err1 := models.NewFriendship(thisUser.Userid, otherUser).DatabaseFormat()
 	if err1 != nil {
 		log.Print("an error occurred while marshalling new friendship")
 		return err1
 	}
-	item2, err2 := models.NewFriendship(recipientId, senderId).DatabaseFormat()
+	item2, err2 := models.NewFriendship(otherUser.Userid, thisUser).DatabaseFormat()
 	if err2 != nil {
 		log.Print("an error occurred while marshalling new friendship")
 		return err2
@@ -104,8 +103,8 @@ func (deps *FriendshipDynamoHelper) AcceptFriendRequest(senderId, recipientId st
 			{
 				// deletes friend request
 				Delete: &types.Delete{
-					Key:       models.FriendRequestKey(recipientId, senderId),
-					TableName: aws.String(deps.TableNames.Users),
+					Key:       models.FriendRequestKey(thisUser.Userid, otherUser.Userid),
+					TableName: aws.String(deps.TableName),
 				},
 			},
 
@@ -113,13 +112,13 @@ func (deps *FriendshipDynamoHelper) AcceptFriendRequest(senderId, recipientId st
 			{
 				Put: &types.Put{
 					Item:      *item1,
-					TableName: aws.String(deps.TableNames.Users),
+					TableName: aws.String(deps.TableName),
 				},
 			},
 			{
 				Put: &types.Put{
 					Item:      *item2,
-					TableName: aws.String(deps.TableNames.Users),
+					TableName: aws.String(deps.TableName),
 				},
 			},
 		},
@@ -140,7 +139,7 @@ func (deps *FriendshipDynamoHelper) AcceptFriendRequest(senderId, recipientId st
 func (deps *FriendshipDynamoHelper) RejectFriendRequest(senderId, recipientId string) error {
 	input := &dynamodb.DeleteItemInput{
 		Key:       models.FriendRequestKey(recipientId, senderId),
-		TableName: aws.String(deps.TableNames.Users),
+		TableName: aws.String(deps.TableName),
 	}
 
 	_, err := deps.DbClient.DeleteItem(deps.Ctx, input)
@@ -156,7 +155,7 @@ func (deps *FriendshipDynamoHelper) RejectFriendRequest(senderId, recipientId st
 func (deps *FriendshipDynamoHelper) usersAreFriends(senderId string, recipientId string) (bool, error) {
 	input := &dynamodb.GetItemInput{
 		Key:       models.FriendKey(senderId, recipientId),
-		TableName: aws.String(deps.TableNames.Users),
+		TableName: aws.String(deps.TableName),
 	}
 
 	item, err := deps.DbClient.GetItem(deps.Ctx, input)
@@ -172,7 +171,7 @@ func (deps *FriendshipDynamoHelper) usersAreFriends(senderId string, recipientId
 func (deps *FriendshipDynamoHelper) userHasRequestedFriendship(senderId string, recipientId string) (bool, error) {
 	input := &dynamodb.GetItemInput{
 		Key:       models.FriendRequestKey(recipientId, senderId),
-		TableName: aws.String(deps.TableNames.Users),
+		TableName: aws.String(deps.TableName),
 	}
 
 	item, err := deps.DbClient.GetItem(deps.Ctx, input)
@@ -218,15 +217,14 @@ func (deps *FriendshipDynamoHelper) GetFriendshipStatus(senderId string, recipie
 	return constants.FRIENDSHIP_STATUS_NOT_FRIENDS, nil
 }
 
-func (deps *FriendshipDynamoHelper) GetAllFriends(userId string, limit int32) (*[]models.User, error) {
+func (deps *FriendshipDynamoHelper) GetAllFriends(userId string) (*[]models.UserDisplayInfo, error) {
 	input := &dynamodb.QueryInput{
-		TableName:              aws.String(deps.TableNames.Users),
+		TableName:              aws.String(deps.TableName),
 		KeyConditionExpression: aws.String("pk = :pk AND begins_with(sk, :skPrefix"),
 		ExpressionAttributeValues: map[string]types.AttributeValue{
 			":pk":       &types.AttributeValueMemberS{Value: utils.AddPrefix(models.FriendItemPk, userId)},
 			":skPrefix": &types.AttributeValueMemberS{Value: models.FriendItemSk},
 		},
-		Limit: aws.Int32(limit),
 	}
 
 	items, err := deps.DbClient.Query(deps.Ctx, input)
@@ -235,7 +233,7 @@ func (deps *FriendshipDynamoHelper) GetAllFriends(userId string, limit int32) (*
 		return nil, err
 	}
 
-	friends, fErr := models.FriendFormat(&items.Items)
+	friends, fErr := models.FriendItemsToUserDisplayStructs(&items.Items)
 	if fErr != nil {
 		return nil, fErr
 	}
@@ -243,15 +241,14 @@ func (deps *FriendshipDynamoHelper) GetAllFriends(userId string, limit int32) (*
 	return friends, nil
 }
 
-func (deps *FriendshipDynamoHelper) GetAllFriendRequests(userId string, limit int32) (*[]models.FriendRequest, error) {
+func (deps *FriendshipDynamoHelper) GetAllFriendRequests(userId string) (*[]models.UserDisplayInfo, error) {
 	input := &dynamodb.QueryInput{
-		TableName:              aws.String(deps.TableNames.Users),
+		TableName:              aws.String(deps.TableName),
 		KeyConditionExpression: aws.String("pk = :pk AND begins_with(sk, :skPrefix)"),
 		ExpressionAttributeValues: map[string]types.AttributeValue{
 			":pk":       &types.AttributeValueMemberS{Value: utils.AddPrefix(models.FriendRequestPkPrefix, userId)},
 			":skPrefix": &types.AttributeValueMemberS{Value: models.FriendRequestSkPrefix},
 		},
-		Limit: aws.Int32(limit),
 	}
 
 	items, err := deps.DbClient.Query(deps.Ctx, input)
@@ -260,11 +257,11 @@ func (deps *FriendshipDynamoHelper) GetAllFriendRequests(userId string, limit in
 		return nil, err
 	}
 
-	var requests []models.FriendRequest
-	if mErr := attributevalue.UnmarshalListOfMaps(items.Items, &requests); mErr != nil {
-		log.Print("an error occurred while trying to unmarshal list of users friend requests")
-		return nil, mErr
+	requestedUsers, ruErr := models.FriendRequestItemsToUserDisplayStructs(&items.Items)
+	if ruErr != nil {
+		log.Println("An error occurred while trying to convert friend request items to their corresponding user display info")
+		return nil, ruErr
 	}
 
-	return &requests, nil
+	return requestedUsers, nil
 }

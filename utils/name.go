@@ -11,12 +11,12 @@ func NameIsValid(name *string) bool {
 }
 
 func NameChangeAllowed(lastChangedOn string) (bool, error) {
-	// format is dd/mm/yyyy
+	// format is yyyy/mm/dd
 	if strings.TrimSpace(lastChangedOn) == "" {
 		return true, nil
 	}
 
-	lastChangeDate, err := time.Parse(constants.DATE_LAYOUT, lastChangedOn)
+	lastChangeDate, err := time.Parse(constants.FULL_DATE_TIME_LAYOUT, lastChangedOn)
 	if err != nil {
 		return false, err
 	}

@@ -2,7 +2,6 @@ package main
 
 import (
 	apis "breadcrumb-backend-go/handlers/account"
-	"breadcrumb-backend-go/utils"
 	"context"
 	"fmt"
 	"log"
@@ -18,7 +17,7 @@ var (
 	ddbClient     *dynamodb.Client
 	cognitoClient *cognitoidentityprovider.Client
 	userPoolId    string
-	tableNames    *utils.TableNames
+	tableName     string
 	starter       apis.GetUserDetailsDependencies
 )
 
@@ -36,13 +35,17 @@ func init() {
 		log.Fatal("USER_POOL_ID environment variable is required")
 	}
 
-	tableNames = utils.GetAllTableNames()
+	tableName = os.Getenv("USERS_TABLE")
+
+	if tableName == "" {
+		panic("USERS_TABLE environment not set")
+	}
 
 	starter = apis.GetUserDetailsDependencies{
 		UserPoolId:    userPoolId,
 		CognitoClient: cognitoClient,
 		DdbClient:     ddbClient,
-		TableNames:    tableNames,
+		TableName:     tableName,
 	}
 }
 

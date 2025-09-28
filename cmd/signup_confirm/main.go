@@ -2,9 +2,9 @@ package main
 
 import (
 	"breadcrumb-backend-go/handlers/auth"
-	"breadcrumb-backend-go/utils"
 	"context"
 	"log"
+	"os"
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -15,7 +15,7 @@ import (
 var (
 	db            *dynamodb.Client
 	cognitoClient *cognitoidentityprovider.Client
-	tableNames    *utils.TableNames
+	tableName     string
 	starter       auth.PostConfirmationDependencies
 )
 
@@ -27,10 +27,14 @@ func init() {
 	db = dynamodb.NewFromConfig(cfg)
 	cognitoClient = cognitoidentityprovider.NewFromConfig(cfg)
 
-	tableNames = utils.GetAllTableNames()
+	tableName = os.Getenv("USERS_TABLE")
+	if tableName == "" {
+		panic("USERS_TABLE not set")
+	}
+
 	starter = auth.PostConfirmationDependencies{
 		DdbClient:     db,
-		TableNames:    tableNames,
+		TableName:     tableName,
 		CognitoClient: cognitoClient,
 	}
 }

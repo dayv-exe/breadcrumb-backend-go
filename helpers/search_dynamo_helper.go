@@ -14,9 +14,9 @@ import (
 )
 
 type SearchDynamoHelper struct {
-	DbClient   *dynamodb.Client
-	Ctx        context.Context
-	TableNames *utils.TableNames
+	DbClient  *dynamodb.Client
+	Ctx       context.Context
+	TableName string
 }
 
 func (deps *SearchDynamoHelper) SearchUser(searchStr string, limit int32) ([]models.UserSearch, error) {
@@ -29,7 +29,7 @@ func (deps *SearchDynamoHelper) SearchUser(searchStr string, limit int32) ([]mod
 	for _, token := range tokens {
 		if len(token) >= models.UserSearchIndexPrefixLen {
 			input := dynamodb.QueryInput{
-				TableName:              aws.String(deps.TableNames.Search),
+				TableName:              aws.String(deps.TableName),
 				KeyConditionExpression: aws.String("pk = :pk AND begins_with(sk, :skPrefix)"),
 				ExpressionAttributeValues: map[string]types.AttributeValue{
 					":pk":       &types.AttributeValueMemberS{Value: models.UserSearchIndexPkPrefix + token[:models.UserSearchIndexPrefixLen]},
@@ -56,8 +56,8 @@ func (deps *SearchDynamoHelper) SearchUser(searchStr string, limit int32) ([]mod
 	// loop through matches and rank them and put them in results
 	var result []models.UserSearch
 	for index, user := range matches {
-		user.UserId = strings.TrimPrefix(user.UserId, models.UserPkPrefix) // removes the 'USER#'
-		key := user.UserId
+		user.Userid = strings.TrimPrefix(user.Userid, models.UserPkPrefix) // removes the 'USER#'
+		key := user.Userid
 		ogIndex, ok := seen[key]
 		if !ok {
 			// first time seen
@@ -75,10 +75,7 @@ func (deps *SearchDynamoHelper) SearchUser(searchStr string, limit int32) ([]mod
 func (deps *SearchDynamoHelper) GetUserSearchIndexItems(user *models.User) ([]types.TransactWriteItem, error) {
 	// Adds items to search table to allow for queries where search string is similar to nickname or full name
 	builder := models.UserSearch{
-		UserId:   user.Userid,
-		Nickname: user.Nickname,
-		Name:     user.Name,
-		DpUrl:    user.DpUrl,
+		UserDisplayInfo: user.UserDisplayInfo,
 	}
 
 	indexes, err := builder.BuildSearchIndexes()
@@ -92,7 +89,7 @@ func (deps *SearchDynamoHelper) GetUserSearchIndexItems(user *models.User) ([]ty
 	for _, index := range indexes {
 		items = append(items, types.TransactWriteItem{
 			Put: &types.Put{
-				TableName: aws.String(deps.TableNames.Search),
+				TableName: aws.String(deps.TableName),
 				Item:      index,
 			},
 		})
@@ -103,10 +100,7 @@ func (deps *SearchDynamoHelper) GetUserSearchIndexItems(user *models.User) ([]ty
 func (deps *SearchDynamoHelper) GetDeleteUserIndexesItems(user *models.User) ([]types.TransactWriteItem, error) {
 	// rebuild indexes, then query them and get their primary keys
 	builder := models.UserSearch{
-		UserId:   user.Userid,
-		Nickname: user.Nickname,
-		Name:     user.Name,
-		DpUrl:    user.DpUrl,
+		UserDisplayInfo: user.UserDisplayInfo,
 	}
 
 	indexes, builderErr := builder.BuildSearchIndexes()
@@ -119,7 +113,7 @@ func (deps *SearchDynamoHelper) GetDeleteUserIndexesItems(user *models.User) ([]
 	for _, key := range keys {
 		items = append(items, types.TransactWriteItem{
 			Delete: &types.Delete{
-				TableName: aws.String(deps.TableNames.Search),
+				TableName: aws.String(deps.TableName),
 				Key:       key,
 			},
 		})

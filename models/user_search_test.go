@@ -111,9 +111,11 @@ func TestGetUserSearchIndexesKeysNickName(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.nickname, func(t *testing.T) {
 			u := UserSearch{
-				UserId:   "123",
-				Nickname: tt.nickname,
-				Name:     tt.name,
+				UserDisplayInfo: UserDisplayInfo{
+					Userid:   tt.userid,
+					Nickname: tt.nickname,
+					Name:     tt.name,
+				},
 			}
 			indexes, _ := u.BuildSearchIndexes()
 			result := GetUserSearchIndexesKeys(indexes)
@@ -166,7 +168,7 @@ func TestBuildUserSearchIndexes(t *testing.T) {
 					"userid":   &types.AttributeValueMemberS{Value: "123"},
 					"name":     &types.AttributeValueMemberS{Value: "johnny test"},
 					"nickname": &types.AttributeValueMemberS{Value: "j.test"},
-					"dp_url":   &types.AttributeValueMemberS{Value: ""},
+					"dpUrl":    &types.AttributeValueMemberS{Value: ""},
 				},
 				{
 					"pk":       &types.AttributeValueMemberS{Value: "USER_INDEX#te"},
@@ -174,7 +176,7 @@ func TestBuildUserSearchIndexes(t *testing.T) {
 					"userid":   &types.AttributeValueMemberS{Value: "123"},
 					"name":     &types.AttributeValueMemberS{Value: "johnny test"},
 					"nickname": &types.AttributeValueMemberS{Value: "j.test"},
-					"dp_url":   &types.AttributeValueMemberS{Value: ""},
+					"dpUrl":    &types.AttributeValueMemberS{Value: ""},
 				},
 			},
 		},
@@ -189,7 +191,7 @@ func TestBuildUserSearchIndexes(t *testing.T) {
 					"userid":   &types.AttributeValueMemberS{Value: "123"},
 					"name":     &types.AttributeValueMemberS{Value: ""},
 					"nickname": &types.AttributeValueMemberS{Value: "j.test"},
-					"dp_url":   &types.AttributeValueMemberS{Value: ""},
+					"dpUrl":    &types.AttributeValueMemberS{Value: ""},
 				},
 			},
 		},
@@ -198,10 +200,12 @@ func TestBuildUserSearchIndexes(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			u := UserSearch{
-				UserId:   tt.userId,
-				Nickname: tt.nickname,
-				Name:     tt.name,
-				DpUrl:    "",
+				UserDisplayInfo: UserDisplayInfo{
+					Userid:   tt.userId,
+					Nickname: tt.nickname,
+					Name:     tt.name,
+					DpUrl:    "",
+				},
 			}
 
 			result, err := u.BuildSearchIndexes()

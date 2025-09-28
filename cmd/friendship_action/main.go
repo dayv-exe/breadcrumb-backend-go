@@ -2,9 +2,9 @@ package main
 
 import (
 	"breadcrumb-backend-go/handlers/discover"
-	"breadcrumb-backend-go/utils"
 	"context"
 	"log"
+	"os"
 
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -12,9 +12,9 @@ import (
 )
 
 var (
-	dbClient   *dynamodb.Client
-	tableNames *utils.TableNames
-	starter    discover.FriendRequestDependencies
+	dbClient  *dynamodb.Client
+	tableName string
+	starter   discover.FriendRequestDependencies
 )
 
 func init() {
@@ -25,11 +25,14 @@ func init() {
 
 	// load dynamodb stuff
 	dbClient = dynamodb.NewFromConfig(cfg)
-	tableNames = utils.GetAllTableNames()
+	tableName = os.Getenv("USERS_TABLE")
+	if tableName == "" {
+		panic("USERS_TABLE environment not set")
+	}
 
 	starter = discover.FriendRequestDependencies{
-		DbClient:   dbClient,
-		TableNames: tableNames,
+		DbClient:  dbClient,
+		TableName: tableName,
 	}
 }
 
