@@ -39,9 +39,10 @@ func init() {
 	}
 
 	starter = auth.PostConfirmationDependencies{
-		DdbClient:     db,
-		TableName:     tableName,
-		CognitoClient: cognitoClient,
+		DdbClient:       db,
+		TableName:       tableName,
+		SearchTableName: searchTableName,
+		CognitoClient:   cognitoClient,
 	}
 }
 
