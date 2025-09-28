@@ -12,9 +12,9 @@ import (
 )
 
 var (
-	dbClient  *dynamodb.Client
-	tableName string
-	starter   discover.AccountSearchDependencies
+	dbClient        *dynamodb.Client
+	searchTableName string
+	starter         discover.AccountSearchDependencies
 )
 
 func init() {
@@ -25,14 +25,14 @@ func init() {
 
 	// load dynamodb stuff
 	dbClient = dynamodb.NewFromConfig(cfg)
-	tableName = os.Getenv("USERS_TABLE")
-	if tableName == "" {
+	searchTableName = os.Getenv("SEARCH_TABLE")
+	if searchTableName == "" {
 		panic("USERS_TABLE environment variable not set")
 	}
 
 	starter = discover.AccountSearchDependencies{
-		Client:    dbClient,
-		TableName: tableName,
+		Client:          dbClient,
+		SearchTableName: searchTableName,
 	}
 }
 

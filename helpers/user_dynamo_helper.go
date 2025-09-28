@@ -44,9 +44,9 @@ func (deps *UserDynamoHelper) AddUser(u *models.User, searchTableName string) er
 	}
 
 	searchHelper := SearchDynamoHelper{
-		DbClient:  deps.DbClient,
-		Ctx:       deps.Ctx,
-		TableName: searchTableName,
+		DbClient:        deps.DbClient,
+		Ctx:             deps.Ctx,
+		SearchTableName: searchTableName,
 	}
 
 	// to create all the search indexes for the new user
@@ -137,9 +137,9 @@ func (deps *UserDynamoHelper) DeleteFromDynamo(u *models.User, searchTableName s
 	}
 
 	searchHelper := SearchDynamoHelper{
-		DbClient:  deps.DbClient,
-		Ctx:       deps.Ctx,
-		TableName: searchTableName,
+		DbClient:        deps.DbClient,
+		Ctx:             deps.Ctx,
+		SearchTableName: searchTableName,
 	}
 	// transactions to remove all users search indexes from search table
 	searchIndexTransactions, siErr := searchHelper.GetDeleteUserIndexesItems(u)
@@ -193,9 +193,9 @@ func (deps *UserDynamoHelper) UpdateName(user *models.User, newName string, upda
 	var transactItems []types.TransactWriteItem
 
 	searchHelper := SearchDynamoHelper{
-		DbClient:  deps.DbClient,
-		Ctx:       deps.Ctx,
-		TableName: searchTableName,
+		DbClient:        deps.DbClient,
+		Ctx:             deps.Ctx,
+		SearchTableName: searchTableName,
 	}
 
 	// get the search indexes of the old name, and puts them all in delete transactions
