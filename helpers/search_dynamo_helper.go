@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 )
@@ -19,9 +18,9 @@ type SearchDynamoHelper struct {
 	SearchTableName string
 }
 
-func (deps *SearchDynamoHelper) SearchUser(searchStr string, limit int32) ([]models.UserSearch, error) {
+func (deps *SearchDynamoHelper) SearchUser(searchStr string, limit int32) (*[]models.UserDisplayInfo, error) {
 
-	var matches []models.UserSearch
+	var matches []models.UserDisplayInfo
 	seen := make(map[string]int)
 
 	tokens := utils.SplitOnDelimiter(strings.ToLower(utils.NormalizeString(searchStr)), " ", "_", ".") // splits the search string into tokens
@@ -44,32 +43,30 @@ func (deps *SearchDynamoHelper) SearchUser(searchStr string, limit int32) ([]mod
 				return nil, qErr
 			}
 
-			var usersFound []models.UserSearch
-			if marshalErr := attributevalue.UnmarshalListOfMaps(found.Items, &usersFound); marshalErr != nil {
-				return nil, marshalErr
+			usersFound, ufErr := models.SearchItemsToUserInfoStruct(&found.Items)
+			if ufErr != nil {
+				log.Print("error while converting search items to user")
+				return nil, ufErr
 			}
 
-			matches = append(matches, usersFound...)
+			matches = append(matches, (*usersFound)...)
 		}
 	}
 
 	// loop through matches and rank them and put them in results
-	var result []models.UserSearch
+	var result []models.UserDisplayInfo
 	for index, user := range matches {
 		user.Userid = strings.TrimPrefix(user.Userid, models.UserPkPrefix) // removes the 'USER#'
 		key := user.Userid
-		ogIndex, ok := seen[key]
+		_, ok := seen[key]
 		if !ok {
 			// first time seen
 			seen[key] = index
 			result = append(result, user)
-		} else {
-			// seen before, then remove it adn add 1 to the rating where we first saw it
-			result[ogIndex].Rating += 1
 		}
 	}
 
-	return result, nil
+	return &result, nil
 }
 
 func (deps *SearchDynamoHelper) GetUserSearchIndexItems(user *models.User) ([]types.TransactWriteItem, error) {
