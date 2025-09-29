@@ -60,9 +60,6 @@ func FriendItemsToUserDisplayStructs(items *[]map[string]types.AttributeValue) (
 		return nil, err
 	}
 
-	// f.User1Id = utils.AddPrefix(FriendItemPk, f.User1Id)
-	// f.User2Id = utils.AddPrefix(FriendItemSk, f.User2Id)
-
 	var users []UserDisplayInfo
 	for index, friend := range f {
 		// clean up

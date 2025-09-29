@@ -78,8 +78,8 @@ func handleRejectFriendship(status, senderId, recipientId string, friendshipHelp
 	return models.SuccessfulRequestResponse("Friendship ended before it began", false), nil
 }
 
-func handleGetAllFriends(thisUserId string, friendshipHelper helpers.FriendshipDynamoHelper) (events.APIGatewayProxyResponse, error) {
-	allFriends, afErr := friendshipHelper.GetAllFriends(thisUserId)
+func handleGetFriends(userId string, friendshipHelper helpers.FriendshipDynamoHelper) (events.APIGatewayProxyResponse, error) {
+	allFriends, afErr := friendshipHelper.GetAllFriends(userId)
 	if afErr != nil {
 		return models.ServerSideErrorResponse("Something went wrong while trying to get all friends, try again.", afErr, "error in friendship action handler"), nil
 	}
@@ -106,7 +106,7 @@ func (deps *FriendRequestDependencies) HandleFriendshipAction(ctx context.Contex
 
 	log.Println("action: " + action)
 
-	otherUserId, exists := req.PathParameters["userid"]
+	otherUserId, exists := req.PathParameters["userid"] // PAYLOAD param in url
 	if !exists && (action != constants.FRIENDSHIP_ACTION_GET_FRIENDS && action != constants.FRIENDSHIP_ACTION_GET_REQUESTED) {
 		return models.InvalidRequestErrorResponse(""), nil
 	}
@@ -173,7 +173,7 @@ func (deps *FriendRequestDependencies) HandleFriendshipAction(ctx context.Contex
 
 		// to list all friends
 	case constants.FRIENDSHIP_ACTION_GET_FRIENDS:
-		return handleGetAllFriends(thisUserId, friendshipHelper)
+		return handleGetFriends(otherUserId, friendshipHelper)
 
 		// to list all friend requests
 	case constants.FRIENDSHIP_ACTION_GET_REQUESTED:
