@@ -242,7 +242,6 @@ func (deps *FriendshipDynamoHelper) GetAllFriends(userId string) (*[]models.User
 }
 
 func (deps *FriendshipDynamoHelper) GetAllFriendRequests(userId string) (*[]models.UserDisplayInfo, error) {
-	log.Print("entered helper get fr function")
 	input := &dynamodb.QueryInput{
 		TableName:              aws.String(deps.TableName),
 		KeyConditionExpression: aws.String("pk = :pk AND begins_with(sk, :skPrefix)"),
@@ -252,23 +251,17 @@ func (deps *FriendshipDynamoHelper) GetAllFriendRequests(userId string) (*[]mode
 		},
 	}
 
-	log.Print("done creating query")
-
 	items, err := deps.DbClient.Query(deps.Ctx, input)
 	if err != nil {
 		log.Print("an error occurred while trying to query users friend requests")
 		return nil, err
 	}
 
-	log.Print("done querying")
-
 	requestedUsers, ruErr := models.FriendRequestItemsToUserDisplayStructs(&items.Items)
 	if ruErr != nil {
 		log.Println("An error occurred while trying to convert friend request items to their corresponding user display info")
 		return nil, ruErr
 	}
-
-	log.Print("converted to user item and returning")
 
 	return requestedUsers, nil
 }

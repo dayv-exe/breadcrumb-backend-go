@@ -58,7 +58,6 @@ func (fr friendRequest) DatabaseFormat() (*map[string]types.AttributeValue, erro
 }
 
 func FriendRequestItemsToUserDisplayStructs(item *[]map[string]types.AttributeValue) (*[]UserDisplayInfo, error) {
-	log.Print("inside item to struct function")
 	// TODO: write a unit test for this function
 	// takes friends request items from the database and converts them to user display info
 	// user id, nickname, name and display picture
@@ -67,8 +66,6 @@ func FriendRequestItemsToUserDisplayStructs(item *[]map[string]types.AttributeVa
 	if err := attributevalue.UnmarshalListOfMaps(*item, &requests); err != nil {
 		return nil, err
 	}
-
-	log.Print("done unmarshaling")
 
 	var users []UserDisplayInfo
 
@@ -83,8 +80,6 @@ func FriendRequestItemsToUserDisplayStructs(item *[]map[string]types.AttributeVa
 			DefaultProfilePicColors: request.DefaultProfilePicColors,
 		})
 	}
-
-	log.Print("done looping through and extracting")
 
 	return &users, nil
 }

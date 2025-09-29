@@ -88,22 +88,23 @@ func handleGetAllFriends(thisUserId string, friendshipHelper helpers.FriendshipD
 }
 
 func handleGetAllFriendRequests(thisUserId string, friendshipHelper helpers.FriendshipDynamoHelper) (events.APIGatewayProxyResponse, error) {
-	log.Print("entered get fr function")
 	allReqs, afErr := friendshipHelper.GetAllFriendRequests(thisUserId)
 	if afErr != nil {
 		return models.ServerSideErrorResponse("Something went wrong while trying to get all friend requests, try again.", afErr, "error in friendship action handler"), nil
 	}
-	log.Print("gotten frs with no issues until now")
 
 	return models.SuccessfulGetRequestResponse(allReqs), nil
 }
 
 func (deps *FriendRequestDependencies) HandleFriendshipAction(ctx context.Context, req *events.APIGatewayProxyRequest) (events.APIGatewayProxyResponse, error) {
 	// /friendship/{action}/{userid}
+	log.Println("entered main handler function")
 	action, actionExists := req.PathParameters["action"]
 	if !actionExists {
 		return models.InvalidRequestErrorResponse(""), nil
 	}
+
+	log.Println("action: " + action)
 
 	otherUserId, exists := req.PathParameters["userid"]
 	if !exists && (action != constants.FRIENDSHIP_ACTION_GET_FRIENDS && action != constants.FRIENDSHIP_ACTION_GET_REQUESTED) {
@@ -114,6 +115,8 @@ func (deps *FriendRequestDependencies) HandleFriendshipAction(ctx context.Contex
 	if thisUserId == "" {
 		return models.UnauthorizedErrorResponse(""), nil
 	}
+
+	log.Println("this user id: " + thisUserId)
 
 	// check if they are friends
 	friendshipHelper := helpers.FriendshipDynamoHelper{
@@ -127,6 +130,8 @@ func (deps *FriendRequestDependencies) HandleFriendshipAction(ctx context.Contex
 		return models.ServerSideErrorResponse("Something went wrong, try again.", statusErr, "error while trying to get friendship status"), nil
 	}
 
+	log.Println("status: " + status)
+
 	findUserHelper := helpers.UserDynamoHelper{
 		DbClient:  deps.DbClient,
 		TableName: deps.TableName,
@@ -138,9 +143,11 @@ func (deps *FriendRequestDependencies) HandleFriendshipAction(ctx context.Contex
 		return models.ServerSideErrorResponse("Something went wrong.", tuErr, "error while trying to fetch this user details"), nil
 	}
 
+	log.Println("this user: " + thisUser.Nickname)
+
 	otherUser, ouErr := findUserHelper.FindById(otherUserId)
 	if ouErr != nil {
-		return models.ServerSideErrorResponse("Something went wrong", tuErr, "error while trying to fetch other user details"), nil
+		return models.ServerSideErrorResponse("Something went wrong", ouErr, "error while trying to fetch other user details"), nil
 	}
 
 	switch action {

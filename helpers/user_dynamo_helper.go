@@ -90,6 +90,7 @@ func (deps *UserDynamoHelper) FindByNickname(nickname string) (*models.User, err
 	}
 
 	if output.Count == 0 {
+		log.Print("no such user found: " + nickname)
 		return nil, nil
 	}
 
@@ -109,7 +110,8 @@ func (deps *UserDynamoHelper) FindById(id string) (*models.User, error) {
 	}
 
 	if len(output.Item) == 0 {
-		return nil, fmt.Errorf("Unable to find user")
+		log.Print("no such user found: " + id)
+		return nil, nil
 	}
 
 	return models.ConvertToUser(output.Item)
