@@ -7,6 +7,7 @@ import (
 	"breadcrumb-backend-go/utils"
 	"context"
 	"fmt"
+	"log"
 
 	"github.com/aws/aws-lambda-go/events"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
@@ -57,7 +58,7 @@ func handleAcceptFriendship(status string, otherUser, thisUser *models.User, fri
 	if status != constants.FRIENDSHIP_STATUS_RECEIVED {
 		return models.InvalidRequestErrorResponse("You cant accept a friend request from someone who never sent you one"), nil
 	}
-	reqErr := friendshipHelper.AcceptFriendRequest(otherUser, thisUser)
+	reqErr := friendshipHelper.AcceptFriendRequest(thisUser, otherUser)
 	if reqErr != nil {
 		return models.ServerSideErrorResponse("Something went wrong while accepting friendship, try again.", reqErr, "Error in friend req handler"), nil
 	}
@@ -87,10 +88,12 @@ func handleGetAllFriends(thisUserId string, friendshipHelper helpers.FriendshipD
 }
 
 func handleGetAllFriendRequests(thisUserId string, friendshipHelper helpers.FriendshipDynamoHelper) (events.APIGatewayProxyResponse, error) {
+	log.Print("entered get fr function")
 	allReqs, afErr := friendshipHelper.GetAllFriendRequests(thisUserId)
 	if afErr != nil {
 		return models.ServerSideErrorResponse("Something went wrong while trying to get all friend requests, try again.", afErr, "error in friendship action handler"), nil
 	}
+	log.Print("gotten frs with no issues until now")
 
 	return models.SuccessfulGetRequestResponse(allReqs), nil
 }

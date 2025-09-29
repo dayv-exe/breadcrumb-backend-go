@@ -58,29 +58,33 @@ func (fr friendRequest) DatabaseFormat() (*map[string]types.AttributeValue, erro
 }
 
 func FriendRequestItemsToUserDisplayStructs(item *[]map[string]types.AttributeValue) (*[]UserDisplayInfo, error) {
+	log.Print("inside item to struct function")
 	// TODO: write a unit test for this function
 	// takes friends request items from the database and converts them to user display info
 	// user id, nickname, name and display picture
 
-	var fr []friendRequest
-	if err := attributevalue.UnmarshalListOfMaps(*item, &fr); err != nil {
+	var requests []friendRequest
+	if err := attributevalue.UnmarshalListOfMaps(*item, &requests); err != nil {
 		return nil, err
 	}
 
+	log.Print("done unmarshaling")
+
 	var users []UserDisplayInfo
 
-	for index, request := range fr {
-		fr[index].RecipientId = strings.TrimPrefix(request.RecipientId, FriendRequestPkPrefix)
-		fr[index].SenderId = strings.TrimPrefix(request.SenderId, FriendRequestSkPrefix)
+	for index, request := range requests {
+		requests[index].SenderId = strings.TrimPrefix(request.SenderId, FriendRequestSkPrefix)
 
 		users = append(users, UserDisplayInfo{
-			Userid:                  fr[index].SenderId,
-			Nickname:                fr[index].Nickname,
-			Name:                    fr[index].Name,
-			DpUrl:                   fr[index].DpUrl,
-			DefaultProfilePicColors: fr[index].DefaultProfilePicColors,
+			Userid:                  requests[index].SenderId,
+			Nickname:                request.Nickname,
+			Name:                    request.Name,
+			DpUrl:                   request.DpUrl,
+			DefaultProfilePicColors: request.DefaultProfilePicColors,
 		})
 	}
+
+	log.Print("done looping through and extracting")
 
 	return &users, nil
 }
